@@ -1,0 +1,3 @@
+base_url: "https://xxx.vmedis.com"
+session_id: "abcd"
+refresh_interval: "1m"
