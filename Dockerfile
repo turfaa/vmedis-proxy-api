@@ -23,4 +23,6 @@ COPY --from=build /vmedis-proxy /vmedis-proxy
 
 USER nonroot:nonroot
 
+EXPOSE 8080
+
 ENTRYPOINT ["/vmedis-proxy"]
