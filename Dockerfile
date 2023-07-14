@@ -25,4 +25,4 @@ USER nonroot:nonroot
 
 EXPOSE 8080
 
-ENTRYPOINT ["/vmedis-proxy"]
+ENTRYPOINT ["/vmedis-proxy", "serve"]
