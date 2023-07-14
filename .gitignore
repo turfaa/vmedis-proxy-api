@@ -141,3 +141,5 @@ fabric.properties
 
 config/config.yaml
 .idea
+
+data/*

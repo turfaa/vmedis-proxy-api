@@ -1,5 +1,10 @@
 package client
 
+import (
+	"strconv"
+	"strings"
+)
+
 // SalesStatistics is the statistics of sales in a period of time.
 type SalesStatistics struct {
 	// NumberOfSales is the number of sales in the period of time.
@@ -9,4 +14,11 @@ type SalesStatistics struct {
 	// This is in IDR.
 	// For precision purposes, this is still represented as string.
 	TotalSales string `json:"totalSales"`
+}
+
+// TotalSalesFloat64 returns the TotalSales as float64.
+func (s SalesStatistics) TotalSalesFloat64() (float64, error) {
+	ts := strings.ReplaceAll(s.TotalSales, ".", "")
+	ts = strings.ReplaceAll(ts, ",", ".")
+	return strconv.ParseFloat(ts, 64)
 }
