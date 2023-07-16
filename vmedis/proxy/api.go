@@ -42,9 +42,10 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 // HandleGetDailySalesStatistics handles the request to get the daily sales statistics.
 func (s *ApiServer) HandleGetDailySalesStatistics(c *gin.Context) {
 	var modelStats []models.SaleStatistics
-	if err := s.DB.Find(&modelStats).
+	if err := s.DB.
 		Where("pulled_at >= ?", time.Now().Truncate(time.Hour*24)).
 		Order("pulled_at ASC").
+		Find(&modelStats).
 		Error; err != nil {
 		c.JSON(500, gin.H{
 			"error": "failed to get historical statistics from DB: " + err.Error(),
