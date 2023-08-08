@@ -7,6 +7,9 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"gorm.io/gorm"
+
+	"github.com/turfaa/vmedis-proxy-api/vmedis/database"
 )
 
 var (
@@ -57,6 +60,7 @@ func initConfig() {
 func initAppCommand(command *cobra.Command) {
 	rootCmd.AddCommand(command)
 
+	command.Flags().String("postgres-dsn", "", "postgres dsn, takes precedence over sqlite-path")
 	command.Flags().String("sqlite-path", "data/db.sqlite", "path to the sqlite database")
 	command.Flags().String("base-url", "http://localhost:8080", "base url of the vmedis proxy server")
 	command.Flags().StringSlice("session-ids", nil, "session id of the vmedis proxy server")
@@ -67,6 +71,7 @@ func initAppCommand(command *cobra.Command) {
 	command.Flags().String("redis-password", "", "redis password")
 	command.Flags().String("redis-db", "0", "redis db")
 
+	viper.BindPFlag("postgres_dsn", command.Flags().Lookup("postgres-dsn"))
 	viper.BindPFlag("sqlite_path", command.Flags().Lookup("sqlite-path"))
 	viper.BindPFlag("base_url", command.Flags().Lookup("base-url"))
 	viper.BindPFlag("session_ids", command.Flags().Lookup("session-ids"))
@@ -76,4 +81,12 @@ func initAppCommand(command *cobra.Command) {
 	viper.BindPFlag("redis_address", command.Flags().Lookup("redis-address"))
 	viper.BindPFlag("redis_password", command.Flags().Lookup("redis-password"))
 	viper.BindPFlag("redis_db", command.Flags().Lookup("redis-db"))
+}
+
+func getDatabase() (*gorm.DB, error) {
+	if viper.GetString("postgres_dsn") != "" {
+		return database.PostgresDB(viper.GetString("postgres_dsn"))
+	}
+
+	return database.SqliteDB(viper.GetString("sqlite_path"))
 }

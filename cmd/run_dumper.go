@@ -8,7 +8,6 @@ import (
 	"golang.org/x/time/rate"
 
 	"github.com/turfaa/vmedis-proxy-api/vmedis/client"
-	"github.com/turfaa/vmedis-proxy-api/vmedis/database"
 	"github.com/turfaa/vmedis-proxy-api/vmedis/dumper"
 )
 
@@ -17,7 +16,7 @@ var runDumperCmd = &cobra.Command{
 	Use:   "run-dumper",
 	Short: "Run data dumper",
 	Run: func(cmd *cobra.Command, args []string) {
-		db, err := database.SqliteDB(viper.GetString("sqlite_path"))
+		db, err := getDatabase()
 		if err != nil {
 			log.Fatalf("Error opening database: %s\n", err)
 		}
