@@ -43,7 +43,7 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 func (s *ApiServer) HandleGetDailySalesStatistics(c *gin.Context) {
 	var modelStats []models.SaleStatistics
 	if err := s.DB.
-		Where("pulled_at >= ?", time.Now().Truncate(time.Hour*24)).
+		Where("pulled_at >= ?", time.Now().UTC().Truncate(time.Hour*24).Add(time.Hour)).
 		Order("pulled_at ASC").
 		Find(&modelStats).
 		Error; err != nil {
@@ -52,6 +52,15 @@ func (s *ApiServer) HandleGetDailySalesStatistics(c *gin.Context) {
 		})
 		return
 	}
+
+	x := s.DB.ToSQL(func(tx *gorm.DB) *gorm.DB {
+		return tx.
+			Where("pulled_at >= ?", time.Now().UTC().Truncate(time.Hour*24).Add(time.Hour)).
+			Order("pulled_at ASC").
+			Find(&modelStats)
+	})
+
+	println(x)
 
 	latestStat, err := s.Client.GetDailySalesStatistics()
 	if err != nil {
