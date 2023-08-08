@@ -24,8 +24,8 @@ const (
 	DrugInterval = 24 * time.Hour
 
 	// ProcurementRecommendationsInterval is the interval of the procurement recommendations' dumper.
-	// It currently runs every hour.
-	ProcurementRecommendationsInterval = time.Hour
+	// It currently runs every 12 hour.
+	ProcurementRecommendationsInterval = 12 * time.Hour
 )
 
 // Run runs the data dumper.
