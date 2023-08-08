@@ -45,12 +45,17 @@ func writeProcurementRecommendations(redisClient *redis.Client, vmedisClient *cl
 
 	recommendations := make([]DrugProcurementRecommendation, len(oosDrugs))
 	for i, drugStock := range oosDrugs {
+		q := drugStock.Drug.MinimumStock.Quantity*2 - drugStock.Stock.Quantity
+		if q < 2 {
+			q = 2
+		}
+
 		recommendations[i] = DrugProcurementRecommendation{
 			DrugStock:    FromClientDrugStock(drugStock),
 			FromSupplier: drugStock.Drug.Supplier,
 			Procurement: Stock{
 				Unit:     drugStock.Stock.Unit,
-				Quantity: drugStock.Drug.MinimumStock.Quantity*2 - drugStock.Stock.Quantity,
+				Quantity: q,
 			},
 		}
 	}
