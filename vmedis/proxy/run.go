@@ -8,11 +8,13 @@ import (
 	"os/signal"
 	"time"
 
+	"gorm.io/gorm"
+
 	"github.com/turfaa/vmedis-proxy-api/vmedis/client"
 )
 
 // Run runs the proxy server.
-func Run(vmedisClient *client.Client, sessionRefreshInterval time.Duration) {
+func Run(vmedisClient *client.Client, db *gorm.DB, sessionRefreshInterval time.Duration) {
 	log.Println("Checking if session id is valid")
 	if err := vmedisClient.RefreshSessionId(); err != nil {
 		log.Fatalf("Session id check failed: %s\n", err)
@@ -20,7 +22,7 @@ func Run(vmedisClient *client.Client, sessionRefreshInterval time.Duration) {
 
 	log.Printf("Starting proxy server to %s with refresh interval %d\n", vmedisClient.BaseUrl, sessionRefreshInterval)
 
-	apiServer := ApiServer{Client: vmedisClient}
+	apiServer := ApiServer{Client: vmedisClient, DB: db}
 	engine := apiServer.GinEngine()
 
 	httpServer := http.Server{
