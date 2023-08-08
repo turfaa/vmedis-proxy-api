@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/turfaa/vmedis-proxy-api/vmedis/client"
 	"github.com/turfaa/vmedis-proxy-api/vmedis/database/models"
@@ -43,7 +44,7 @@ func DumpDrugs(db *gorm.DB, vmedisClient *client.Client) {
 
 		if len(toInsert) == drugsBatchSize {
 			log.Printf("Dumping %d drugs\n", len(toInsert))
-			if err := db.Create(&toInsert).Error; err != nil {
+			if err := dumpDrugs(db, toInsert); err != nil {
 				log.Printf("Error inserting drugs: %s\n", err)
 				errCounter += len(toInsert)
 			} else {
@@ -55,7 +56,7 @@ func DumpDrugs(db *gorm.DB, vmedisClient *client.Client) {
 
 	if len(toInsert) > 0 {
 		log.Printf("Dumping %d drugs\n", len(toInsert))
-		if err := db.Create(&toInsert).Error; err != nil {
+		if err := dumpDrugs(db, toInsert); err != nil {
 			log.Printf("Error inserting drugs: %s\n", err)
 			errCounter += len(toInsert)
 		} else {
@@ -64,4 +65,13 @@ func DumpDrugs(db *gorm.DB, vmedisClient *client.Client) {
 	}
 
 	log.Printf("Finished dumping drugs: %d, errors: %d\n", counter, errCounter)
+}
+
+func dumpDrugs(db *gorm.DB, drugs []models.Drug) error {
+	return db.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "vmedis_code"}},
+		DoUpdates: clause.AssignmentColumns([]string{"updated_at", "vmedis_id", "name", "manufacturer"}),
+	}).
+		Create(&drugs).
+		Error
 }
