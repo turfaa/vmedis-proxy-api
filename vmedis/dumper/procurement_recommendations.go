@@ -49,7 +49,12 @@ func DumpProcurementRecommendations(ctx context.Context, db *gorm.DB, redisClien
 		log.Printf("Error getting drug units of out-of-stock drugs: %s\n", err)
 		return
 	}
-	log.Printf("Got %d drug units of out-of-stock drugs\n", len(unitsByCode))
+
+	var unitCount int
+	for _, units := range unitsByCode {
+		unitCount += len(units)
+	}
+	log.Printf("Got %d drug units of out-of-stock drugs\n", unitCount)
 
 	recommendations := make([]proxy.DrugProcurementRecommendation, len(oosDrugs))
 	for i, drugStock := range oosDrugs {
