@@ -28,7 +28,7 @@ func (s *ApiServer) GinEngine() *gin.Engine {
 
 // SetupRoute sets up the routes of the proxy api server.
 func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
-	store := persist.NewRedisStore(s.RedisClient)
+	store := CompressedCache{Store: persist.NewRedisStore(s.RedisClient)}
 
 	v1 := router.Group("/api/v1")
 	{

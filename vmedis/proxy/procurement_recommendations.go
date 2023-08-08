@@ -1,8 +1,6 @@
 package proxy
 
 import (
-	"bytes"
-	"compress/zlib"
 	"context"
 	"encoding/json"
 
@@ -51,20 +49,4 @@ func (s *ApiServer) HandleProcurementRecommendations(c *gin.Context) {
 	}
 
 	c.JSON(200, response)
-}
-
-func zlibDecompress(data []byte) ([]byte, error) {
-	var buf bytes.Buffer
-
-	r, err := zlib.NewReader(bytes.NewReader(data))
-	if err != nil {
-		return nil, err
-	}
-	defer r.Close()
-
-	if _, err := buf.ReadFrom(r); err != nil {
-		return nil, err
-	}
-
-	return buf.Bytes(), nil
 }
