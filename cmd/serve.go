@@ -1,11 +1,9 @@
-/*
-Copyright © 2023 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
 	"log"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -26,9 +24,16 @@ var serveCmd = &cobra.Command{
 		}
 
 		proxy.Run(
-			client.New(viper.GetString("base_url"), viper.GetString("session_id")),
-			db,
-			viper.GetDuration("refresh_interval"),
+			proxy.Config{
+				VmedisClient: client.New(viper.GetString("base_url"), viper.GetString("session_id"), viper.GetInt("concurrency")),
+				DB:           db,
+				RedisClient: redis.NewClient(&redis.Options{
+					Addr:     viper.GetString("redis_address"),
+					Password: viper.GetString("redis_password"),
+					DB:       viper.GetInt("redis_db"),
+				}),
+				SessionRefreshInterval: viper.GetDuration("refresh_interval"),
+			},
 		)
 	},
 }

@@ -1,6 +1,3 @@
-/*
-Copyright © 2023 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
@@ -25,7 +22,7 @@ var runDumperCmd = &cobra.Command{
 		}
 
 		dumper.Run(
-			client.New(viper.GetString("base_url"), viper.GetString("session_id")),
+			client.New(viper.GetString("base_url"), viper.GetString("session_id"), viper.GetInt("concurrency")),
 			db,
 		)
 	},

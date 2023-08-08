@@ -42,3 +42,64 @@ func FromModelsSaleStatistics(saleStatistics models.SaleStatistics) SaleStatisti
 		NumberOfSales: saleStatistics.NumberOfSales,
 	}
 }
+
+// DrugProcurementRecommendationsResponse represents the drug procurement recommendations API response.
+type DrugProcurementRecommendationsResponse struct {
+	Recommendations []DrugProcurementRecommendation `json:"recommendations"`
+	ComputedAt      time.Time                       `json:"computedAt"`
+}
+
+// DrugProcurementRecommendation represents one drug procurement recommendation.
+type DrugProcurementRecommendation struct {
+	DrugStock    DrugStock `json:",inline"`
+	FromSupplier string    `json:"fromSupplier"`
+	Procurement  Stock     `json:"procurement"`
+}
+
+// DrugStock is the stock of a drug.
+type DrugStock struct {
+	Drug  Drug  `json:",inline"`
+	Stock Stock `json:"stock"`
+}
+
+// FromClientDrugStock converts DrugStock from client schema to proxy schema.
+func FromClientDrugStock(cd client.DrugStock) DrugStock {
+	return DrugStock{
+		Drug:  FromClientDrug(cd.Drug),
+		Stock: FromClientStock(cd.Stock),
+	}
+}
+
+// Drug is a drug in the inventory.
+type Drug struct {
+	VmedisCode   string `json:"vmedisCode"`
+	Name         string `json:"name"`
+	Manufacturer string `json:"manufacturer"`
+	Supplier     string `json:"supplier"`
+	MinimumStock Stock  `json:"minimumStock"`
+}
+
+// FromClientDrug converts Drug from client schema to proxy schema.
+func FromClientDrug(cd client.Drug) Drug {
+	return Drug{
+		VmedisCode:   cd.VmedisCode,
+		Name:         cd.Name,
+		Manufacturer: cd.Manufacturer,
+		Supplier:     cd.Supplier,
+		MinimumStock: FromClientStock(cd.MinimumStock),
+	}
+}
+
+// Stock represents one instance of stock.
+type Stock struct {
+	Unit     string  `json:"unit"`
+	Quantity float64 `json:"quantity"`
+}
+
+// FromClientStock converts Stock from client schema to proxy schema.
+func FromClientStock(cs client.Stock) Stock {
+	return Stock{
+		Unit:     cs.Unit,
+		Quantity: cs.Quantity,
+	}
+}

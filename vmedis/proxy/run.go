@@ -8,21 +8,42 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 
 	"github.com/turfaa/vmedis-proxy-api/vmedis/client"
 )
 
+// Config is the proxy server configuration.
+type Config struct {
+	VmedisClient           *client.Client
+	DB                     *gorm.DB
+	RedisClient            *redis.Client
+	SessionRefreshInterval time.Duration
+}
+
 // Run runs the proxy server.
-func Run(vmedisClient *client.Client, db *gorm.DB, sessionRefreshInterval time.Duration) {
+func Run(config Config) {
 	log.Println("Checking if session id is valid")
-	if err := vmedisClient.RefreshSessionId(); err != nil {
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+
+	if err := config.VmedisClient.RefreshSessionId(ctx); err != nil {
 		log.Fatalf("Session id check failed: %s\n", err)
 	}
 
-	log.Printf("Starting proxy server to %s with refresh interval %d\n", vmedisClient.BaseUrl, sessionRefreshInterval)
+	closeCacheWriter := runCacheWriter(config.RedisClient, config.VmedisClient)
+	defer closeCacheWriter()
 
-	apiServer := ApiServer{Client: vmedisClient, DB: db}
+	log.Printf("Starting proxy server to %s with refresh interval %d\n", config.VmedisClient.BaseUrl, config.SessionRefreshInterval)
+
+	apiServer := ApiServer{
+		Client:      config.VmedisClient,
+		DB:          config.DB,
+		RedisClient: config.RedisClient,
+	}
+
 	engine := apiServer.GinEngine()
 
 	httpServer := http.Server{
@@ -37,7 +58,7 @@ func Run(vmedisClient *client.Client, db *gorm.DB, sessionRefreshInterval time.D
 
 	log.Println("Proxy server started")
 
-	stop := vmedisClient.AutoRefreshSessionId(sessionRefreshInterval)
+	stop := config.VmedisClient.AutoRefreshSessionId(config.SessionRefreshInterval)
 	defer stop()
 
 	done := make(chan os.Signal, 1)

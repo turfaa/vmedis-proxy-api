@@ -3,8 +3,11 @@ package client
 import (
 	"fmt"
 	"io"
+	"log"
 	"regexp"
 	"strconv"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
 var (
@@ -40,4 +43,49 @@ func ParseSalesStatistics(r io.Reader) (SalesStatistics, error) {
 		NumberOfSales: numberOfSales,
 		TotalSales:    totalSalesMatches[1],
 	}, nil
+}
+
+// ParseOutOfStockDrugs parses the out-of-stock drugs from the given reader.
+func ParseOutOfStockDrugs(r io.Reader) (OutOfStockDrugsResponse, error) {
+	doc, err := goquery.NewDocumentFromReader(r)
+	if err != nil {
+		return OutOfStockDrugsResponse{}, fmt.Errorf("parse HTML: %w", err)
+	}
+
+	var drugs []DrugStock
+	doc.Find("tr[data-key]").Each(func(i int, s *goquery.Selection) {
+		drug, err := parseOutOfStockDrug(s)
+		if err != nil {
+			log.Printf("error parsing out-of-stock drug #%d: %s", i, err)
+			return
+		}
+
+		drugs = append(drugs, drug)
+	})
+
+	var otherPages []int
+	doc.Find(".pagination li a").Each(func(i int, s *goquery.Selection) {
+		page, err := strconv.Atoi(s.Text())
+		if err != nil {
+			// expected, ignore
+			return
+		}
+
+		otherPages = append(otherPages, page)
+	})
+
+	return OutOfStockDrugsResponse{Drugs: drugs, OtherPages: otherPages}, nil
+}
+
+func parseOutOfStockDrug(doc *goquery.Selection) (DrugStock, error) {
+	var ds DrugStock
+	if err := UnmarshalDataColumn(doc, &ds); err != nil {
+		return DrugStock{}, fmt.Errorf("parse drug: %w", err)
+	}
+
+	if ds.Drug.MinimumStock.Unit == "" {
+		ds.Drug.MinimumStock.Unit = ds.Stock.Unit
+	}
+
+	return ds, nil
 }

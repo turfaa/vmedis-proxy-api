@@ -61,9 +61,17 @@ func initAppCommand(command *cobra.Command) {
 	command.Flags().String("base-url", "http://localhost:8080", "base url of the vmedis proxy server")
 	command.Flags().String("session-id", "", "session id of the vmedis proxy server")
 	command.Flags().Duration("refresh-interval", time.Minute, "refresh interval of the session id in milliseconds")
+	command.Flags().Int("concurrency", 50, "number of concurrent requests")
+	command.Flags().String("redis-address", "localhost:6379", "redis address")
+	command.Flags().String("redis-password", "", "redis password")
+	command.Flags().String("redis-db", "0", "redis db")
 
 	viper.BindPFlag("sqlite_path", command.Flags().Lookup("sqlite-path"))
 	viper.BindPFlag("base_url", command.Flags().Lookup("base-url"))
 	viper.BindPFlag("session_id", command.Flags().Lookup("session-id"))
 	viper.BindPFlag("refresh_interval", command.Flags().Lookup("refresh-interval"))
+	viper.BindPFlag("concurrency", command.Flags().Lookup("concurrency"))
+	viper.BindPFlag("redis_address", command.Flags().Lookup("redis-address"))
+	viper.BindPFlag("redis_password", command.Flags().Lookup("redis-password"))
+	viper.BindPFlag("redis_db", command.Flags().Lookup("redis-db"))
 }

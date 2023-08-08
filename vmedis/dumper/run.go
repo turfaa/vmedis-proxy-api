@@ -1,6 +1,7 @@
 package dumper
 
 import (
+	"context"
 	"log"
 	"os"
 	"os/signal"
@@ -44,7 +45,10 @@ func Run(vmedisClient *client.Client, db *gorm.DB) {
 func DumpDailySalesStatistics(db *gorm.DB, vmedisClient *client.Client) {
 	log.Println("Dumping daily sales statistics")
 
-	data, err := vmedisClient.GetDailySalesStatistics()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+
+	data, err := vmedisClient.GetDailySalesStatistics(ctx)
 	if err != nil {
 		log.Printf("Error getting daily sales statistics: %s\n", err)
 		return
