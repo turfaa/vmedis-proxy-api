@@ -75,7 +75,8 @@ func DumpDrugs(ctx context.Context, db *gorm.DB, vmedisClient *client.Client, de
 	log.Printf("Finished dumping drugs: %d, errors: %d\n", counter, errCounter)
 }
 
-func drugDetailsPuller(ctx context.Context, db *gorm.DB, vmedisClient *client.Client) (chan<- models.Drug, func()) {
+// DrugDetailsPuller pulls the details of the drugs from the channel and store them into the database.
+func DrugDetailsPuller(ctx context.Context, db *gorm.DB, vmedisClient *client.Client) (chan<- models.Drug, func()) {
 	drugs := make(chan models.Drug, 100)
 	closeChan := make(chan struct{})
 

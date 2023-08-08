@@ -1,9 +1,12 @@
 package proxy
 
 import (
+	"context"
+
 	"github.com/gin-gonic/gin"
 
 	"github.com/turfaa/vmedis-proxy-api/vmedis/database/models"
+	"github.com/turfaa/vmedis-proxy-api/vmedis/dumper"
 	"github.com/turfaa/vmedis-proxy-api/vmedis/proxy/schema"
 )
 
@@ -23,4 +26,12 @@ func (s *ApiServer) HandleGetDrugs(c *gin.Context) {
 	}
 
 	c.JSON(200, res)
+}
+
+// HandleDumpDrugs handles the request to dump the drugs.
+func (s *ApiServer) HandleDumpDrugs(c *gin.Context) {
+	go dumper.DumpDrugs(context.Background(), s.DB, s.Client, s.DrugDetailsPuller)
+	c.JSON(200, gin.H{
+		"message": "dumping drugs",
+	})
 }

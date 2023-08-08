@@ -13,9 +13,9 @@ RUN go mod download
 COPY cmd/ cmd/
 COPY vmedis/ vmedis/
 
-RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o /vmedis-proxy
+RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} CGO_ENABLED=0 go build -o /vmedis-proxy
 
-FROM --platform=${BUILDPLATFORM:-linux/amd64} gcr.io/distroless/base-debian11 AS release
+FROM --platform=${BUILDPLATFORM:-linux/amd64} gcr.io/distroless/static-debian11 AS release
 
 WORKDIR /
 

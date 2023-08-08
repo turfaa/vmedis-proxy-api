@@ -11,13 +11,15 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/turfaa/vmedis-proxy-api/vmedis/client"
+	"github.com/turfaa/vmedis-proxy-api/vmedis/database/models"
 )
 
 // ApiServer is the proxy api server.
 type ApiServer struct {
-	Client      *client.Client
-	DB          *gorm.DB
-	RedisClient *redis.Client
+	Client            *client.Client
+	DB                *gorm.DB
+	RedisClient       *redis.Client
+	DrugDetailsPuller chan<- models.Drug
 }
 
 // GinEngine returns the gin engine of the proxy api server.
@@ -54,6 +56,11 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 			"/drugs",
 			cache.CacheByRequestURI(store, time.Hour),
 			s.HandleGetDrugs,
+		)
+
+		v1.POST(
+			"/drugs/dump",
+			s.HandleDumpDrugs,
 		)
 	}
 }

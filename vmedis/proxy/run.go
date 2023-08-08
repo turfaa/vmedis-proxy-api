@@ -12,6 +12,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/turfaa/vmedis-proxy-api/vmedis/client"
+	"github.com/turfaa/vmedis-proxy-api/vmedis/dumper"
 )
 
 // Config is the proxy server configuration.
@@ -33,12 +34,16 @@ func Run(config Config) {
 		log.Fatalf("Session id check failed: %s\n", err)
 	}
 
+	drugDetailsChan, closeDrugDetailsPuller := dumper.DrugDetailsPuller(ctx, config.DB, config.VmedisClient)
+	defer closeDrugDetailsPuller()
+
 	log.Printf("Starting proxy server to %s with refresh interval %d\n", config.VmedisClient.BaseUrl, config.SessionRefreshInterval)
 
 	apiServer := ApiServer{
-		Client:      config.VmedisClient,
-		DB:          config.DB,
-		RedisClient: config.RedisClient,
+		Client:            config.VmedisClient,
+		DB:                config.DB,
+		RedisClient:       config.RedisClient,
+		DrugDetailsPuller: drugDetailsChan,
 	}
 
 	engine := apiServer.GinEngine()

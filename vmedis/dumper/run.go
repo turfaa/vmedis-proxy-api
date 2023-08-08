@@ -37,7 +37,7 @@ func Run(vmedisClient *client.Client, db *gorm.DB, redisClient *redis.Client) {
 	db = db.WithContext(ctx)
 	redisClient = redisClient.WithContext(ctx)
 
-	drugDetailsChan, closeDrugDetailsPuller := drugDetailsPuller(ctx, db, vmedisClient)
+	drugDetailsChan, closeDrugDetailsPuller := DrugDetailsPuller(ctx, db, vmedisClient)
 	defer closeDrugDetailsPuller()
 
 	scheduler := gocron.NewScheduler(time.Local)
