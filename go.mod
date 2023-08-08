@@ -12,6 +12,7 @@ require (
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.16.0
 	golang.org/x/sync v0.3.0
+	golang.org/x/time v0.1.0
 	gorm.io/gorm v1.25.2
 )
 

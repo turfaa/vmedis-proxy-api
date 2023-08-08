@@ -5,6 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/time/rate"
 
 	"github.com/turfaa/vmedis-proxy-api/vmedis/client"
 	"github.com/turfaa/vmedis-proxy-api/vmedis/database"
@@ -22,7 +23,12 @@ var runDumperCmd = &cobra.Command{
 		}
 
 		dumper.Run(
-			client.New(viper.GetString("base_url"), viper.GetStringSlice("session_ids"), viper.GetInt("concurrency")),
+			client.New(
+				viper.GetString("base_url"),
+				viper.GetStringSlice("session_ids"),
+				viper.GetInt("concurrency"),
+				rate.NewLimiter(rate.Limit(viper.GetFloat64("rate_limit")), 1),
+			),
 			db,
 		)
 	},

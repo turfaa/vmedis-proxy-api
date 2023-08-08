@@ -16,9 +16,10 @@ type DrugStock struct {
 
 // Drug is a drug in the inventory.
 type Drug struct {
-	VmedisCode   string `oos-column:"4"`
-	Name         string `oos-column:"5"`
-	Manufacturer string `oos-column:"12"`
+	VmedisID     int
+	VmedisCode   string `oos-column:"4" drugs-index:"3"`
+	Name         string `oos-column:"5" drugs-index:"4"`
+	Manufacturer string `oos-column:"12" drugs-index:"5"`
 	Supplier     string `oos-column:"13"`
 	MinimumStock Stock  `oos-column:"6"`
 }

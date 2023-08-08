@@ -6,6 +6,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/time/rate"
 
 	"github.com/turfaa/vmedis-proxy-api/vmedis/client"
 	"github.com/turfaa/vmedis-proxy-api/vmedis/database"
@@ -25,8 +26,13 @@ var serveCmd = &cobra.Command{
 
 		proxy.Run(
 			proxy.Config{
-				VmedisClient: client.New(viper.GetString("base_url"), viper.GetStringSlice("session_ids"), viper.GetInt("concurrency")),
-				DB:           db,
+				VmedisClient: client.New(
+					viper.GetString("base_url"),
+					viper.GetStringSlice("session_ids"),
+					viper.GetInt("concurrency"),
+					rate.NewLimiter(rate.Limit(viper.GetFloat64("rate_limit")), 1),
+				),
+				DB: db,
 				RedisClient: redis.NewClient(&redis.Options{
 					Addr:     viper.GetString("redis_address"),
 					Password: viper.GetString("redis_password"),

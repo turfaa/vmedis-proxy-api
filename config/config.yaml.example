@@ -4,6 +4,8 @@ session_ids:
     - "abcd"
 concurrency: 10
 refresh_interval: "1m"
+rate_limit: 100
+
 redis_address: "localhost:6379"
 redis_password: ""
 redis_db: 0

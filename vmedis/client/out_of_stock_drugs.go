@@ -43,7 +43,7 @@ func (c *Client) GetAllOutOfStockDrugs(ctx context.Context) ([]DrugStock, error)
 		}
 	}
 
-	log.Printf("Number of pages: %d\n", lastPage)
+	log.Printf("Number of OOS pages: %d\n", lastPage)
 
 	go func() {
 		for i := 1; i <= lastPage; i++ {
@@ -92,6 +92,7 @@ func (c *Client) GetOutOfStockDrugs(ctx context.Context, page int) (OutOfStockDr
 	if err != nil {
 		return OutOfStockDrugsResponse{}, fmt.Errorf("get out of stock drugs at page %d: %w", page, err)
 	}
+	defer res.Body.Close()
 
 	drugs, err := ParseOutOfStockDrugs(res.Body)
 	if err != nil {

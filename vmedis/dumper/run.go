@@ -1,7 +1,6 @@
 package dumper
 
 import (
-	"context"
 	"log"
 	"os"
 	"os/signal"
@@ -11,13 +10,16 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/turfaa/vmedis-proxy-api/vmedis/client"
-	"github.com/turfaa/vmedis-proxy-api/vmedis/database/models"
 )
 
 const (
 	// DailySalesStatisticsSchedule is the schedule of the daily sales statistics dumper.
-	// It currently runs every 1 hour.
+	// It currently runs every the first second of every hour.
 	DailySalesStatisticsSchedule = "0 0 * * * *"
+
+	// DrugsSchedule is the schedule of the drugs' dumper.
+	// It currently runs every 6 hour.
+	DrugsSchedule = 6 * time.Hour
 )
 
 // Run runs the data dumper.
@@ -27,6 +29,10 @@ func Run(vmedisClient *client.Client, db *gorm.DB) {
 
 	if _, err := scheduler.CronWithSeconds(DailySalesStatisticsSchedule).Do(DumpDailySalesStatistics, db, vmedisClient); err != nil {
 		log.Fatalf("Error scheduling daily sales statistics dumper: %s\n", err)
+	}
+
+	if _, err := scheduler.Every(DrugsSchedule).Do(DumpDrugs, db, vmedisClient); err != nil {
+		log.Fatalf("Error scheduling drugs dumper: %s\n", err)
 	}
 
 	log.Println("Starting data dumper")
@@ -39,35 +45,4 @@ func Run(vmedisClient *client.Client, db *gorm.DB) {
 
 	log.Println("Stopping data dumper")
 	scheduler.Stop()
-}
-
-// DumpDailySalesStatistics dumps the daily sales statistics.
-func DumpDailySalesStatistics(db *gorm.DB, vmedisClient *client.Client) {
-	log.Println("Dumping daily sales statistics")
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-	defer cancel()
-
-	data, err := vmedisClient.GetDailySalesStatistics(ctx)
-	if err != nil {
-		log.Printf("Error getting daily sales statistics: %s\n", err)
-		return
-	}
-
-	salesFloat, err := data.TotalSalesFloat64()
-	if err != nil {
-		log.Printf("Error parsing total sales (%s): %s\n", data.TotalSales, err)
-		return
-	}
-
-	if err := db.Create(&models.SaleStatistics{
-		PulledAt:      time.Now(),
-		TotalSales:    salesFloat,
-		NumberOfSales: data.NumberOfSales,
-	}).Error; err != nil {
-		log.Printf("Error creating sale statistics: %s\n", err)
-		return
-	}
-
-	log.Printf("Dumped daily sales statistics: (total sales: %f, number of sales: %d)\n", salesFloat, data.NumberOfSales)
 }

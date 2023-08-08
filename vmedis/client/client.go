@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"golang.org/x/sync/errgroup"
+	"golang.org/x/time/rate"
 )
 
 var (
@@ -25,15 +26,17 @@ type Client struct {
 
 	httpClient  *http.Client
 	concurrency int
+	limiter     *rate.Limiter
 }
 
 // New creates a new client.
-func New(baseUrl string, sessionIds []string, concurrency int) *Client {
+func New(baseUrl string, sessionIds []string, concurrency int, limiter *rate.Limiter) *Client {
 	return &Client{
 		BaseUrl:     baseUrl,
 		SessionIds:  sessionIds,
 		httpClient:  &http.Client{},
 		concurrency: concurrency,
+		limiter:     limiter,
 	}
 }
 
@@ -79,6 +82,7 @@ func (c *Client) RefreshSessionIds(ctx context.Context) error {
 			if err != nil {
 				return fmt.Errorf("error refreshing session id: %w", err)
 			}
+			defer res.Body.Close()
 
 			bodyBytes, err := io.ReadAll(res.Body)
 			if err != nil {
@@ -111,6 +115,10 @@ func (c *Client) getWithSessionId(ctx context.Context, path, sessionId string) (
 
 	req.Header.Add("Cookie", "PHPSESSID="+sessionId)
 	req = req.WithContext(ctx)
+
+	if err := c.limiter.Wait(ctx); err != nil {
+		return nil, fmt.Errorf("error waiting for limiter: %w", err)
+	}
 
 	res, err := c.httpClient.Do(req)
 	if err != nil {

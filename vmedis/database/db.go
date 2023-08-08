@@ -27,6 +27,7 @@ func SqliteDB(path string) (*gorm.DB, error) {
 func AutoMigrate(db *gorm.DB) error {
 	availableModels := []interface{}{
 		models.SaleStatistics{},
+		models.Drug{},
 	}
 
 	for _, model := range availableModels {

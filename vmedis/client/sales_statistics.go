@@ -21,6 +21,7 @@ func (c *Client) GetDailySalesStatistics(ctx context.Context) (SalesStatistics, 
 	if err != nil {
 		return SalesStatistics{}, fmt.Errorf("error getting total daily sales: %w", err)
 	}
+	defer res.Body.Close()
 
 	stats, err := ParseSalesStatistics(res.Body)
 	if err != nil {
