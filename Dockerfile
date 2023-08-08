@@ -1,4 +1,9 @@
-FROM golang:alpine AS build
+FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:alpine AS build
+
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
+ARG TARGETOS
+ARG TARGETARCH
 
 WORKDIR /app
 
@@ -8,9 +13,9 @@ RUN go mod download
 COPY cmd/ cmd/
 COPY vmedis/ vmedis/
 
-RUN GOOS=linux GOARCH=arm GOARM=5 go build -o /vmedis-proxy
+RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o /vmedis-proxy
 
-FROM gcr.io/distroless/base-debian11 AS release
+FROM --platform=${BUILDPLATFORM:-linux/amd64} gcr.io/distroless/base-debian11 AS release
 
 WORKDIR /
 
