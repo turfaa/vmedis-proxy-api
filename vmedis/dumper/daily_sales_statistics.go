@@ -12,10 +12,10 @@ import (
 )
 
 // DumpDailySalesStatistics dumps the daily sales statistics.
-func DumpDailySalesStatistics(db *gorm.DB, vmedisClient *client.Client) {
+func DumpDailySalesStatistics(ctx context.Context, db *gorm.DB, vmedisClient *client.Client) {
 	log.Println("Dumping daily sales statistics")
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, time.Minute)
 	defer cancel()
 
 	data, err := vmedisClient.GetDailySalesStatistics(ctx)

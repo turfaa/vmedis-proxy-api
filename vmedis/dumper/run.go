@@ -1,6 +1,7 @@
 package dumper
 
 import (
+	"context"
 	"log"
 	"os"
 	"os/signal"
@@ -30,17 +31,23 @@ const (
 // Run runs the data dumper.
 // All the dumper intervals and schedules are currently hardcoded.
 func Run(vmedisClient *client.Client, db *gorm.DB, redisClient *redis.Client) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	drugDetailsChan, closeDrugDetailsPuller := drugDetailsPuller(ctx, db, vmedisClient)
+	defer closeDrugDetailsPuller()
+
 	scheduler := gocron.NewScheduler(time.Local)
 
-	if _, err := scheduler.CronWithSeconds(DailySalesStatisticsSchedule).Do(DumpDailySalesStatistics, db, vmedisClient); err != nil {
+	if _, err := scheduler.CronWithSeconds(DailySalesStatisticsSchedule).Do(DumpDailySalesStatistics, ctx, db, vmedisClient); err != nil {
 		log.Fatalf("Error scheduling daily sales statistics dumper: %s\n", err)
 	}
 
-	if _, err := scheduler.Every(DrugInterval).Do(DumpDrugs, db, vmedisClient); err != nil {
+	if _, err := scheduler.Every(DrugInterval).Do(DumpDrugs, ctx, db, vmedisClient, drugDetailsChan); err != nil {
 		log.Fatalf("Error scheduling drugs dumper: %s\n", err)
 	}
 
-	if _, err := scheduler.Every(ProcurementRecommendationsInterval).Do(DumpProcurementRecommendations, redisClient, vmedisClient); err != nil {
+	if _, err := scheduler.Every(ProcurementRecommendationsInterval).Do(DumpProcurementRecommendations, ctx, redisClient, vmedisClient); err != nil {
 		log.Fatalf("Error scheduling procurement recommendations dumper: %s\n", err)
 	}
 

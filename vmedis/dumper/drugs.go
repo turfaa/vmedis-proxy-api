@@ -3,6 +3,7 @@ package dumper
 import (
 	"context"
 	"log"
+	"sync"
 	"time"
 
 	"gorm.io/gorm"
@@ -17,10 +18,10 @@ const (
 )
 
 // DumpDrugs dumps the drugs.
-func DumpDrugs(db *gorm.DB, vmedisClient *client.Client) {
+func DumpDrugs(ctx context.Context, db *gorm.DB, vmedisClient *client.Client, detailsPuller chan<- models.Drug) {
 	log.Println("Dumping drugs")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Hour)
+	ctx, cancel := context.WithTimeout(ctx, 6*time.Hour)
 	defer cancel()
 
 	drugs, err := vmedisClient.GetAllDrugs(ctx)
@@ -52,6 +53,10 @@ func DumpDrugs(db *gorm.DB, vmedisClient *client.Client) {
 				counter += len(toInsert)
 			}
 
+			for _, d := range toInsert {
+				detailsPuller <- d
+			}
+
 			toInsert = nil
 		}
 	}
@@ -70,11 +75,107 @@ func DumpDrugs(db *gorm.DB, vmedisClient *client.Client) {
 	log.Printf("Finished dumping drugs: %d, errors: %d\n", counter, errCounter)
 }
 
+func drugDetailsPuller(ctx context.Context, db *gorm.DB, vmedisClient *client.Client) (chan<- models.Drug, func()) {
+	drugs := make(chan models.Drug, 100)
+	closeChan := make(chan struct{})
+
+	var wg sync.WaitGroup
+	closeFunc := func() {
+		close(closeChan)
+		wg.Wait()
+	}
+
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+
+		go func() {
+			defer wg.Done()
+
+			for {
+				select {
+				case drug := <-drugs:
+					ctx, cancel := context.WithTimeout(ctx, time.Minute)
+					d, err := vmedisClient.GetDrug(ctx, drug.VmedisID)
+					cancel()
+
+					if err != nil {
+						log.Printf("Error getting drug details of id %d: %s\n", drug.VmedisID, err)
+						continue
+					}
+
+					drug.VmedisCode = d.VmedisCode
+					drug.Name = d.Name
+					drug.Manufacturer = d.Manufacturer
+					drug.MinimumStock = models.Stock{
+						Unit:     d.MinimumStock.Unit,
+						Quantity: d.MinimumStock.Quantity,
+					}
+
+					if err := dumpDrugDetails(db, drug); err != nil {
+						log.Printf("Error inserting drug details of id %d: %s\n", drug.VmedisID, err)
+					}
+
+					var units []models.DrugUnit
+					for _, u := range d.Units {
+						units = append(units, models.DrugUnit{
+							Unit:                   u.Unit,
+							DrugVmedisCode:         d.VmedisCode,
+							ParentUnit:             u.ParentUnit,
+							ConversionToParentUnit: u.ConversionToParentUnit,
+						})
+					}
+
+					if err := dumpDrugUnits(db, units); err != nil {
+						log.Printf("Error inserting drug units of id %d: %s\n", drug.VmedisID, err)
+					}
+
+				case <-closeChan:
+					return
+
+				case <-ctx.Done():
+					return
+				}
+			}
+		}()
+	}
+
+	return drugs, closeFunc
+}
+
 func dumpDrugs(db *gorm.DB, drugs []models.Drug) error {
 	return db.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "vmedis_code"}},
 		DoUpdates: clause.AssignmentColumns([]string{"updated_at", "vmedis_id", "name", "manufacturer"}),
 	}).
 		Create(&drugs).
+		Error
+}
+
+func dumpDrugDetails(db *gorm.DB, drug models.Drug) error {
+	return db.Clauses(clause.OnConflict{
+		Columns: []clause.Column{{Name: "vmedis_id"}},
+		DoUpdates: clause.AssignmentColumns([]string{
+			"updated_at",
+			"vmedis_code",
+			"name",
+			"manufacturer",
+			"minimum_stock_unit",
+			"minimum_stock_quantity",
+		}),
+	}).
+		Create(&drug).
+		Error
+}
+
+func dumpDrugUnits(db *gorm.DB, units []models.DrugUnit) error {
+	return db.Clauses(clause.OnConflict{
+		Columns: []clause.Column{{Name: "drug_vmedis_code"}, {Name: "unit"}},
+		DoUpdates: clause.AssignmentColumns([]string{
+			"updated_at",
+			"parent_unit",
+			"conversion_to_parent_unit",
+		}),
+	}).
+		Create(&units).
 		Error
 }

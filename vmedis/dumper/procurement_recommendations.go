@@ -19,10 +19,10 @@ const (
 )
 
 // DumpProcurementRecommendations calculates and dumps procurement recommendations to cache.
-func DumpProcurementRecommendations(redisClient *redis.Client, vmedisClient *client.Client) {
+func DumpProcurementRecommendations(ctx context.Context, redisClient *redis.Client, vmedisClient *client.Client) {
 	log.Println("Computing procurement recommendations and writing them to cache....")
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*30)
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*30)
 	defer cancel()
 
 	log.Printf("Getting all out of stock drugs for writing procurement recommendations")
