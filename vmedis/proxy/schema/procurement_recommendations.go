@@ -15,9 +15,9 @@ type DrugProcurementRecommendationsResponse struct {
 // DrugProcurementRecommendation represents one drug procurement recommendation.
 type DrugProcurementRecommendation struct {
 	DrugStock    `json:",inline"`
-	FromSupplier string  `json:"fromSupplier"`
+	FromSupplier string  `json:"fromSupplier,omitempty"`
 	Procurement  Stock   `json:"procurement"`
-	Alternatives []Stock `json:"alternatives"`
+	Alternatives []Stock `json:"alternatives,omitempty"`
 }
 
 // DrugStock is the stock of a drug.
