@@ -15,9 +15,9 @@ type SaleStatisticsResponse struct {
 
 // SaleStatistics represents the sale statistics from the beginning of the day until PulledAt.
 type SaleStatistics struct {
-	PulledAt      time.Time
-	TotalSales    float64
-	NumberOfSales int
+	PulledAt      time.Time `json:"pulledAt"`
+	TotalSales    float64   `json:"totalSales"`
+	NumberOfSales int       `json:"numberOfSales"`
 }
 
 // FromSalesStatisticsClientSchema converts SaleStatistics from client schema to proxy schema.
