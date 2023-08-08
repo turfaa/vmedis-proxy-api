@@ -78,9 +78,13 @@ func (s *Stock) UnmarshalText(text []byte) error {
 			}
 		}
 
-		q, err := strconv.ParseFloat(qStr, 64)
-		if err != nil {
-			return fmt.Errorf("parse quantity from string [%s]: %w", split[0], err)
+		var q float64
+		if qStr != "" {
+			var err error
+			q, err = strconv.ParseFloat(qStr, 64)
+			if err != nil {
+				return fmt.Errorf("parse quantity from string [%s]: %w", split[0], err)
+			}
 		}
 
 		s.Quantity = q

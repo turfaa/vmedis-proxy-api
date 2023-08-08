@@ -152,19 +152,34 @@ func dumpDrugs(db *gorm.DB, drugs []models.Drug) error {
 }
 
 func dumpDrugDetails(db *gorm.DB, drug models.Drug) error {
-	return db.Clauses(clause.OnConflict{
-		Columns: []clause.Column{{Name: "vmedis_id"}},
-		DoUpdates: clause.AssignmentColumns([]string{
-			"updated_at",
-			"vmedis_code",
-			"name",
-			"manufacturer",
-			"minimum_stock_unit",
-			"minimum_stock_quantity",
-		}),
-	}).
-		Create(&drug).
-		Error
+	columns := []string{"updated_at"}
+	if drug.VmedisCode != "" {
+		columns = append(columns, "vmedis_code")
+	}
+
+	if drug.Name != "" {
+		columns = append(columns, "name")
+	}
+
+	if drug.Manufacturer != "" {
+		columns = append(columns, "manufacturer")
+	}
+
+	if drug.MinimumStock.Unit != "" {
+		columns = append(columns, "minimum_stock_unit", "minimum_stock_quantity")
+	}
+
+	if len(columns) > 1 {
+		return db.Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "vmedis_id"}},
+			DoUpdates: clause.AssignmentColumns(columns),
+		}).
+			Create(&drug).
+			Error
+	} else {
+		log.Printf("No columns to update for drug %d\n", drug.VmedisID)
+		return nil
+	}
 }
 
 func dumpDrugUnits(db *gorm.DB, units []models.DrugUnit) error {
