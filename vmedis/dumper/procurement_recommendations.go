@@ -15,7 +15,7 @@ import (
 
 	"github.com/turfaa/vmedis-proxy-api/vmedis/client"
 	"github.com/turfaa/vmedis-proxy-api/vmedis/database/models"
-	"github.com/turfaa/vmedis-proxy-api/vmedis/proxy"
+	"github.com/turfaa/vmedis-proxy-api/vmedis/proxy/schema"
 )
 
 const (
@@ -56,19 +56,19 @@ func DumpProcurementRecommendations(ctx context.Context, db *gorm.DB, redisClien
 	}
 	log.Printf("Got %d drug units of out-of-stock drugs\n", unitCount)
 
-	recommendations := make([]proxy.DrugProcurementRecommendation, len(oosDrugs))
+	recommendations := make([]schema.DrugProcurementRecommendation, len(oosDrugs))
 	for i, drugStock := range oosDrugs {
 		procurement, alternatives := calculateRecommendation(drugStock, unitsByCode[drugStock.Drug.VmedisCode])
 
-		recommendations[i] = proxy.DrugProcurementRecommendation{
-			DrugStock:    proxy.FromClientDrugStock(drugStock),
+		recommendations[i] = schema.DrugProcurementRecommendation{
+			DrugStock:    schema.FromClientDrugStock(drugStock),
 			FromSupplier: drugStock.Drug.Supplier,
 			Procurement:  procurement,
 			Alternatives: alternatives,
 		}
 	}
 
-	data := proxy.DrugProcurementRecommendationsResponse{
+	data := schema.DrugProcurementRecommendationsResponse{
 		Recommendations: recommendations,
 		ComputedAt:      time.Now(),
 	}
@@ -133,13 +133,13 @@ func getDrugUnits(db *gorm.DB, drugCodes []string) (map[string][]models.DrugUnit
 	return unitsByCode, nil
 }
 
-func calculateRecommendation(stock client.DrugStock, drugUnits []models.DrugUnit) (chosen proxy.Stock, alternatives []proxy.Stock) {
+func calculateRecommendation(stock client.DrugStock, drugUnits []models.DrugUnit) (chosen schema.Stock, alternatives []schema.Stock) {
 	smallestQ := stock.Drug.MinimumStock.Quantity*2 - stock.Stock.Quantity
 	if smallestQ < 2 {
 		smallestQ = 2
 	}
 
-	fallback := proxy.Stock{
+	fallback := schema.Stock{
 		Unit:     stock.Stock.Unit,
 		Quantity: smallestQ,
 	}
@@ -157,7 +157,7 @@ func calculateRecommendation(stock client.DrugStock, drugUnits []models.DrugUnit
 
 	foundChosen := false
 	for i := len(drugUnits) - 1; i >= 0; i-- {
-		proc := proxy.Stock{
+		proc := schema.Stock{
 			Unit:     drugUnits[i].Unit,
 			Quantity: qPerUnit[i],
 		}

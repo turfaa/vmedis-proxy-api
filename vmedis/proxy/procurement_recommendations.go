@@ -5,45 +5,16 @@ import (
 	"compress/zlib"
 	"context"
 	"encoding/json"
-	"time"
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/turfaa/vmedis-proxy-api/vmedis/client"
 	"github.com/turfaa/vmedis-proxy-api/vmedis/dumper"
+	"github.com/turfaa/vmedis-proxy-api/vmedis/proxy/schema"
 )
 
 const (
 	procurementRecommendationsKey = "static_key.procurement_recommendations.json.zlib"
 )
-
-// DrugProcurementRecommendationsResponse represents the drug procurement recommendations API response.
-type DrugProcurementRecommendationsResponse struct {
-	Recommendations []DrugProcurementRecommendation `json:"recommendations"`
-	ComputedAt      time.Time                       `json:"computedAt"`
-}
-
-// DrugProcurementRecommendation represents one drug procurement recommendation.
-type DrugProcurementRecommendation struct {
-	DrugStock    `json:",inline"`
-	FromSupplier string  `json:"fromSupplier"`
-	Procurement  Stock   `json:"procurement"`
-	Alternatives []Stock `json:"alternatives"`
-}
-
-// DrugStock is the stock of a drug.
-type DrugStock struct {
-	Drug  Drug  `json:"drug"`
-	Stock Stock `json:"stock"`
-}
-
-// FromClientDrugStock converts DrugStock from client schema to proxy schema.
-func FromClientDrugStock(cd client.DrugStock) DrugStock {
-	return DrugStock{
-		Drug:  FromClientDrug(cd.Drug),
-		Stock: FromClientStock(cd.Stock),
-	}
-}
 
 // HandleDumpProcurementRecommendations handles the request to calculate and dump the procurement recommendations.
 func (s *ApiServer) HandleDumpProcurementRecommendations(c *gin.Context) {
@@ -71,7 +42,7 @@ func (s *ApiServer) HandleProcurementRecommendations(c *gin.Context) {
 		return
 	}
 
-	var response DrugProcurementRecommendationsResponse
+	var response schema.DrugProcurementRecommendationsResponse
 	if err := json.Unmarshal(data, &response); err != nil {
 		c.JSON(500, gin.H{
 			"error": "failed to unmarshal procurement recommendations: " + err.Error(),

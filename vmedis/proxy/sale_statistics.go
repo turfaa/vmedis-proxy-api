@@ -1,49 +1,13 @@
 package proxy
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/turfaa/vmedis-proxy-api/vmedis/client"
 	"github.com/turfaa/vmedis-proxy-api/vmedis/database/models"
+	"github.com/turfaa/vmedis-proxy-api/vmedis/proxy/schema"
 )
-
-// SaleStatisticsResponse represents the sale statistics API response.
-type SaleStatisticsResponse struct {
-	History []SaleStatistics `json:"history"`
-}
-
-// SaleStatistics represents the sale statistics from the beginning of the day until PulledAt.
-type SaleStatistics struct {
-	PulledAt      time.Time `json:"pulledAt"`
-	TotalSales    float64   `json:"totalSales"`
-	NumberOfSales int       `json:"numberOfSales"`
-}
-
-// FromSalesStatisticsClientSchema converts SaleStatistics from client schema to proxy schema.
-func FromSalesStatisticsClientSchema(pulledAt time.Time, salesStatistics client.SalesStatistics) (SaleStatistics, error) {
-	totalSales, err := salesStatistics.TotalSalesFloat64()
-	if err != nil {
-		return SaleStatistics{}, fmt.Errorf("total sales float64: %w", err)
-	}
-
-	return SaleStatistics{
-		PulledAt:      pulledAt,
-		TotalSales:    totalSales,
-		NumberOfSales: salesStatistics.NumberOfSales,
-	}, nil
-}
-
-// FromModelsSaleStatistics converts SaleStatistics from models.SaleStatistics to proxy schema.
-func FromModelsSaleStatistics(saleStatistics models.SaleStatistics) SaleStatistics {
-	return SaleStatistics{
-		PulledAt:      saleStatistics.PulledAt,
-		TotalSales:    saleStatistics.TotalSales,
-		NumberOfSales: saleStatistics.NumberOfSales,
-	}
-}
 
 // HandleGetDailySalesStatistics handles the request to get the daily sales statistics.
 func (s *ApiServer) HandleGetDailySalesStatistics(c *gin.Context) {
@@ -67,12 +31,12 @@ func (s *ApiServer) HandleGetDailySalesStatistics(c *gin.Context) {
 		return
 	}
 
-	var stats []SaleStatistics
+	var stats []schema.SaleStatistics
 	for _, s := range modelStats {
-		stats = append(stats, FromModelsSaleStatistics(s))
+		stats = append(stats, schema.FromModelsSaleStatistics(s))
 	}
 
-	latest, err := FromSalesStatisticsClientSchema(time.Now(), latestStat)
+	latest, err := schema.FromSalesStatisticsClientSchema(time.Now(), latestStat)
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": "failed to convert latest statistics from API: " + err.Error(),
@@ -84,7 +48,7 @@ func (s *ApiServer) HandleGetDailySalesStatistics(c *gin.Context) {
 		stats = append(stats, latest)
 	}
 
-	c.JSON(200, SaleStatisticsResponse{History: stats})
+	c.JSON(200, schema.SaleStatisticsResponse{History: stats})
 }
 
 func beginningOfToday() time.Time {
