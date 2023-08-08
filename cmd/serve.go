@@ -25,7 +25,7 @@ var serveCmd = &cobra.Command{
 
 		proxy.Run(
 			proxy.Config{
-				VmedisClient: client.New(viper.GetString("base_url"), viper.GetString("session_id"), viper.GetInt("concurrency")),
+				VmedisClient: client.New(viper.GetString("base_url"), viper.GetStringSlice("session_ids"), viper.GetInt("concurrency")),
 				DB:           db,
 				RedisClient: redis.NewClient(&redis.Options{
 					Addr:     viper.GetString("redis_address"),

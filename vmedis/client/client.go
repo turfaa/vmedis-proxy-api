@@ -6,44 +6,51 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/rand"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
+
+	"golang.org/x/sync/errgroup"
+)
+
+var (
+	rnd = rand.New(rand.NewSource(time.Now().UnixNano()))
 )
 
 // Client is the main struct for the vmedis client.
 type Client struct {
-	BaseUrl   string
-	SessionId string
+	BaseUrl    string
+	SessionIds []string
 
 	httpClient  *http.Client
 	concurrency int
 }
 
 // New creates a new client.
-func New(baseUrl, sessionId string, concurrency int) *Client {
+func New(baseUrl string, sessionIds []string, concurrency int) *Client {
 	return &Client{
 		BaseUrl:     baseUrl,
-		SessionId:   sessionId,
+		SessionIds:  sessionIds,
 		httpClient:  &http.Client{},
 		concurrency: concurrency,
 	}
 }
 
-// AutoRefreshSessionId refreshes the session id of the client every d duration.
+// AutoRefreshSessionIds refreshes the session ids of the client every d duration.
 // It returns a function to stop the auto refresh.
-func (c *Client) AutoRefreshSessionId(d time.Duration) func() {
+func (c *Client) AutoRefreshSessionIds(d time.Duration) func() {
 	ticker := time.NewTicker(d)
 
 	stop := make(chan struct{})
 	go func() {
 		for {
-			log.Println("Refreshing session id")
-			if err := c.RefreshSessionId(context.Background()); err != nil {
-				log.Printf("Error refreshing session id: %v\n", err)
+			log.Println("Refreshing session ids")
+			if err := c.RefreshSessionIds(context.Background()); err != nil {
+				log.Printf("Error refreshing session ids: %v\n", err)
 			} else {
-				log.Println("Session id refreshed")
+				log.Println("Session ids refreshed")
 			}
 
 			select {
@@ -61,27 +68,36 @@ func (c *Client) AutoRefreshSessionId(d time.Duration) func() {
 	}
 }
 
-// RefreshSessionId refreshes the session id of the client.
-// This is used to keep the session alive. We are doing this by calling the home page.
-func (c *Client) RefreshSessionId(ctx context.Context) error {
-	res, err := c.get(ctx, "/")
-	if err != nil {
-		return fmt.Errorf("error refreshing session id: %w", err)
+// RefreshSessionIds refreshes the session ids of the client.
+// This is used to keep the sessions alive. We are doing this by calling the home page.
+func (c *Client) RefreshSessionIds(ctx context.Context) error {
+	var errs errgroup.Group
+
+	for _, s := range c.SessionIds {
+		sessionId := s
+		errs.Go(func() error {
+			res, err := c.getWithSessionId(ctx, "/", sessionId)
+			if err != nil {
+				return fmt.Errorf("error refreshing session id: %w", err)
+			}
+
+			bodyBytes, err := io.ReadAll(res.Body)
+			if err != nil {
+				return fmt.Errorf("error reading response body: %w", err)
+			}
+
+			body := string(bodyBytes)
+			if strings.Contains(body, "Vmedis - Login") {
+				return errors.New("session id expired")
+			} else if !strings.Contains(body, "Vmedis - Beranda") {
+				return fmt.Errorf("unknown response body: %s", body)
+			}
+
+			return nil
+		})
 	}
 
-	bodyBytes, err := io.ReadAll(res.Body)
-	if err != nil {
-		return fmt.Errorf("error reading response body: %w", err)
-	}
-
-	body := string(bodyBytes)
-	if strings.Contains(body, "Vmedis - Login") {
-		return errors.New("session id expired")
-	} else if !strings.Contains(body, "Vmedis - Beranda") {
-		return fmt.Errorf("unknown response body: %s", body)
-	}
-
-	return nil
+	return errs.Wait()
 }
 
 // GetDailySalesStatistics gets the daily sales statistics from vmedis.
@@ -184,12 +200,16 @@ func (c *Client) GetOutOfStockDrugs(ctx context.Context, page int) (OutOfStockDr
 }
 
 func (c *Client) get(ctx context.Context, path string) (*http.Response, error) {
+	return c.getWithSessionId(ctx, path, c.SessionIds[rnd.Intn(len(c.SessionIds))])
+}
+
+func (c *Client) getWithSessionId(ctx context.Context, path, sessionId string) (*http.Response, error) {
 	req, err := http.NewRequest("GET", c.BaseUrl+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error creating request: %w", err)
 	}
 
-	req.Header.Add("Cookie", "PHPSESSID="+c.SessionId)
+	req.Header.Add("Cookie", "PHPSESSID="+sessionId)
 	req = req.WithContext(ctx)
 
 	res, err := c.httpClient.Do(req)

@@ -24,12 +24,12 @@ type Config struct {
 
 // Run runs the proxy server.
 func Run(config Config) {
-	log.Println("Checking if session id is valid")
+	log.Println("Checking if session ids are valid")
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
-	if err := config.VmedisClient.RefreshSessionId(ctx); err != nil {
+	if err := config.VmedisClient.RefreshSessionIds(ctx); err != nil {
 		log.Fatalf("Session id check failed: %s\n", err)
 	}
 
@@ -58,7 +58,7 @@ func Run(config Config) {
 
 	log.Println("Proxy server started")
 
-	stop := config.VmedisClient.AutoRefreshSessionId(config.SessionRefreshInterval)
+	stop := config.VmedisClient.AutoRefreshSessionIds(config.SessionRefreshInterval)
 	defer stop()
 
 	done := make(chan os.Signal, 1)

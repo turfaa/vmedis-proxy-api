@@ -22,7 +22,7 @@ var runDumperCmd = &cobra.Command{
 		}
 
 		dumper.Run(
-			client.New(viper.GetString("base_url"), viper.GetString("session_id"), viper.GetInt("concurrency")),
+			client.New(viper.GetString("base_url"), viper.GetStringSlice("session_ids"), viper.GetInt("concurrency")),
 			db,
 		)
 	},
