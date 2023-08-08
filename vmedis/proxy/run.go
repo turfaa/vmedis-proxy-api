@@ -34,7 +34,7 @@ func Run(config Config) {
 		log.Fatalf("Session id check failed: %s\n", err)
 	}
 
-	drugDetailsChan, closeDrugDetailsPuller := dumper.DrugDetailsPuller(ctx, config.DB, config.VmedisClient)
+	drugDetailsChan, closeDrugDetailsPuller := dumper.DrugDetailsPuller(context.Background(), config.DB, config.VmedisClient)
 	defer closeDrugDetailsPuller()
 
 	log.Printf("Starting proxy server to %s with refresh interval %d\n", config.VmedisClient.BaseUrl, config.SessionRefreshInterval)
