@@ -1,9 +1,12 @@
 package client
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -56,8 +59,23 @@ func (c *Client) AutoRefreshSessionId(d time.Duration) func() {
 func (c *Client) RefreshSessionId() error {
 	log.Println("Refreshing session id")
 
-	if _, err := c.get("/"); err != nil {
+	res, err := c.get("/")
+	if err != nil {
 		return fmt.Errorf("error refreshing session id: %w", err)
+	}
+
+	bodyBytes, err := io.ReadAll(res.Body)
+	if err != nil {
+		return fmt.Errorf("error reading response body: %w", err)
+	}
+
+	body := string(bodyBytes)
+	if strings.Contains(body, "Vmedis - Beranda") {
+		log.Println("Session id refreshed")
+	} else if strings.Contains(body, "Vmedis - Login") {
+		return errors.New("session id expired")
+	} else {
+		return fmt.Errorf("unknown response body: %s", body)
 	}
 
 	return nil
