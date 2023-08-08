@@ -35,8 +35,11 @@ func (c *Client) AutoRefreshSessionId(d time.Duration) func() {
 	stop := make(chan struct{})
 	go func() {
 		for {
+			log.Println("Refreshing session id")
 			if err := c.RefreshSessionId(); err != nil {
 				log.Printf("Error refreshing session id: %v\n", err)
+			} else {
+				log.Println("Session id refreshed")
 			}
 
 			select {
@@ -57,8 +60,6 @@ func (c *Client) AutoRefreshSessionId(d time.Duration) func() {
 // RefreshSessionId refreshes the session id of the client.
 // This is used to keep the session alive. We are doing this by calling the home page.
 func (c *Client) RefreshSessionId() error {
-	log.Println("Refreshing session id")
-
 	res, err := c.get("/")
 	if err != nil {
 		return fmt.Errorf("error refreshing session id: %w", err)
@@ -70,15 +71,29 @@ func (c *Client) RefreshSessionId() error {
 	}
 
 	body := string(bodyBytes)
-	if strings.Contains(body, "Vmedis - Beranda") {
-		log.Println("Session id refreshed")
-	} else if strings.Contains(body, "Vmedis - Login") {
+	if strings.Contains(body, "Vmedis - Login") {
 		return errors.New("session id expired")
-	} else {
+	} else if !strings.Contains(body, "Vmedis - Beranda") {
 		return fmt.Errorf("unknown response body: %s", body)
 	}
 
 	return nil
+}
+
+// GetDailySalesStatistics gets the daily sales statistics from vmedis.
+// It calls the /apt-lap-penjualanobat-batch page and try to parse the statistics from it.
+func (c *Client) GetDailySalesStatistics() (SalesStatistics, error) {
+	res, err := c.get("/apt-lap-penjualanobat-batch")
+	if err != nil {
+		return SalesStatistics{}, fmt.Errorf("error getting total daily sales: %w", err)
+	}
+
+	stats, err := ParseSalesStatistics(res.Body)
+	if err != nil {
+		return SalesStatistics{}, fmt.Errorf("error parsing total daily sales: %w", err)
+	}
+
+	return stats, nil
 }
 
 func (c *Client) get(path string) (*http.Response, error) {
