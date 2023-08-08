@@ -19,10 +19,12 @@ FROM --platform=${BUILDPLATFORM:-linux/amd64} gcr.io/distroless/base-debian11 AS
 
 WORKDIR /
 
+VOLUME /data
+
 COPY --from=build /vmedis-proxy /vmedis-proxy
 
 USER nonroot:nonroot
 
 EXPOSE 8080
 
-ENTRYPOINT ["/vmedis-proxy", "serve"]
+CMD ["/vmedis-proxy", "serve"]

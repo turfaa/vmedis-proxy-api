@@ -22,13 +22,13 @@ func ParseSalesStatistics(r io.Reader) (SalesStatistics, error) {
 	body := string(bodyBytes)
 
 	numberOfSalesMatches := numberOfSalesRegexp.FindStringSubmatch(body)
-	if len(numberOfSalesMatches) != 2 {
-		return SalesStatistics{}, fmt.Errorf("error parsing number of sales, matches: %v", numberOfSalesMatches)
-	}
 
-	numberOfSales, err := strconv.Atoi(numberOfSalesMatches[1])
-	if err != nil {
-		return SalesStatistics{}, fmt.Errorf("error parsing number of sales [%s]: %w", numberOfSalesMatches[1], err)
+	var numberOfSales int
+	if len(numberOfSalesMatches) == 2 {
+		numberOfSales, err = strconv.Atoi(numberOfSalesMatches[1])
+		if err != nil {
+			return SalesStatistics{}, fmt.Errorf("error parsing number of sales [%s]: %w", numberOfSalesMatches[1], err)
+		}
 	}
 
 	totalSalesMatches := totalSalesRegexp.FindStringSubmatch(body)
