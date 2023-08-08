@@ -107,6 +107,14 @@ type Unit struct {
 	// The smallest unit has the lowest order.
 	UnitOrder int
 
+	// PriceOne, PriceTwo, and PriceThree are the prices of the drug for different segments.
+	// PriceOne is the price for common customers.
+	// PriceTwo is the price for medical facilities.
+	// PriceThree is the price for prescription.
+	PriceOne   float64
+	PriceTwo   float64
+	PriceThree float64
+
 	formName string
 }
 
@@ -153,10 +161,50 @@ func EnrichUnitsFromDoc(units []Unit, doc *goquery.Document) ([]Unit, error) {
 			u.ConversionToParentUnit = conversion
 		}
 
+		conversion, err := u.extractFloatFromInput(selection, "sodkonversi")
+		if err != nil {
+			return nil, fmt.Errorf("extract '%s' conversion: %w", u.Unit, err)
+		}
+		u.ConversionToParentUnit = conversion
+
+		priceOne, err := u.extractFloatFromInput(selection, "hrgjual1")
+		if err != nil {
+			return nil, fmt.Errorf("extract '%s' price one: %w", u.Unit, err)
+		}
+		u.PriceOne = priceOne
+
+		priceTwo, err := u.extractFloatFromInput(selection, "hrgjual2")
+		if err != nil {
+			return nil, fmt.Errorf("extract '%s' price two: %w", u.Unit, err)
+		}
+		u.PriceTwo = priceTwo
+
+		priceThree, err := u.extractFloatFromInput(selection, "hrgjual3")
+		if err != nil {
+			return nil, fmt.Errorf("extract '%s' price three: %w", u.Unit, err)
+		}
+		u.PriceThree = priceThree
+
 		u.UnitOrder = len(result)
-	
+
 		result = append(result, u)
 	}
 
 	return result, nil
+}
+
+func (u *Unit) extractFloatFromInput(selection *goquery.Selection, name string) (float64, error) {
+	selection = selection.Find("input[name=\"" + strings.ReplaceAll(u.formName, "soid", name) + "\"]")
+	if selection.Length() == 0 {
+		return 0, nil
+	}
+
+	floatStr := selection.AttrOr("value", "")
+	float, err := strconv.ParseFloat(floatStr, 64)
+	if err != nil {
+		html, _ := selection.Html()
+		return 0, fmt.Errorf("parse '%s' float(%s) from string [%s] <%s>: %w", u.Unit, name, floatStr, html, err)
+	}
+
+	return float, nil
 }

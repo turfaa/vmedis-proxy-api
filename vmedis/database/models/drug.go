@@ -53,6 +53,14 @@ type DrugUnit struct {
 	// UnitOrder is the order of the unit of the drug.
 	// The smallest unit has the lowest order.
 	UnitOrder int
+
+	// PriceOne, PriceTwo, and PriceThree are the prices of the drug for different segments.
+	// PriceOne is the price for common customers.
+	// PriceTwo is the price for medical facilities.
+	// PriceThree is the price for prescription.
+	PriceOne   float64
+	PriceTwo   float64
+	PriceThree float64
 }
 
 // Stock represents one instance of stock.

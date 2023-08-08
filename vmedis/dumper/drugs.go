@@ -126,6 +126,9 @@ func drugDetailsPuller(ctx context.Context, db *gorm.DB, vmedisClient *client.Cl
 							ParentUnit:             u.ParentUnit,
 							ConversionToParentUnit: u.ConversionToParentUnit,
 							UnitOrder:              u.UnitOrder,
+							PriceOne:               u.PriceOne,
+							PriceTwo:               u.PriceTwo,
+							PriceThree:             u.PriceThree,
 						})
 					}
 
