@@ -61,7 +61,7 @@ type DrugProcurementRecommendation struct {
 
 // DrugStock is the stock of a drug.
 type DrugStock struct {
-	Drug  Drug  `json:",inline"`
+	Drug  Drug  `json:"drug"`
 	Stock Stock `json:"stock"`
 }
 
