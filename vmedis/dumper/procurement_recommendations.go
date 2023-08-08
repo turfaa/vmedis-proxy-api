@@ -58,10 +58,13 @@ func DumpProcurementRecommendations(ctx context.Context, db *gorm.DB, redisClien
 
 	recommendations := make([]proxy.DrugProcurementRecommendation, len(oosDrugs))
 	for i, drugStock := range oosDrugs {
+		procurement, alternatives := calculateRecommendation(drugStock, unitsByCode[drugStock.Drug.VmedisCode])
+
 		recommendations[i] = proxy.DrugProcurementRecommendation{
 			DrugStock:    proxy.FromClientDrugStock(drugStock),
 			FromSupplier: drugStock.Drug.Supplier,
-			Procurement:  calculateRecommendation(drugStock, unitsByCode[drugStock.Drug.VmedisCode]),
+			Procurement:  procurement,
+			Alternatives: alternatives,
 		}
 	}
 
@@ -130,7 +133,7 @@ func getDrugUnits(db *gorm.DB, drugCodes []string) (map[string][]models.DrugUnit
 	return unitsByCode, nil
 }
 
-func calculateRecommendation(stock client.DrugStock, drugUnits []models.DrugUnit) proxy.Stock {
+func calculateRecommendation(stock client.DrugStock, drugUnits []models.DrugUnit) (chosen proxy.Stock, alternatives []proxy.Stock) {
 	smallestQ := stock.Drug.MinimumStock.Quantity*2 - stock.Stock.Quantity
 	if smallestQ < 2 {
 		smallestQ = 2
@@ -142,7 +145,7 @@ func calculateRecommendation(stock client.DrugStock, drugUnits []models.DrugUnit
 	}
 
 	if len(drugUnits) == 0 {
-		return fallback
+		return fallback, nil
 	}
 
 	qPerUnit := make([]float64, len(drugUnits))
@@ -152,16 +155,28 @@ func calculateRecommendation(stock client.DrugStock, drugUnits []models.DrugUnit
 		qPerUnit[i] = math.Round(qPerUnit[i-1] / math.Max(drugUnits[i].ConversionToParentUnit, 1))
 	}
 
+	foundChosen := false
 	for i := len(drugUnits) - 1; i >= 0; i-- {
-		if qPerUnit[i] > 0 {
-			return proxy.Stock{
-				Unit:     drugUnits[i].Unit,
-				Quantity: qPerUnit[i],
+		proc := proxy.Stock{
+			Unit:     drugUnits[i].Unit,
+			Quantity: qPerUnit[i],
+		}
+
+		if proc.Quantity > 0 {
+			if !foundChosen {
+				foundChosen = true
+				chosen = proc
+			} else {
+				alternatives = append(alternatives, proc)
 			}
 		}
 	}
 
-	return fallback
+	if !foundChosen {
+		chosen = fallback
+	}
+
+	return
 }
 
 func zlibCompress(data []byte) ([]byte, error) {
