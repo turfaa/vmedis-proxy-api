@@ -53,15 +53,6 @@ func (s *ApiServer) HandleGetDailySalesStatistics(c *gin.Context) {
 		return
 	}
 
-	x := s.DB.ToSQL(func(tx *gorm.DB) *gorm.DB {
-		return tx.
-			Where("pulled_at >= ?", time.Now().UTC().Truncate(time.Hour*24).Add(time.Hour)).
-			Order("pulled_at ASC").
-			Find(&modelStats)
-	})
-
-	println(x)
-
 	latestStat, err := s.Client.GetDailySalesStatistics()
 	if err != nil {
 		c.JSON(500, gin.H{
