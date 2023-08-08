@@ -20,8 +20,8 @@ const (
 	DailySalesStatisticsSchedule = "0 0 * * * *"
 
 	// DrugInterval is the interval of the drugs' dumper.
-	// It currently runs every 6 hour.
-	DrugInterval = 6 * time.Hour
+	// It currently runs every 24 hour.
+	DrugInterval = 24 * time.Hour
 
 	// ProcurementRecommendationsInterval is the interval of the procurement recommendations' dumper.
 	// It currently runs every hour.
@@ -33,6 +33,9 @@ const (
 func Run(vmedisClient *client.Client, db *gorm.DB, redisClient *redis.Client) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	db = db.WithContext(ctx)
+	redisClient = redisClient.WithContext(ctx)
 
 	drugDetailsChan, closeDrugDetailsPuller := drugDetailsPuller(ctx, db, vmedisClient)
 	defer closeDrugDetailsPuller()
@@ -47,7 +50,7 @@ func Run(vmedisClient *client.Client, db *gorm.DB, redisClient *redis.Client) {
 		log.Fatalf("Error scheduling drugs dumper: %s\n", err)
 	}
 
-	if _, err := scheduler.Every(ProcurementRecommendationsInterval).Do(DumpProcurementRecommendations, ctx, redisClient, vmedisClient); err != nil {
+	if _, err := scheduler.Every(ProcurementRecommendationsInterval).Do(DumpProcurementRecommendations, ctx, db, redisClient, vmedisClient); err != nil {
 		log.Fatalf("Error scheduling procurement recommendations dumper: %s\n", err)
 	}
 

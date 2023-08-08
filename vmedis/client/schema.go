@@ -103,6 +103,10 @@ type Unit struct {
 	ParentUnit             string
 	ConversionToParentUnit float64
 
+	// UnitOrder is the order of the unit of the drug.
+	// The smallest unit has the lowest order.
+	UnitOrder int
+
 	formName string
 }
 
@@ -149,6 +153,8 @@ func EnrichUnitsFromDoc(units []Unit, doc *goquery.Document) ([]Unit, error) {
 			u.ConversionToParentUnit = conversion
 		}
 
+		u.UnitOrder = len(result)
+	
 		result = append(result, u)
 	}
 

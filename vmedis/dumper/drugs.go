@@ -122,6 +122,7 @@ func drugDetailsPuller(ctx context.Context, db *gorm.DB, vmedisClient *client.Cl
 							DrugVmedisCode:         d.VmedisCode,
 							ParentUnit:             u.ParentUnit,
 							ConversionToParentUnit: u.ConversionToParentUnit,
+							UnitOrder:              u.UnitOrder,
 						})
 					}
 
@@ -189,6 +190,7 @@ func dumpDrugUnits(db *gorm.DB, units []models.DrugUnit) error {
 			"updated_at",
 			"parent_unit",
 			"conversion_to_parent_unit",
+			"unit_order",
 		}),
 	}).
 		Create(&units).

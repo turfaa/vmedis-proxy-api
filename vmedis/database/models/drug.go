@@ -49,6 +49,10 @@ type DrugUnit struct {
 	Unit                   string `gorm:"index;uniqueIndex:idx_drug_units_code_unit"`
 	ParentUnit             string
 	ConversionToParentUnit float64
+
+	// UnitOrder is the order of the unit of the drug.
+	// The smallest unit has the lowest order.
+	UnitOrder int
 }
 
 // Stock represents one instance of stock.
