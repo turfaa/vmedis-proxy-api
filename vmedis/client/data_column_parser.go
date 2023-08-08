@@ -17,11 +17,11 @@ var (
 )
 
 // UnmarshalDataColumn parses the data column from the API response.
-func UnmarshalDataColumn(selection *goquery.Selection, v any) error {
-	return unmarshalDataColumn(selection, reflect.ValueOf(v))
+func UnmarshalDataColumn(tag string, selection *goquery.Selection, v any) error {
+	return unmarshalDataColumn(tag, selection, reflect.ValueOf(v))
 }
 
-func unmarshalDataColumn(selection *goquery.Selection, vv reflect.Value) error {
+func unmarshalDataColumn(tag string, selection *goquery.Selection, vv reflect.Value) error {
 	vt := vv.Type()
 	if vt.Implements(dataColumnUnmarshalerType) {
 		return vv.Interface().(DataColumnUnmarshaler).UnmarshalDataColumn(selection)
@@ -32,7 +32,7 @@ func unmarshalDataColumn(selection *goquery.Selection, vv reflect.Value) error {
 	}
 
 	if vv.Kind() == reflect.Ptr {
-		return unmarshalDataColumn(selection, vv.Elem())
+		return unmarshalDataColumn(tag, selection, vv.Elem())
 	}
 
 	if !vv.CanSet() {
@@ -43,7 +43,7 @@ func unmarshalDataColumn(selection *goquery.Selection, vv reflect.Value) error {
 	case reflect.Struct:
 		for i := 0; i < vv.NumField(); i++ {
 			f, ft := vv.Field(i), vv.Type().Field(i)
-			dataTag, ok := ft.Tag.Lookup("data-column")
+			dataTag, ok := ft.Tag.Lookup(tag)
 			if !ok {
 				continue
 			}
@@ -56,7 +56,7 @@ func unmarshalDataColumn(selection *goquery.Selection, vv reflect.Value) error {
 			}
 
 			if data.Length() > 0 {
-				if err := unmarshalDataColumn(data, f); err != nil {
+				if err := unmarshalDataColumn(tag, data, f); err != nil {
 					return fmt.Errorf("unmarshal field %s: %w", ft.Name, err)
 				}
 			}

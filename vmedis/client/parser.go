@@ -79,7 +79,7 @@ func ParseOutOfStockDrugs(r io.Reader) (OutOfStockDrugsResponse, error) {
 
 func parseOutOfStockDrug(doc *goquery.Selection) (DrugStock, error) {
 	var ds DrugStock
-	if err := UnmarshalDataColumn(doc, &ds); err != nil {
+	if err := UnmarshalDataColumn("oos-column", doc, &ds); err != nil {
 		return DrugStock{}, fmt.Errorf("parse drug: %w", err)
 	}
 

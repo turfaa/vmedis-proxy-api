@@ -34,17 +34,17 @@ type OutOfStockDrugsResponse struct {
 
 // DrugStock is the stock of a drug.
 type DrugStock struct {
-	Drug  Drug  `data-column:"<self>"`
-	Stock Stock `data-column:"8"`
+	Drug  Drug  `oos-column:"<self>"`
+	Stock Stock `oos-column:"8"`
 }
 
 // Drug is a drug in the inventory.
 type Drug struct {
-	VmedisCode   string `data-column:"4"`
-	Name         string `data-column:"5"`
-	Manufacturer string `data-column:"12"`
-	Supplier     string `data-column:"13"`
-	MinimumStock Stock  `data-column:"6"`
+	VmedisCode   string `oos-column:"4"`
+	Name         string `oos-column:"5"`
+	Manufacturer string `oos-column:"12"`
+	Supplier     string `oos-column:"13"`
+	MinimumStock Stock  `oos-column:"6"`
 }
 
 // Stock represents one instance of stock.
