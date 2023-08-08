@@ -1,6 +1,8 @@
 package proxy
 
 import (
+	"bytes"
+	"compress/zlib"
 	"context"
 	"encoding/json"
 	"log"
@@ -14,7 +16,7 @@ import (
 
 const (
 	procurementRecommendationsInterval = time.Hour
-	procurementRecommendationsKey      = "static_key.procurement_recommendations.json"
+	procurementRecommendationsKey      = "static_key.procurement_recommendations.json.zlib"
 )
 
 func runCacheWriter(redisClient *redis.Client, vmedisClient *client.Client) func() {
@@ -72,10 +74,30 @@ func writeProcurementRecommendations(redisClient *redis.Client, vmedisClient *cl
 		return
 	}
 
-	if err := redisClient.Set(ctx, procurementRecommendationsKey, dataJson, 0).Err(); err != nil {
+	compressed, err := zlibCompress(dataJson)
+	if err != nil {
+		log.Printf("Error compressing procurement recommendations: %s\n", err)
+		return
+	}
+
+	if err := redisClient.Set(ctx, procurementRecommendationsKey, compressed, 7*24*time.Hour).Err(); err != nil {
 		log.Printf("Error writing procurement recommendations to cache: %s\n", err)
 		return
 	}
 
 	log.Printf("Wrote %d procurement recommendations to cache (size: %d bytes) \n", len(recommendations), len(dataJson))
+}
+
+func zlibCompress(data []byte) ([]byte, error) {
+	var buf bytes.Buffer
+	w := zlib.NewWriter(&buf)
+	if _, err := w.Write(data); err != nil {
+		return nil, err
+	}
+
+	if err := w.Close(); err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
 }
