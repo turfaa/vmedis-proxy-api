@@ -12,7 +12,7 @@ import (
 func (s *ApiServer) HandleGetDailySalesStatistics(c *gin.Context) {
 	var modelStats []models.SaleStatistics
 	if err := s.DB.
-		Where("pulled_at >= ?", beginningOfToday()).
+		Where("pulled_at >= ?", beginningOfToday().Add(30*time.Minute)).
 		Order("pulled_at ASC").
 		Find(&modelStats).
 		Error; err != nil {
