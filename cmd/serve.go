@@ -4,8 +4,6 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"time"
-
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -27,13 +25,5 @@ var serveCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(serveCmd)
-
-	serveCmd.Flags().String("base-url", "http://localhost:8080", "base url of the vmedis proxy server")
-	serveCmd.Flags().String("session-id", "", "session id of the vmedis proxy server")
-	serveCmd.Flags().Duration("refresh-interval", time.Minute, "refresh interval of the session id in milliseconds")
-
-	viper.BindPFlag("base_url", serveCmd.Flags().Lookup("base-url"))
-	viper.BindPFlag("session_id", serveCmd.Flags().Lookup("session-id"))
-	viper.BindPFlag("refresh_interval", serveCmd.Flags().Lookup("refresh-interval"))
+	initAppCommand(serveCmd)
 }

@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -51,4 +52,18 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
 	}
+}
+
+func initAppCommand(command *cobra.Command) {
+	rootCmd.AddCommand(command)
+
+	command.Flags().String("sqlite-path", "data/db.sqlite", "path to the sqlite database")
+	command.Flags().String("base-url", "http://localhost:8080", "base url of the vmedis proxy server")
+	command.Flags().String("session-id", "", "session id of the vmedis proxy server")
+	command.Flags().Duration("refresh-interval", time.Minute, "refresh interval of the session id in milliseconds")
+
+	viper.BindPFlag("sqlite_path", command.Flags().Lookup("sqlite-path"))
+	viper.BindPFlag("base_url", command.Flags().Lookup("base-url"))
+	viper.BindPFlag("session_id", command.Flags().Lookup("session-id"))
+	viper.BindPFlag("refresh_interval", command.Flags().Lookup("refresh-interval"))
 }

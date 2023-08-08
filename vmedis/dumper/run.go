@@ -10,7 +10,6 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/turfaa/vmedis-proxy-api/vmedis/client"
-	"github.com/turfaa/vmedis-proxy-api/vmedis/database"
 	"github.com/turfaa/vmedis-proxy-api/vmedis/database/models"
 )
 
@@ -22,12 +21,7 @@ const (
 
 // Run runs the data dumper.
 // All the dumper intervals and schedules are currently hardcoded.
-func Run(vmedisClient *client.Client) {
-	db, err := database.SqliteDB("data/db.sqlite")
-	if err != nil {
-		log.Fatalf("Error opening database: %s\n", err)
-	}
-
+func Run(vmedisClient *client.Client, db *gorm.DB) {
 	scheduler := gocron.NewScheduler(time.Local)
 
 	if _, err := scheduler.CronWithSeconds(DailySalesStatisticsSchedule).Do(DumpDailySalesStatistics, db, vmedisClient); err != nil {
