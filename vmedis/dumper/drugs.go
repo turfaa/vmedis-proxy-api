@@ -48,6 +48,7 @@ func DumpDrugs(db *gorm.DB, vmedisClient *client.Client) {
 				log.Printf("Error inserting drugs: %s\n", err)
 				errCounter += len(toInsert)
 			} else {
+				log.Printf("Inserted %d drugs\n", len(toInsert))
 				counter += len(toInsert)
 			}
 
@@ -61,6 +62,7 @@ func DumpDrugs(db *gorm.DB, vmedisClient *client.Client) {
 			log.Printf("Error inserting drugs: %s\n", err)
 			errCounter += len(toInsert)
 		} else {
+			log.Printf("Inserted %d drugs\n", len(toInsert))
 			counter += len(toInsert)
 		}
 	}
