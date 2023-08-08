@@ -197,6 +197,9 @@ func dumpDrugUnits(db *gorm.DB, units []models.DrugUnit) error {
 			"parent_unit",
 			"conversion_to_parent_unit",
 			"unit_order",
+			"price_one",
+			"price_two",
+			"price_three",
 		}),
 	}).
 		Create(&units).
