@@ -94,6 +94,8 @@ func drugDetailsPuller(ctx context.Context, db *gorm.DB, vmedisClient *client.Cl
 			for {
 				select {
 				case drug := <-drugs:
+					log.Printf("Getting drug details of id %d\n", drug.VmedisID)
+
 					ctx, cancel := context.WithTimeout(ctx, time.Minute)
 					d, err := vmedisClient.GetDrug(ctx, drug.VmedisID)
 					cancel()
@@ -111,6 +113,7 @@ func drugDetailsPuller(ctx context.Context, db *gorm.DB, vmedisClient *client.Cl
 						Quantity: d.MinimumStock.Quantity,
 					}
 
+					log.Printf("Dumping drug details of id %d [%s]\n", drug.VmedisID, drug.Name)
 					if err := dumpDrugDetails(db, drug); err != nil {
 						log.Printf("Error inserting drug details of id %d: %s\n", drug.VmedisID, err)
 					}

@@ -17,15 +17,15 @@ import (
 const (
 	// DailySalesStatisticsSchedule is the schedule of the daily sales statistics dumper.
 	// It currently runs every the first second of every hour.
-	DailySalesStatisticsSchedule = "0 0 * * * *"
+	DailySalesStatisticsSchedule = "0 * * * *"
 
-	// DrugInterval is the interval of the drugs' dumper.
-	// It currently runs every 24 hour.
-	DrugInterval = 24 * time.Hour
+	// DrugSchedule is the schedule of the drugs' dumper.
+	// It currently runs at 12am and 2am every day.
+	DrugSchedule = "0 0,2 * * *"
 
-	// ProcurementRecommendationsInterval is the interval of the procurement recommendations' dumper.
-	// It currently runs every 12 hour.
-	ProcurementRecommendationsInterval = 12 * time.Hour
+	// ProcurementRecommendationsSchedule is the schedule of the procurement recommendations' dumper.
+	// It currently runs at 11pm, 1am, and 3am every day.
+	ProcurementRecommendationsSchedule = "0 23,1,3 * * *"
 )
 
 // Run runs the data dumper.
@@ -42,15 +42,15 @@ func Run(vmedisClient *client.Client, db *gorm.DB, redisClient *redis.Client) {
 
 	scheduler := gocron.NewScheduler(time.Local)
 
-	if _, err := scheduler.CronWithSeconds(DailySalesStatisticsSchedule).Do(DumpDailySalesStatistics, ctx, db, vmedisClient); err != nil {
+	if _, err := scheduler.Cron(DailySalesStatisticsSchedule).Do(DumpDailySalesStatistics, ctx, db, vmedisClient); err != nil {
 		log.Fatalf("Error scheduling daily sales statistics dumper: %s\n", err)
 	}
 
-	if _, err := scheduler.Every(DrugInterval).Do(DumpDrugs, ctx, db, vmedisClient, drugDetailsChan); err != nil {
+	if _, err := scheduler.Cron(DrugSchedule).Do(DumpDrugs, ctx, db, vmedisClient, drugDetailsChan); err != nil {
 		log.Fatalf("Error scheduling drugs dumper: %s\n", err)
 	}
 
-	if _, err := scheduler.Every(ProcurementRecommendationsInterval).Do(DumpProcurementRecommendations, ctx, db, redisClient, vmedisClient); err != nil {
+	if _, err := scheduler.Cron(ProcurementRecommendationsSchedule).Do(DumpProcurementRecommendations, ctx, db, redisClient, vmedisClient); err != nil {
 		log.Fatalf("Error scheduling procurement recommendations dumper: %s\n", err)
 	}
 
