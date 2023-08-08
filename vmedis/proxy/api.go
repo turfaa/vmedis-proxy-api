@@ -5,6 +5,7 @@ import (
 
 	"github.com/chenyahui/gin-cache"
 	"github.com/chenyahui/gin-cache/persist"
+	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
@@ -22,6 +23,7 @@ type ApiServer struct {
 // GinEngine returns the gin engine of the proxy api server.
 func (s *ApiServer) GinEngine() *gin.Engine {
 	r := gin.Default()
+	r.Use(gzip.Gzip(gzip.DefaultCompression))
 	s.SetupRoute(&r.RouterGroup)
 	return r
 }
