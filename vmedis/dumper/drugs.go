@@ -42,15 +42,16 @@ func DumpDrugs(db *gorm.DB, vmedisClient *client.Client) {
 			Manufacturer: drug.Manufacturer,
 		})
 
-		if len(toInsert) == drugsBatchSize {
+		if len(toInsert) >= drugsBatchSize {
 			log.Printf("Dumping %d drugs\n", len(toInsert))
 			if err := dumpDrugs(db, toInsert); err != nil {
 				log.Printf("Error inserting drugs: %s\n", err)
 				errCounter += len(toInsert)
 			} else {
-				toInsert = nil
 				counter += len(toInsert)
 			}
+
+			toInsert = nil
 		}
 	}
 
