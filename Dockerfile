@@ -8,7 +8,7 @@ RUN go mod download
 COPY cmd/ cmd/
 COPY vmedis/ vmedis/
 
-RUN go build -o /vmedis-proxy
+RUN GOOS=linux GOARCH=arm GOARM=5 go build -o /vmedis-proxy
 
 FROM gcr.io/distroless/base-debian11 AS release
 
