@@ -3,8 +3,8 @@ package proxy
 import (
 	"time"
 
-	"github.com/gin-contrib/cache"
-	"github.com/gin-contrib/cache/persistence"
+	"github.com/chenyahui/gin-cache"
+	"github.com/chenyahui/gin-cache/persist"
 	"github.com/gin-gonic/gin"
 
 	"github.com/turfaa/vmedis-proxy-api/vmedis/client"
@@ -24,11 +24,15 @@ func (s *ApiServer) GinEngine() *gin.Engine {
 
 // SetupRoute sets up the routes of the proxy api server.
 func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
-	store := persistence.NewInMemoryStore(time.Minute)
+	store := persist.NewMemoryStore(time.Minute)
 
 	v1 := router.Group("/api/v1")
 	{
-		v1.GET("/sales/statistics/daily", cache.CachePage(store, time.Minute, s.HandleGetDailySalesStatistics))
+		v1.GET(
+			"/sales/statistics/daily",
+			cache.CacheByRequestURI(store, time.Minute),
+			s.HandleGetDailySalesStatistics,
+		)
 	}
 }
 
