@@ -8,6 +8,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const (
+	procurementRecommendationsKey = "static_key.procurement_recommendations.json.zlib"
+)
+
 // HandleProcurementRecommendations handles the request to get the procurement recommendations.
 func (s *ApiServer) HandleProcurementRecommendations(c *gin.Context) {
 	compressed, err := s.RedisClient.Get(c, procurementRecommendationsKey).Result()

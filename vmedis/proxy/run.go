@@ -33,9 +33,6 @@ func Run(config Config) {
 		log.Fatalf("Session id check failed: %s\n", err)
 	}
 
-	closeCacheWriter := runCacheWriter(config.RedisClient, config.VmedisClient)
-	defer closeCacheWriter()
-
 	log.Printf("Starting proxy server to %s with refresh interval %d\n", config.VmedisClient.BaseUrl, config.SessionRefreshInterval)
 
 	apiServer := ApiServer{

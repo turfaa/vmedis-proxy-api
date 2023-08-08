@@ -3,6 +3,7 @@ package cmd
 import (
 	"log"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/time/rate"
@@ -29,6 +30,11 @@ var runDumperCmd = &cobra.Command{
 				rate.NewLimiter(rate.Limit(viper.GetFloat64("rate_limit")), 1),
 			),
 			db,
+			redis.NewClient(&redis.Options{
+				Addr:     viper.GetString("redis_address"),
+				Password: viper.GetString("redis_password"),
+				DB:       viper.GetInt("redis_db"),
+			}),
 		)
 	},
 }

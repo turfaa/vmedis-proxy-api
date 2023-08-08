@@ -1,4 +1,4 @@
-package proxy
+package dumper
 
 import (
 	"bytes"
@@ -8,29 +8,18 @@ import (
 	"log"
 	"time"
 
-	"github.com/go-co-op/gocron"
 	"github.com/go-redis/redis/v8"
 
 	"github.com/turfaa/vmedis-proxy-api/vmedis/client"
+	"github.com/turfaa/vmedis-proxy-api/vmedis/proxy"
 )
 
 const (
-	procurementRecommendationsInterval = time.Hour
-	procurementRecommendationsKey      = "static_key.procurement_recommendations.json.zlib"
+	procurementRecommendationsKey = "static_key.procurement_recommendations.json.zlib"
 )
 
-func runCacheWriter(redisClient *redis.Client, vmedisClient *client.Client) func() {
-	scheduler := gocron.NewScheduler(time.Local)
-
-	if _, err := scheduler.Every(procurementRecommendationsInterval).Do(writeProcurementRecommendations, redisClient, vmedisClient); err != nil {
-		log.Fatalf("Error scheduling procurement recommendations writer: %s\n", err)
-	}
-
-	scheduler.StartAsync()
-	return scheduler.Stop
-}
-
-func writeProcurementRecommendations(redisClient *redis.Client, vmedisClient *client.Client) {
+// DumpProcurementRecommendations calculates and dumps procurement recommendations to cache.
+func DumpProcurementRecommendations(redisClient *redis.Client, vmedisClient *client.Client) {
 	log.Println("Computing procurement recommendations and writing them to cache....")
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*30)
@@ -45,24 +34,24 @@ func writeProcurementRecommendations(redisClient *redis.Client, vmedisClient *cl
 
 	log.Printf("Got %d out of stock drugs for writing procurement recommendations\n", len(oosDrugs))
 
-	recommendations := make([]DrugProcurementRecommendation, len(oosDrugs))
+	recommendations := make([]proxy.DrugProcurementRecommendation, len(oosDrugs))
 	for i, drugStock := range oosDrugs {
 		q := drugStock.Drug.MinimumStock.Quantity*2 - drugStock.Stock.Quantity
 		if q < 2 {
 			q = 2
 		}
 
-		recommendations[i] = DrugProcurementRecommendation{
-			DrugStock:    FromClientDrugStock(drugStock),
+		recommendations[i] = proxy.DrugProcurementRecommendation{
+			DrugStock:    proxy.FromClientDrugStock(drugStock),
 			FromSupplier: drugStock.Drug.Supplier,
-			Procurement: Stock{
+			Procurement: proxy.Stock{
 				Unit:     drugStock.Stock.Unit,
 				Quantity: q,
 			},
 		}
 	}
 
-	data := DrugProcurementRecommendationsResponse{
+	data := proxy.DrugProcurementRecommendationsResponse{
 		Recommendations: recommendations,
 		ComputedAt:      time.Now(),
 	}
