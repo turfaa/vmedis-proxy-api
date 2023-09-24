@@ -117,18 +117,7 @@ func ParseDrugs(r io.Reader) (DrugsResponse, error) {
 		drugs = append(drugs, drug)
 	})
 
-	var otherPages []int
-	doc.Find(".pagination li a").Each(func(i int, s *goquery.Selection) {
-		page, err := strconv.Atoi(s.Text())
-		if err != nil {
-			// expected, ignore
-			return
-		}
-
-		otherPages = append(otherPages, page)
-	})
-
-	return DrugsResponse{Drugs: drugs, OtherPages: otherPages}, nil
+	return DrugsResponse{Drugs: drugs, OtherPages: parsePagination(doc)}, nil
 }
 
 func parseDrug(selection *goquery.Selection) (Drug, error) {

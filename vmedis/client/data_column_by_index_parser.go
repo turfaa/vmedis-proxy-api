@@ -3,6 +3,8 @@ package client
 import (
 	"fmt"
 	"reflect"
+	"strconv"
+	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -31,6 +33,8 @@ func unmarshalDataColumnByIndex(tag string, selection *goquery.Selection, vv ref
 		return fmt.Errorf("cannot set value of type %s", vv.Type())
 	}
 
+	selectionText := strings.TrimSpace(selection.Text())
+
 	switch vv.Kind() {
 	case reflect.Struct:
 		for i := 0; i < vv.NumField(); i++ {
@@ -55,7 +59,23 @@ func unmarshalDataColumnByIndex(tag string, selection *goquery.Selection, vv ref
 		}
 
 	case reflect.String:
-		vv.SetString(selection.Text())
+		vv.SetString(selectionText)
+
+	case reflect.Float32, reflect.Float64:
+		f, err := parseFloat(selectionText)
+		if err != nil {
+			return fmt.Errorf("parse float from string [%s]: %w", selectionText, err)
+		}
+
+		vv.SetFloat(f)
+
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		i, err := strconv.ParseInt(selectionText, 10, 64)
+		if err != nil {
+			return fmt.Errorf("parse int from string [%s]: %w", selectionText, err)
+		}
+
+		vv.SetInt(i)
 	}
 
 	return nil

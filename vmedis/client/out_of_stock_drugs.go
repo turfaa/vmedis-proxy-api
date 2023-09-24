@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"strconv"
 	"sync"
 
 	"github.com/PuerkitoBio/goquery"
@@ -120,18 +119,7 @@ func ParseOutOfStockDrugs(r io.Reader) (OutOfStockDrugsResponse, error) {
 		drugs = append(drugs, drug)
 	})
 
-	var otherPages []int
-	doc.Find(".pagination li a").Each(func(i int, s *goquery.Selection) {
-		page, err := strconv.Atoi(s.Text())
-		if err != nil {
-			// expected, ignore
-			return
-		}
-
-		otherPages = append(otherPages, page)
-	})
-
-	return OutOfStockDrugsResponse{Drugs: drugs, OtherPages: otherPages}, nil
+	return OutOfStockDrugsResponse{Drugs: drugs, OtherPages: parsePagination(doc)}, nil
 }
 
 func parseOutOfStockDrug(doc *goquery.Selection) (DrugStock, error) {
