@@ -3,6 +3,7 @@ package proxy
 import (
 	"context"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -74,6 +75,14 @@ func (s *ApiServer) HandleGetSoldDrugs(c *gin.Context) {
 	for _, drug := range drugs {
 		drugsSlice = append(drugsSlice, drug)
 	}
+
+	sort.Slice(drugsSlice, func(i, j int) bool {
+		if drugsSlice[i].Occurrences == drugsSlice[j].Occurrences {
+			return drugsSlice[i].TotalAmount > drugsSlice[j].TotalAmount
+		}
+
+		return drugsSlice[i].Occurrences > drugsSlice[j].Occurrences
+	})
 
 	date := c.DefaultQuery("date", time.Now().Format("2006-01-02"))
 	c.JSON(200, schema.SoldDrugsResponse{Drugs: drugsSlice, Date: date})
