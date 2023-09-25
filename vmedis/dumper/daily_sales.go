@@ -77,7 +77,7 @@ func dumpSales(db *gorm.DB, sales []models.Sale) error {
 				"payment",
 				"total",
 			}),
-		}).Create(&sales).Error; err != nil {
+		}).Omit("SaleUnits").Create(&sales).Error; err != nil {
 			return fmt.Errorf("create sales: %w", err)
 		}
 
