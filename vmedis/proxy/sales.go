@@ -48,7 +48,7 @@ func (s *ApiServer) HandleGetSoldDrugs(c *gin.Context) {
 	}
 
 	var drugsModels []models.Drug
-	if err := s.DB.Find(&drugsModels, "code IN ?", drugCodes).Error; err != nil {
+	if err := s.DB.Find(&drugsModels, "vmedis_code IN ?", drugCodes).Error; err != nil {
 		c.JSON(500, gin.H{
 			"error": fmt.Sprintf("failed to get drugs: %s", err),
 		})
