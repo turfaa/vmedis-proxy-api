@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -13,26 +14,10 @@ import (
 
 // HandleGetSales handles the GET /sales endpoint.
 func (s *ApiServer) HandleGetSales(c *gin.Context) {
-	date := c.Query("date")
-
-	var from, until time.Time
-	if date == "" {
-		from, until = today()
-	} else {
-		var err error
-		from, until, err = day(date)
-		if err != nil {
-			c.JSON(400, gin.H{
-				"error": "failed to parse date: " + err.Error(),
-			})
-			return
-		}
-	}
-
-	var salesModels []models.Sale
-	if err := s.DB.Preload("SaleUnits").Find(&salesModels, "sold_at >= ? AND sold_at <= ?", from, until).Error; err != nil {
+	salesModels, err := s.getSales(c)
+	if err != nil {
 		c.JSON(500, gin.H{
-			"error": "failed to get sales from database: " + err.Error(),
+			"error": fmt.Sprintf("failed to get sales: %s", err),
 		})
 		return
 	}
@@ -45,6 +30,40 @@ func (s *ApiServer) HandleGetSales(c *gin.Context) {
 	c.JSON(200, schema.SalesResponse{Sales: sales})
 }
 
+// HandleGetSoldDrugs handles the GET /sold-drugs endpoint.
+func (s *ApiServer) HandleGetSoldDrugs(c *gin.Context) {
+	salesModels, err := s.getSales(c)
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": fmt.Sprintf("failed to get sales: %s", err),
+		})
+		return
+	}
+
+	var drugCodes []string
+	for _, sale := range salesModels {
+		for _, saleUnit := range sale.SaleUnits {
+			drugCodes = append(drugCodes, saleUnit.DrugCode)
+		}
+	}
+
+	var drugsModels []models.Drug
+	if err := s.DB.Find(&drugsModels, "code IN ?", drugCodes).Error; err != nil {
+		c.JSON(500, gin.H{
+			"error": fmt.Sprintf("failed to get drugs: %s", err),
+		})
+		return
+	}
+
+	drugs := make([]schema.Drug, len(drugsModels))
+	for i, drug := range drugsModels {
+		drugs[i] = schema.FromModelsDrug(drug)
+	}
+
+	date := c.DefaultQuery("date", time.Now().Format("2006-01-02"))
+	c.JSON(200, schema.SoldDrugsResponse{Drugs: drugs, Date: date})
+}
+
 // HandleDumpSales handles the request to dump today's sales.
 func (s *ApiServer) HandleDumpSales(c *gin.Context) {
 	go dumper.DumpDailySales(context.Background(), s.DB, s.Client)
@@ -52,4 +71,26 @@ func (s *ApiServer) HandleDumpSales(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"message": "dumping today's sales",
 	})
+}
+
+func (s *ApiServer) getSales(c *gin.Context) ([]models.Sale, error) {
+	date := c.Query("date")
+
+	var from, until time.Time
+	if date == "" {
+		from, until = today()
+	} else {
+		var err error
+		from, until, err = day(date)
+		if err != nil {
+			return nil, fmt.Errorf("get day from date query [%s]: %w", date, err)
+		}
+	}
+
+	var salesModels []models.Sale
+	if err := s.DB.Preload("SaleUnits").Find(&salesModels, "sold_at >= ? AND sold_at <= ?", from, until).Error; err != nil {
+		return nil, fmt.Errorf("get sales from database: %w", err)
+	}
+
+	return salesModels, nil
 }

@@ -40,42 +40,57 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 
 	v1 := router.Group("/api/v1")
 	{
-		v1.GET(
-			"/sales/statistics/daily",
-			cache.CacheByRequestURI(store, time.Minute),
-			s.HandleGetDailySalesStatistics,
-		)
+		sales := v1.Group("/sales")
+		{
+			sales.GET(
+				"",
+				cache.CacheByRequestURI(store, 10*time.Minute),
+				s.HandleGetSales,
+			)
 
-		v1.GET(
-			"/procurement/recommendations",
-			s.HandleProcurementRecommendations,
-		)
+			sales.GET(
+				"/statistics/daily",
+				cache.CacheByRequestURI(store, time.Minute),
+				s.HandleGetDailySalesStatistics,
+			)
 
-		v1.POST(
-			"/procurement/recommendations/dump",
-			s.HandleDumpProcurementRecommendations,
-		)
+			sales.GET(
+				"/drugs",
+				cache.CacheByRequestURI(store, 10*time.Minute),
+				s.HandleGetSoldDrugs,
+			)
 
-		v1.GET(
-			"/drugs",
-			cache.CacheByRequestURI(store, time.Hour),
-			s.HandleGetDrugs,
-		)
+			sales.POST(
+				"/dump",
+				s.HandleDumpSales,
+			)
+		}
 
-		v1.POST(
-			"/drugs/dump",
-			s.HandleDumpDrugs,
-		)
+		procurement := v1.Group("/procurement")
+		{
+			procurement.GET(
+				"/recommendations",
+				s.HandleProcurementRecommendations,
+			)
 
-		v1.GET(
-			"/sales",
-			cache.CacheByRequestURI(store, 10*time.Minute),
-			s.HandleGetSales,
-		)
+			procurement.POST(
+				"/recommendations/dump",
+				s.HandleDumpProcurementRecommendations,
+			)
+		}
 
-		v1.POST(
-			"/sales/dump",
-			s.HandleDumpSales,
-		)
+		drugs := v1.Group("/drugs")
+		{
+			drugs.GET(
+				"",
+				cache.CacheByRequestURI(store, time.Hour),
+				s.HandleGetDrugs,
+			)
+
+			drugs.POST(
+				"/dump",
+				s.HandleDumpDrugs,
+			)
+		}
 	}
 }
