@@ -1,6 +1,8 @@
 package proxy
 
 import (
+	"context"
+	"log"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -23,29 +25,28 @@ func (s *ApiServer) HandleGetDailySalesStatistics(c *gin.Context) {
 		return
 	}
 
-	latestStat, err := s.Client.GetDailySalesStatistics(c)
-	if err != nil {
-		c.JSON(500, gin.H{
-			"error": "failed to get latest statistics from API: " + err.Error(),
-		})
-		return
-	}
-
 	var stats []schema.SaleStatistics
 	for _, s := range modelStats {
 		stats = append(stats, schema.FromModelsSaleStatistics(s))
 	}
 
-	latest, err := schema.FromSalesStatisticsClientSchema(time.Now(), latestStat)
-	if err != nil {
-		c.JSON(500, gin.H{
-			"error": "failed to convert latest statistics from API: " + err.Error(),
-		})
-		return
-	}
+	ctx, cancel := context.WithTimeout(c, 10*time.Second)
+	defer cancel()
 
-	if len(stats) == 0 || (stats[len(stats)-1].TotalSales <= latest.TotalSales && stats[len(stats)-1].PulledAt.Before(latest.PulledAt)) {
-		stats = append(stats, latest)
+	if latestStat, err := s.Client.GetDailySalesStatistics(ctx); err != nil {
+		log.Printf("failed to get latest statistics from API: %s", err)
+	} else {
+		latest, err := schema.FromSalesStatisticsClientSchema(time.Now(), latestStat)
+		if err != nil {
+			c.JSON(500, gin.H{
+				"error": "failed to convert latest statistics from API: " + err.Error(),
+			})
+			return
+		}
+
+		if len(stats) == 0 || (stats[len(stats)-1].TotalSales <= latest.TotalSales && stats[len(stats)-1].PulledAt.Before(latest.PulledAt)) {
+			stats = append(stats, latest)
+		}
 	}
 
 	c.JSON(200, schema.SaleStatisticsResponse{History: stats})
