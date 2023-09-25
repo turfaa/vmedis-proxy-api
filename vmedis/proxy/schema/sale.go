@@ -13,8 +13,15 @@ type SalesResponse struct {
 
 // SoldDrugsResponse represents the sold drugs API response.
 type SoldDrugsResponse struct {
-	Date  string `json:"date"`
-	Drugs []Drug `json:"drugs"`
+	Date  string     `json:"date"`
+	Drugs []SoldDrug `json:"drugs"`
+}
+
+// SoldDrug represents a sold drug.
+type SoldDrug struct {
+	Drug        Drug    `json:"drug"`
+	Occurrences int     `json:"occurrences"`
+	TotalAmount float64 `json:"totalAmount"`
 }
 
 // Sale represents a sale.

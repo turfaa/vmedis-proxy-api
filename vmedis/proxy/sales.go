@@ -40,10 +40,17 @@ func (s *ApiServer) HandleGetSoldDrugs(c *gin.Context) {
 		return
 	}
 
-	var drugCodes []string
+	var (
+		drugCodes []string
+		drugs     = make(map[string]schema.SoldDrug)
+	)
 	for _, sale := range salesModels {
 		for _, saleUnit := range sale.SaleUnits {
 			drugCodes = append(drugCodes, saleUnit.DrugCode)
+			drugs[saleUnit.DrugCode] = schema.SoldDrug{
+				Occurrences: drugs[saleUnit.DrugCode].Occurrences + 1,
+				TotalAmount: drugs[saleUnit.DrugCode].TotalAmount + saleUnit.Total,
+			}
 		}
 	}
 
@@ -55,13 +62,21 @@ func (s *ApiServer) HandleGetSoldDrugs(c *gin.Context) {
 		return
 	}
 
-	drugs := make([]schema.Drug, len(drugsModels))
-	for i, drug := range drugsModels {
-		drugs[i] = schema.FromModelsDrug(drug)
+	for _, drug := range drugsModels {
+		drugs[drug.VmedisCode] = schema.SoldDrug{
+			Drug:        schema.FromModelsDrug(drug),
+			Occurrences: drugs[drug.VmedisCode].Occurrences,
+			TotalAmount: drugs[drug.VmedisCode].TotalAmount,
+		}
+	}
+
+	drugsSlice := make([]schema.SoldDrug, 0, len(drugs))
+	for _, drug := range drugs {
+		drugsSlice = append(drugsSlice, drug)
 	}
 
 	date := c.DefaultQuery("date", time.Now().Format("2006-01-02"))
-	c.JSON(200, schema.SoldDrugsResponse{Drugs: drugs, Date: date})
+	c.JSON(200, schema.SoldDrugsResponse{Drugs: drugsSlice, Date: date})
 }
 
 // HandleDumpSales handles the request to dump today's sales.
