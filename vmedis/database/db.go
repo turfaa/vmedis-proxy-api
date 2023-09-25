@@ -44,6 +44,8 @@ func AutoMigrate(db *gorm.DB) error {
 		models.SaleStatistics{},
 		models.Drug{},
 		models.DrugUnit{},
+		models.Sale{},
+		models.SaleUnit{},
 	}
 
 	for _, model := range availableModels {

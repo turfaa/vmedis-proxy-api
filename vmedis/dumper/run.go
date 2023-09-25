@@ -19,6 +19,10 @@ const (
 	// It currently runs every the first second of every hour.
 	DailySalesStatisticsSchedule = "0 * * * *"
 
+	// DailySalesSchedule is the schedule of the daily sales dumper.
+	// It currently runs every the first second of every hour.
+	DailySalesSchedule = "0 * * * *"
+
 	// DrugSchedule is the schedule of the drugs' dumper.
 	// It currently runs at 12am and 2am every day.
 	DrugSchedule = "0 0,2 * * *"
@@ -44,6 +48,10 @@ func Run(vmedisClient *client.Client, db *gorm.DB, redisClient *redis.Client) {
 
 	if _, err := scheduler.Cron(DailySalesStatisticsSchedule).Do(DumpDailySalesStatistics, ctx, db, vmedisClient); err != nil {
 		log.Fatalf("Error scheduling daily sales statistics dumper: %s\n", err)
+	}
+
+	if _, err := scheduler.Cron(DailySalesSchedule).Do(DumpDailySales, ctx, db, vmedisClient); err != nil {
+		log.Fatalf("Error scheduling daily sales dumper: %s\n", err)
 	}
 
 	if _, err := scheduler.Cron(DrugSchedule).Do(DumpDrugs, ctx, db, vmedisClient, drugDetailsChan); err != nil {

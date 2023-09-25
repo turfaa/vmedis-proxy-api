@@ -66,5 +66,16 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 			"/drugs/dump",
 			s.HandleDumpDrugs,
 		)
+
+		v1.GET(
+			"/sales",
+			cache.CacheByRequestURI(store, 10*time.Minute),
+			s.HandleGetSales,
+		)
+
+		v1.POST(
+			"/sales/dump",
+			s.HandleDumpSales,
+		)
 	}
 }
