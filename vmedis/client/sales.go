@@ -126,7 +126,7 @@ func parseSale(selection *goquery.Selection) (Sale, error) {
 		return Sale{}, fmt.Errorf("unmarshal sale: %w", err)
 	}
 
-	selection.Find("table tr:nth-child(+2)").Each(func(i int, s *goquery.Selection) {
+	selection.Find("table tr:nth-child(n+2)").Each(func(i int, s *goquery.Selection) {
 		su, err := parseSaleUnit(s)
 		if err != nil {
 			log.Printf("error parsing sale unit #%d: %s", i, err)
