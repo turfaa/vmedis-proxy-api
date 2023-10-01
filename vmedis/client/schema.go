@@ -218,4 +218,5 @@ type StockOpname struct {
 	QuantityDifference  float64 `so-index:"15"`
 	HPPDifference       float64 `so-index:"24"`
 	SalePriceDifference float64 `so-index:"25"`
+	Notes               string  `so-index:"26"`
 }

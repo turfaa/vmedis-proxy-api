@@ -2,7 +2,9 @@ package dumper
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"math/rand"
 	"time"
 
 	"gorm.io/datatypes"
@@ -11,6 +13,10 @@ import (
 
 	"github.com/turfaa/vmedis-proxy-api/vmedis/client"
 	"github.com/turfaa/vmedis-proxy-api/vmedis/database/models"
+)
+
+var (
+	rnd = rand.New(rand.NewSource(time.Now().UnixNano()))
 )
 
 // DumpDailyStockOpnames dumps the daily stock opnames.
@@ -30,8 +36,13 @@ func DumpDailyStockOpnames(ctx context.Context, db *gorm.DB, vmedisClient *clien
 
 	soModels := make([]models.StockOpname, len(sos))
 	for i, so := range sos {
+		id := so.ID
+		if id == "" {
+			id = fmt.Sprintf("%s-%s-%s-%s-%d", so.DrugCode, so.BatchCode, so.Unit, so.Date.Time.Format("2006-01-02"), rnd.Int())
+		}
+
 		soModels[i] = models.StockOpname{
-			VmedisID:            so.ID,
+			VmedisID:            id,
 			Date:                datatypes.Date(so.Date.Time),
 			DrugCode:            so.DrugCode,
 			DrugName:            so.DrugName,
@@ -42,6 +53,7 @@ func DumpDailyStockOpnames(ctx context.Context, db *gorm.DB, vmedisClient *clien
 			QuantityDifference:  so.QuantityDifference,
 			HPPDifference:       so.HPPDifference,
 			SalePriceDifference: so.SalePriceDifference,
+			Notes:               so.Notes,
 		}
 	}
 

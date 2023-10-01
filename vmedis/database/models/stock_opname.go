@@ -23,4 +23,5 @@ type StockOpname struct {
 	QuantityDifference  float64
 	HPPDifference       float64
 	SalePriceDifference float64
+	Notes               string
 }
