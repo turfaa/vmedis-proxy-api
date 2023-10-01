@@ -57,10 +57,13 @@ func DumpDailyStockOpnames(ctx context.Context, db *gorm.DB, vmedisClient *clien
 		}
 	}
 
+	log.Printf("Dumping %d stock opnames\n", len(soModels))
 	if err := dumpStockOpnames(db, soModels); err != nil {
 		log.Printf("Error dumping stock opnames: %s\n", err)
 		return
 	}
+
+	log.Println("Stock opnames dumped")
 }
 
 func dumpStockOpnames(db *gorm.DB, stockOpnames []models.StockOpname) error {

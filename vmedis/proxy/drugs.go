@@ -3,6 +3,7 @@ package proxy
 import (
 	"context"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -61,9 +62,14 @@ func (s *ApiServer) HandleGetDrugsToStockOpname(c *gin.Context) {
 	}
 
 	drugsToStockOpnameCodesMap := make(map[string]struct{})
+	drugSales := make(map[string]schema.SoldDrug)
 	for _, sale := range yesterdaySales {
 		for _, saleUnit := range sale.SaleUnits {
 			drugsToStockOpnameCodesMap[saleUnit.DrugCode] = struct{}{}
+			drugSales[saleUnit.DrugCode] = schema.SoldDrug{
+				Occurrences: drugSales[saleUnit.DrugCode].Occurrences + 1,
+				TotalAmount: drugSales[saleUnit.DrugCode].TotalAmount + saleUnit.Total,
+			}
 		}
 	}
 
@@ -88,6 +94,14 @@ func (s *ApiServer) HandleGetDrugsToStockOpname(c *gin.Context) {
 	for i, drug := range drugsToStockOpnameModels {
 		drugsToStockOpname[i] = schema.FromModelsDrug(drug)
 	}
+
+	sort.Slice(drugsToStockOpname, func(i, j int) bool {
+		if drugSales[drugsToStockOpname[i].VmedisCode].Occurrences == drugSales[drugsToStockOpname[j].VmedisCode].Occurrences {
+			return drugSales[drugsToStockOpname[i].VmedisCode].TotalAmount > drugSales[drugsToStockOpname[j].VmedisCode].TotalAmount
+		}
+
+		return drugSales[drugsToStockOpname[i].VmedisCode].Occurrences > drugSales[drugsToStockOpname[j].VmedisCode].Occurrences
+	})
 
 	c.JSON(200, schema.DrugsResponse{Drugs: drugsToStockOpname})
 }
