@@ -4,9 +4,40 @@ import (
 	"context"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/datatypes"
 
+	"github.com/turfaa/vmedis-proxy-api/vmedis/database/models"
 	"github.com/turfaa/vmedis-proxy-api/vmedis/dumper"
+	"github.com/turfaa/vmedis-proxy-api/vmedis/proxy/schema"
 )
+
+// HandleGetStockOpnames handles the request to get the stock opnames.
+func (s *ApiServer) HandleGetStockOpnames(c *gin.Context) {
+	dayFrom, _, err := getDatesFromQuery(c)
+	if err != nil {
+		c.JSON(400, gin.H{
+			"error": "failed to parse date query: " + err.Error(),
+		})
+		return
+	}
+
+	day := datatypes.Date(dayFrom)
+
+	var stockOpnames []models.StockOpname
+	if err := s.DB.Where("date = ?", day).Find(&stockOpnames).Error; err != nil {
+		c.JSON(500, gin.H{
+			"error": "failed to get stock opnames: " + err.Error(),
+		})
+		return
+	}
+
+	sos := make([]schema.StockOpname, len(stockOpnames))
+	for i, so := range stockOpnames {
+		sos[i] = schema.FromModelsStockOpname(so)
+	}
+
+	c.JSON(200, schema.StockOpnamesResponse{StockOpnames: sos})
+}
 
 // HandleDumpStockOpnames handles the request to dump the stock opnames.
 func (s *ApiServer) HandleDumpStockOpnames(c *gin.Context) {

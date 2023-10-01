@@ -34,6 +34,11 @@ func DumpDailyStockOpnames(ctx context.Context, db *gorm.DB, vmedisClient *clien
 
 	log.Printf("Got %d stock opnames\n", len(sos))
 
+	if len(sos) == 0 {
+		log.Printf("No stock opnames found\n")
+		return
+	}
+
 	soModels := make([]models.StockOpname, len(sos))
 	for i, so := range sos {
 		id := so.ID
