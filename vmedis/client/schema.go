@@ -204,3 +204,18 @@ type SaleUnit struct {
 	Embalase      float64 `sales-index:"14"`
 	Total         float64 `sales-index:"15"`
 }
+
+// StockOpname represents a stock opname.
+type StockOpname struct {
+	ID                  string  `so-index:"2"`
+	Date                Date    `so-index:"3"`
+	DrugCode            string  `so-index:"4"`
+	DrugName            string  `so-index:"6"`
+	BatchCode           string  `so-index:"27"`
+	Unit                string  `so-index:"7"`
+	InitialQuantity     float64 `so-index:"13"`
+	RealQuantity        float64 `so-index:"14"`
+	QuantityDifference  float64 `so-index:"15"`
+	HPPDifference       float64 `so-index:"24"`
+	SalePriceDifference float64 `so-index:"25"`
+}

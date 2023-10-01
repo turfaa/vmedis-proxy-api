@@ -87,9 +87,23 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 				s.HandleGetDrugs,
 			)
 
+			drugs.GET(
+				"/to-stock-opname",
+				cache.CacheByRequestURI(store, time.Hour),
+				s.HandleGetDrugsToStockOpname,
+			)
+
 			drugs.POST(
 				"/dump",
 				s.HandleDumpDrugs,
+			)
+		}
+
+		stockOpnames := v1.Group("/stock-opnames")
+		{
+			stockOpnames.POST(
+				"/dump",
+				s.HandleDumpStockOpnames,
 			)
 		}
 	}

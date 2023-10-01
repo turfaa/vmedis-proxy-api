@@ -3,7 +3,25 @@ package proxy
 import (
 	"fmt"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
+
+func getDatesFromQuery(c *gin.Context) (from time.Time, until time.Time, err error) {
+	date := c.Query("date")
+
+	if date == "" {
+		from, until = today()
+	} else {
+		from, until, err = day(date)
+		if err != nil {
+			err = fmt.Errorf("parse day from date query [%s]: %w", date, err)
+			return
+		}
+	}
+
+	return
+}
 
 func today() (from time.Time, until time.Time) {
 	return beginningOfToday(), endOfToday()

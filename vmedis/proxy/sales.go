@@ -98,19 +98,20 @@ func (s *ApiServer) HandleDumpSales(c *gin.Context) {
 }
 
 func (s *ApiServer) getSales(c *gin.Context) ([]models.Sale, error) {
-	date := c.Query("date")
-
-	var from, until time.Time
-	if date == "" {
-		from, until = today()
-	} else {
-		var err error
-		from, until, err = day(date)
-		if err != nil {
-			return nil, fmt.Errorf("get day from date query [%s]: %w", date, err)
-		}
+	from, until, err := getDatesFromQuery(c)
+	if err != nil {
+		return nil, fmt.Errorf("get dates from query: %w", err)
 	}
 
+	sales, err := s.getSalesBetween(from, until)
+	if err != nil {
+		return nil, fmt.Errorf("get sales between %s - %s: %w", from, until, err)
+	}
+
+	return sales, nil
+}
+
+func (s *ApiServer) getSalesBetween(from, until time.Time) ([]models.Sale, error) {
 	var salesModels []models.Sale
 	if err := s.DB.Preload("SaleUnits").Find(&salesModels, "sold_at >= ? AND sold_at <= ?", from, until).Error; err != nil {
 		return nil, fmt.Errorf("get sales from database: %w", err)
