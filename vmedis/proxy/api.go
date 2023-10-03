@@ -44,7 +44,6 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 		{
 			sales.GET(
 				"",
-				cache.CacheByRequestURI(store, 10*time.Minute),
 				s.HandleGetSales,
 			)
 
@@ -83,13 +82,11 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 		{
 			drugs.GET(
 				"",
-				cache.CacheByRequestURI(store, time.Hour),
 				s.HandleGetDrugs,
 			)
 
 			drugs.GET(
 				"/to-stock-opname",
-				cache.CacheByRequestURI(store, time.Hour),
 				s.HandleGetDrugsToStockOpname,
 			)
 
@@ -103,7 +100,6 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 		{
 			stockOpnames.GET(
 				"",
-				cache.CacheByRequestURI(store, time.Hour),
 				s.HandleGetStockOpnames,
 			)
 

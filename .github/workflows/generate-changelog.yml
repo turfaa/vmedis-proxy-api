@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  deploy:
+  generate-changelog:
     runs-on: ubuntu-latest
 
     steps:
