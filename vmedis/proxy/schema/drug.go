@@ -8,6 +8,7 @@ import (
 // DrugsResponse is the response of the drugs endpoint.
 type DrugsResponse struct {
 	Drugs []Drug `json:"drugs"`
+	Date  string `json:"date,omitempty"`
 }
 
 // Drug is a drug in the inventory.

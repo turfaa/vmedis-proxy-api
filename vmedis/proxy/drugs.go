@@ -103,7 +103,7 @@ func (s *ApiServer) HandleGetDrugsToStockOpname(c *gin.Context) {
 		return drugSales[drugsToStockOpname[i].VmedisCode].Occurrences > drugSales[drugsToStockOpname[j].VmedisCode].Occurrences
 	})
 
-	c.JSON(200, schema.DrugsResponse{Drugs: drugsToStockOpname})
+	c.JSON(200, schema.DrugsResponse{Drugs: drugsToStockOpname, Date: todayFrom.Format("2006-01-02")})
 }
 
 // HandleDumpDrugs handles the request to dump the drugs.

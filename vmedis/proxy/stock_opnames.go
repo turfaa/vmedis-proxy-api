@@ -21,10 +21,8 @@ func (s *ApiServer) HandleGetStockOpnames(c *gin.Context) {
 		return
 	}
 
-	day := datatypes.Date(dayFrom)
-
 	var stockOpnames []models.StockOpname
-	if err := s.DB.Where("date = ?", day).Find(&stockOpnames).Error; err != nil {
+	if err := s.DB.Where("date = ?", datatypes.Date(dayFrom)).Find(&stockOpnames).Error; err != nil {
 		c.JSON(500, gin.H{
 			"error": "failed to get stock opnames: " + err.Error(),
 		})
@@ -36,7 +34,7 @@ func (s *ApiServer) HandleGetStockOpnames(c *gin.Context) {
 		sos[i] = schema.FromModelsStockOpname(so)
 	}
 
-	c.JSON(200, schema.StockOpnamesResponse{StockOpnames: sos})
+	c.JSON(200, schema.StockOpnamesResponse{StockOpnames: sos, Date: dayFrom.Format("2006-01-02")})
 }
 
 // HandleDumpStockOpnames handles the request to dump the stock opnames.
