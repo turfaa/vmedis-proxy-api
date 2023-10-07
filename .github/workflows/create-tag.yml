@@ -20,4 +20,4 @@ jobs:
         id: tagbot
         env:
           AUTH_TOKEN: ${{ secrets.PAT }}
-          LATEST: true
+
