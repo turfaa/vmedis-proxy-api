@@ -144,3 +144,5 @@ config/config.yaml
 
 data
 x_test.go
+.DS_Store
+

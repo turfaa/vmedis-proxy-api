@@ -3,7 +3,7 @@ package proxy
 import (
 	"time"
 
-	"github.com/chenyahui/gin-cache"
+	cache "github.com/chenyahui/gin-cache"
 	"github.com/chenyahui/gin-cache/persist"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/gzip"
@@ -106,6 +106,14 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 			stockOpnames.POST(
 				"/dump",
 				s.HandleDumpStockOpnames,
+			)
+		}
+
+		users := v1.Group("/users")
+		{
+			users.POST(
+				"/login",
+				s.HandleLogin,
 			)
 		}
 	}
