@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"sort"
+	"strings"
 
 	"github.com/turfaa/vmedis-proxy-api/vmedis/proxy/schema"
 )
@@ -30,7 +31,7 @@ func filterUnits(units []schema.Unit) []schema.Unit {
 	for _, u := range units {
 		conversion *= u.ConversionToParentUnit
 
-		minPrice, ok := minAllowedPriceByUnit[u.Unit]
+		minPrice, ok := minAllowedPriceByUnit[strings.ToLower(u.Unit)]
 		if ok && u.PriceOne < minPrice {
 			continue
 		}
@@ -39,7 +40,7 @@ func filterUnits(units []schema.Unit) []schema.Unit {
 		if len(result) > 0 {
 			pu = result[len(result)-1].Unit
 		}
-		
+
 		result = append(result, schema.Unit{
 			Unit:                   u.Unit,
 			ParentUnit:             pu,
