@@ -16,7 +16,7 @@ import (
 // HandleGetDrugs handles the request to get the drugs.
 func (s *ApiServer) HandleGetDrugs(c *gin.Context) {
 	var drugs []models.Drug
-	if err := s.DB.Preload("Units").Find(&drugs).Error; err != nil {
+	if err := s.DB.Preload("Units").Order("name").Find(&drugs).Error; err != nil {
 		c.JSON(500, gin.H{
 			"error": "failed to get drugs from database: " + err.Error(),
 		})
@@ -25,7 +25,10 @@ func (s *ApiServer) HandleGetDrugs(c *gin.Context) {
 
 	var res schema.DrugsResponse
 	for _, drug := range drugs {
-		res.Drugs = append(res.Drugs, schema.FromModelsDrug(drug))
+		d := schema.FromModelsDrug(drug)
+		d.Units = filterUnits(d.Units)
+
+		res.Drugs = append(res.Drugs, d)
 	}
 
 	c.JSON(200, res)

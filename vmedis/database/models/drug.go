@@ -12,7 +12,7 @@ type Drug struct {
 
 	VmedisID     int    `gorm:"unique"`
 	VmedisCode   string `gorm:"unique"`
-	Name         string
+	Name         string `gorm:"index"`
 	Manufacturer string `gorm:"index"`
 	MinimumStock Stock  `gorm:"embedded;embeddedPrefix:minimum_stock_"`
 
