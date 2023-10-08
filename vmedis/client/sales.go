@@ -35,7 +35,7 @@ func (c *Client) GetAllTodaySales(ctx context.Context) ([]Sale, error) {
 		return nil, fmt.Errorf("get number of pages: %w", err)
 	}
 
-	lastPage := 0
+	lastPage := 1
 	for _, p := range res.OtherPages {
 		if p > lastPage {
 			lastPage = p
