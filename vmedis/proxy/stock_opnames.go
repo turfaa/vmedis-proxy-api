@@ -22,7 +22,7 @@ func (s *ApiServer) HandleGetStockOpnames(c *gin.Context) {
 	}
 
 	var stockOpnames []models.StockOpname
-	if err := s.DB.Where("date = ?", datatypes.Date(dayFrom)).Find(&stockOpnames).Error; err != nil {
+	if err := s.DB.Where("date = ?", datatypes.Date(dayFrom)).Order("vmedis_id").Find(&stockOpnames).Error; err != nil {
 		c.JSON(500, gin.H{
 			"error": "failed to get stock opnames: " + err.Error(),
 		})
