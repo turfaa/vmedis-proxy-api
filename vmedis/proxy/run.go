@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -64,7 +65,7 @@ func Run(config Config) {
 	defer stop()
 
 	done := make(chan os.Signal, 1)
-	signal.Notify(done, os.Interrupt, os.Kill)
+	signal.Notify(done, os.Interrupt, syscall.SIGTERM)
 
 	select {
 	case err := <-serverError:

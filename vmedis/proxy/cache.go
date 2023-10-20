@@ -44,5 +44,5 @@ func (c CompressedCache) Get(key string, value interface{}) error {
 
 // Delete removes an item from the underlying CacheStore.
 func (c CompressedCache) Delete(key string) error {
-	return c.Delete(key)
+	return c.Store.Delete(key)
 }

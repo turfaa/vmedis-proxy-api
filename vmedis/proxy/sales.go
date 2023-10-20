@@ -112,6 +112,10 @@ func (s *ApiServer) getSales(c *gin.Context) ([]models.Sale, error) {
 }
 
 func (s *ApiServer) getSalesBetween(from, until time.Time) ([]models.Sale, error) {
+	if from.After(until) {
+		from, until = until, from
+	}
+
 	var salesModels []models.Sale
 	if err := s.DB.Preload("SaleUnits").Find(&salesModels, "sold_at >= ? AND sold_at <= ?", from, until).Error; err != nil {
 		return nil, fmt.Errorf("get sales from database: %w", err)
