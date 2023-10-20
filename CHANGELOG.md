@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.4.3] - 2023-10-20
+### :bug: Bug Fixes
+- [`35b1a04`](https://github.com/turfaa/vmedis-proxy-api/commit/35b1a04c295973574611c3000fe7016addb5a1e5) - Use last month sales data for stock opname *(commit by [@turfaa](https://github.com/turfaa))*
+
+
 ## [v0.4.2] - 2023-10-10
 ### :bug: Bug Fixes
 - [`bc0a8d1`](https://github.com/turfaa/vmedis-proxy-api/commit/bc0a8d16e4b8071e6365928d01f67b2b83518f66) - Order stock opnames by vmedis_id *(commit by [@turfaa](https://github.com/turfaa))*
@@ -37,3 +42,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v0.4.0]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.3.1...v0.4.0
 [v0.4.1]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.4.0...v0.4.1
 [v0.4.2]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.4.1...v0.4.2
+[v0.4.3]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.4.2...v0.4.3
