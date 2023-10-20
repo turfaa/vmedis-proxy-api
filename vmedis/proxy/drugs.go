@@ -44,20 +44,20 @@ func (s *ApiServer) HandleGetDrugsToStockOpname(c *gin.Context) {
 		return
 	}
 
-	yesterdayFrom, yesterdayUntil := todayFrom.Add(-24*time.Hour), todayUntil.Add(-24*time.Hour)
+	yesterdayFrom, lastMonthFrom := todayFrom.Add(-24*time.Hour), todayFrom.AddDate(0, -1, 0)
 
-	yesterdaySales, err := s.getSalesBetween(yesterdayFrom, yesterdayUntil)
+	sales, err := s.getSalesBetween(yesterdayFrom, lastMonthFrom)
 	if err != nil {
 		c.JSON(500, gin.H{
-			"error": fmt.Sprintf("failed to get sales between %s and %s: %s", yesterdayFrom, yesterdayUntil, err),
+			"error": fmt.Sprintf("failed to get sales between %s and %s: %s", yesterdayFrom, lastMonthFrom, err),
 		})
 		return
 	}
 
-	lastMonthFrom := todayFrom.AddDate(0, -1, 0)
+	lastThreeMonthsFrom := lastMonthFrom.AddDate(0, -3, 0)
 
 	var alreadyStockOpnamedDrugCodes []string
-	if err := s.DB.Model(&models.StockOpname{}).Where("date BETWEEN ? AND ?", lastMonthFrom, todayUntil).Pluck("drug_code", &alreadyStockOpnamedDrugCodes).Error; err != nil {
+	if err := s.DB.Model(&models.StockOpname{}).Where("date BETWEEN ? AND ?", lastThreeMonthsFrom, todayUntil).Pluck("drug_code", &alreadyStockOpnamedDrugCodes).Error; err != nil {
 		c.JSON(500, gin.H{
 			"error": fmt.Sprintf("failed to get already stock opnamed drug codes: %s", err),
 		})
@@ -66,7 +66,7 @@ func (s *ApiServer) HandleGetDrugsToStockOpname(c *gin.Context) {
 
 	drugsToStockOpnameCodesMap := make(map[string]struct{})
 	drugSales := make(map[string]schema.SoldDrug)
-	for _, sale := range yesterdaySales {
+	for _, sale := range sales {
 		for _, saleUnit := range sale.SaleUnits {
 			drugsToStockOpnameCodesMap[saleUnit.DrugCode] = struct{}{}
 			drugSales[saleUnit.DrugCode] = schema.SoldDrug{
