@@ -8,7 +8,6 @@ import (
 
 // StockOpnamesResponse represents the stock opnames API response.
 type StockOpnamesResponse struct {
-	Date         string        `json:"date"`
 	StockOpnames []StockOpname `json:"stockOpnames"`
 }
 

@@ -34,7 +34,7 @@ func (s *ApiServer) HandleGetStockOpnames(c *gin.Context) {
 		sos[i] = schema.FromModelsStockOpname(so)
 	}
 
-	c.JSON(200, schema.StockOpnamesResponse{StockOpnames: sos, Date: dayFrom.Format("2006-01-02")})
+	c.JSON(200, schema.StockOpnamesResponse{StockOpnames: sos})
 }
 
 // HandleDumpStockOpnames handles the request to dump the stock opnames.

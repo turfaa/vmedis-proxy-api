@@ -13,7 +13,6 @@ type SalesResponse struct {
 
 // SoldDrugsResponse represents the sold drugs API response.
 type SoldDrugsResponse struct {
-	Date  string     `json:"date"`
 	Drugs []SoldDrug `json:"drugs"`
 }
 

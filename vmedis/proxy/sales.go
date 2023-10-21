@@ -84,8 +84,7 @@ func (s *ApiServer) HandleGetSoldDrugs(c *gin.Context) {
 		return drugsSlice[i].Occurrences > drugsSlice[j].Occurrences
 	})
 
-	date := c.DefaultQuery("date", time.Now().Format("2006-01-02"))
-	c.JSON(200, schema.SoldDrugsResponse{Drugs: drugsSlice, Date: date})
+	c.JSON(200, schema.SoldDrugsResponse{Drugs: drugsSlice})
 }
 
 // HandleDumpSales handles the request to dump today's sales.
