@@ -7,15 +7,37 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func getDatesFromQuery(c *gin.Context) (from time.Time, until time.Time, err error) {
-	date := c.Query("date")
+func getOneDayFromQuery(c *gin.Context) (from time.Time, until time.Time, err error) {
+	return getTimeRange(c.Query("date"), "", "")
+}
 
-	if date == "" {
+func getTimeRangeFromQuery(c *gin.Context) (from time.Time, until time.Time, err error) {
+	return getTimeRange(c.Query("date"), c.Query("from"), c.Query("until"))
+}
+
+func getTimeRange(dateQuery, fromQuery, untilQuery string) (from time.Time, until time.Time, err error) {
+	if fromQuery != "" {
+		from, _, err = day(fromQuery)
+		if err != nil {
+			err = fmt.Errorf("parse time range from `from` query [%s]: %w", fromQuery, err)
+			return
+		}
+
+		if untilQuery != "" {
+			_, until, err = day(untilQuery)
+			if err != nil {
+				err = fmt.Errorf("parse time range from `until` query [%s]: %w", untilQuery, err)
+				return
+			}
+		} else {
+			until = endOfToday()
+		}
+	} else if dateQuery == "" {
 		from, until = today()
 	} else {
-		from, until, err = day(date)
+		from, until, err = day(dateQuery)
 		if err != nil {
-			err = fmt.Errorf("parse day from date query [%s]: %w", date, err)
+			err = fmt.Errorf("parse time range from `date` query [%s]: %w", dateQuery, err)
 			return
 		}
 	}

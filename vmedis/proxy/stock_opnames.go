@@ -13,7 +13,7 @@ import (
 
 // HandleGetStockOpnames handles the request to get the stock opnames.
 func (s *ApiServer) HandleGetStockOpnames(c *gin.Context) {
-	dayFrom, _, err := getDatesFromQuery(c)
+	dayFrom, _, err := getTimeRangeFromQuery(c)
 	if err != nil {
 		c.JSON(400, gin.H{
 			"error": "failed to parse date query: " + err.Error(),

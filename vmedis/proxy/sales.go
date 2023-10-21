@@ -98,7 +98,7 @@ func (s *ApiServer) HandleDumpSales(c *gin.Context) {
 }
 
 func (s *ApiServer) getSales(c *gin.Context) ([]models.Sale, error) {
-	from, until, err := getDatesFromQuery(c)
+	from, until, err := getTimeRangeFromQuery(c)
 	if err != nil {
 		return nil, fmt.Errorf("get dates from query: %w", err)
 	}

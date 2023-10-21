@@ -36,7 +36,7 @@ func (s *ApiServer) HandleGetDrugs(c *gin.Context) {
 
 // HandleGetDrugsToStockOpname handles the request to get the drugs to stock opname.
 func (s *ApiServer) HandleGetDrugsToStockOpname(c *gin.Context) {
-	todayFrom, todayUntil, err := getDatesFromQuery(c)
+	todayFrom, todayUntil, err := getOneDayFromQuery(c)
 	if err != nil {
 		c.JSON(400, gin.H{
 			"error": fmt.Sprintf("failed to parse date query: %s", err),
