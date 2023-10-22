@@ -105,7 +105,7 @@ func summarizeOneDrugStockOpnames(stockOpnames []schema.StockOpname) schema.Stoc
 		summary.SalePriceDifference += so.SalePriceDifference
 
 		summary.Changes = append(summary.Changes, schema.StockChange{
-			Batch:           so.BatchCode,
+			BatchCode:       so.BatchCode,
 			InitialQuantity: so.InitialQuantity,
 			RealQuantity:    so.RealQuantity,
 		})

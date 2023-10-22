@@ -46,7 +46,7 @@ type StockOpnameSummary struct {
 
 // StockChange represents the stock change in one stock opname.
 type StockChange struct {
-	Batch           string  `json:"batch"`
+	BatchCode       string  `json:"batchCode"`
 	InitialQuantity float64 `json:"initialQuantity"`
 	RealQuantity    float64 `json:"realQuantity"`
 }
