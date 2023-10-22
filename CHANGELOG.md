@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.5.2] - 2023-10-22
+### :bug: Bug Fixes
+- [`963275e`](https://github.com/turfaa/vmedis-proxy-api/commit/963275e3918ae59c98e41795cdb149b4ca8290e8) - **stock-opname-summary**: Change 'batch' to 'batchCode' to make it consistent *(commit by [@turfaa](https://github.com/turfaa))*
+
+
 ## [v0.5.1] - 2023-10-22
 ### :bug: Bug Fixes
 - [`ca26834`](https://github.com/turfaa/vmedis-proxy-api/commit/ca268340e65591fbace90b29b9157a53e6736f9e) - Return empty list when empty *(commit by [@turfaa](https://github.com/turfaa))*
@@ -63,3 +68,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v0.4.4]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.4.3...v0.4.4
 [v0.5.0]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.4.4...v0.5.0
 [v0.5.1]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.5.0...v0.5.1
+[v0.5.2]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.5.1...v0.5.2
