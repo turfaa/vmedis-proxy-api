@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.5.0] - 2023-10-22
+### :sparkles: New Features
+- [`d88daec`](https://github.com/turfaa/vmedis-proxy-api/commit/d88daeceaceb07a792a15841fa0317208701106a) - Support multiple days queries *(commit by [@turfaa](https://github.com/turfaa))*
+- [`a50eadb`](https://github.com/turfaa/vmedis-proxy-api/commit/a50eadb8892371a668c177ead83603ce427c56c4) - Remove Sun Oct 22 05:11:48 WIB 2023 in response schemas because it's not relevant anymore with the introduction of multiple days queries *(commit by [@turfaa](https://github.com/turfaa))*
+- [`8c4ba61`](https://github.com/turfaa/vmedis-proxy-api/commit/8c4ba616e42aadfb300a645fe2af6c5fb50f763d) - Support stock opname summary *(commit by [@turfaa](https://github.com/turfaa))*
+
+
 ## [v0.4.4] - 2023-10-20
 ### :bug: Bug Fixes
 - [`8013f55`](https://github.com/turfaa/vmedis-proxy-api/commit/8013f5581da862fda1ff48531480c281f74840d4) - Support getSalesBetween(until, from) *(commit by [@turfaa](https://github.com/turfaa))*
@@ -49,3 +56,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v0.4.2]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.4.1...v0.4.2
 [v0.4.3]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.4.2...v0.4.3
 [v0.4.4]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.4.3...v0.4.4
+[v0.5.0]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.4.4...v0.5.0
