@@ -103,6 +103,11 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 				s.HandleGetStockOpnames,
 			)
 
+			stockOpnames.GET(
+				"/summaries",
+				s.HandleGetStockOpnameSummaries,
+			)
+
 			stockOpnames.POST(
 				"/dump",
 				s.HandleDumpStockOpnames,

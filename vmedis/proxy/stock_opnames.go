@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/datatypes"
@@ -13,28 +14,45 @@ import (
 
 // HandleGetStockOpnames handles the request to get the stock opnames.
 func (s *ApiServer) HandleGetStockOpnames(c *gin.Context) {
-	dayFrom, _, err := getTimeRangeFromQuery(c)
+	sos, err := s.getStockOpnames(c)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "failed to parse date query: " + err.Error(),
-		})
-		return
-	}
-
-	var stockOpnames []models.StockOpname
-	if err := s.DB.Where("date = ?", datatypes.Date(dayFrom)).Order("vmedis_id").Find(&stockOpnames).Error; err != nil {
 		c.JSON(500, gin.H{
-			"error": "failed to get stock opnames: " + err.Error(),
+			"error": fmt.Sprintf("failed to get stock opnames: %s", err),
 		})
 		return
-	}
-
-	sos := make([]schema.StockOpname, len(stockOpnames))
-	for i, so := range stockOpnames {
-		sos[i] = schema.FromModelsStockOpname(so)
 	}
 
 	c.JSON(200, schema.StockOpnamesResponse{StockOpnames: sos})
+}
+
+// HandleGetStockOpnameSummaries handles the request to get the stock opname summary.
+func (s *ApiServer) HandleGetStockOpnameSummaries(c *gin.Context) {
+	sos, err := s.getStockOpnames(c)
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": fmt.Sprintf("failed to get stock opnames: %s", err),
+		})
+		return
+	}
+
+	var summaries []schema.StockOpnameSummary
+
+	var currentDrug []schema.StockOpname
+	for _, so := range sos {
+		if len(currentDrug) == 0 || stockOpnameShouldSummarizeTogether(so, currentDrug[0]) {
+			currentDrug = append(currentDrug, so)
+			continue
+		}
+
+		summaries = append(summaries, summarizeOneDrugStockOpnames(currentDrug))
+		currentDrug = nil
+	}
+
+	if len(currentDrug) > 0 {
+		summaries = append(summaries, summarizeOneDrugStockOpnames(currentDrug))
+	}
+
+	c.JSON(200, schema.StockOpnameSummariesResponse{Summaries: summaries})
 }
 
 // HandleDumpStockOpnames handles the request to dump the stock opnames.
@@ -43,4 +61,58 @@ func (s *ApiServer) HandleDumpStockOpnames(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"message": "dumping stock opnames",
 	})
+}
+
+func (s *ApiServer) getStockOpnames(c *gin.Context) ([]schema.StockOpname, error) {
+	timeFrom, timeUntil, err := getTimeRangeFromQuery(c)
+	if err != nil {
+		return nil, fmt.Errorf("get dates from query: %w", err)
+	}
+
+	var stockOpnames []models.StockOpname
+	if err := s.DB.Where("date >= ? AND date <= ?", datatypes.Date(timeFrom), datatypes.Date(timeUntil)).Order("vmedis_id").Find(&stockOpnames).Error; err != nil {
+		return nil, fmt.Errorf("get stock opnames from database: %w", err)
+	}
+
+	sos := make([]schema.StockOpname, len(stockOpnames))
+	for i, so := range stockOpnames {
+		sos[i] = schema.FromModelsStockOpname(so)
+	}
+
+	return sos, nil
+}
+
+// summarizeOneDrugStockOpnames assumes that the stock opnames are:
+// - In the same date
+// - Sorted chronologically
+// - For the same drug
+func summarizeOneDrugStockOpnames(stockOpnames []schema.StockOpname) schema.StockOpnameSummary {
+	summary := schema.StockOpnameSummary{
+		Date:     stockOpnames[0].Date,
+		DrugCode: stockOpnames[0].DrugCode,
+		DrugName: stockOpnames[0].DrugName,
+		Unit:     stockOpnames[0].Unit,
+	}
+
+	for _, so := range stockOpnames {
+		if so.InitialQuantity == so.RealQuantity {
+			continue
+		}
+
+		summary.QuantityDifference += so.QuantityDifference
+		summary.HPPDifference += so.HPPDifference
+		summary.SalePriceDifference += so.SalePriceDifference
+
+		summary.Changes = append(summary.Changes, schema.StockChange{
+			Batch:           so.BatchCode,
+			InitialQuantity: so.InitialQuantity,
+			RealQuantity:    so.RealQuantity,
+		})
+	}
+
+	return summary
+}
+
+func stockOpnameShouldSummarizeTogether(so1, so2 schema.StockOpname) bool {
+	return so1.Date == so2.Date && so1.DrugCode == so2.DrugCode && so1.Unit == so2.Unit
 }

@@ -11,6 +11,11 @@ type StockOpnamesResponse struct {
 	StockOpnames []StockOpname `json:"stockOpnames"`
 }
 
+// StockOpnameSummariesResponse represents the stock opname summaries API response.
+type StockOpnameSummariesResponse struct {
+	Summaries []StockOpnameSummary `json:"summaries"`
+}
+
 // StockOpname represents the stock opname.
 type StockOpname struct {
 	VmedisID            string  `json:"vmedisId"`
@@ -25,6 +30,25 @@ type StockOpname struct {
 	HPPDifference       float64 `json:"hppDifference"`
 	SalePriceDifference float64 `json:"salePriceDifference"`
 	Notes               string  `json:"notes"`
+}
+
+// StockOpnameSummary is the summary of a series of stock opname for the same drug.
+type StockOpnameSummary struct {
+	Date                string        `json:"date"`
+	DrugCode            string        `json:"drugCode"`
+	DrugName            string        `json:"drugName"`
+	Unit                string        `json:"unit"`
+	Changes             []StockChange `json:"changes"`
+	QuantityDifference  float64       `json:"quantityDifference"`
+	HPPDifference       float64       `json:"hppDifference"`
+	SalePriceDifference float64       `json:"salePriceDifference"`
+}
+
+// StockChange represents the stock change in one stock opname.
+type StockChange struct {
+	Batch           string  `json:"batch"`
+	InitialQuantity float64 `json:"initialQuantity"`
+	RealQuantity    float64 `json:"realQuantity"`
 }
 
 // FromModelsStockOpname converts StockOpname from models.StockOpname to proxy schema.
