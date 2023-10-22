@@ -35,7 +35,7 @@ func (s *ApiServer) HandleGetStockOpnameSummaries(c *gin.Context) {
 		return
 	}
 
-	var summaries []schema.StockOpnameSummary
+	summaries := []schema.StockOpnameSummary{}
 
 	var currentDrug []schema.StockOpname
 	for _, so := range sos {
@@ -92,6 +92,7 @@ func summarizeOneDrugStockOpnames(stockOpnames []schema.StockOpname) schema.Stoc
 		DrugCode: stockOpnames[0].DrugCode,
 		DrugName: stockOpnames[0].DrugName,
 		Unit:     stockOpnames[0].Unit,
+		Changes:  make([]schema.StockChange, 0, len(stockOpnames)),
 	}
 
 	for _, so := range stockOpnames {
