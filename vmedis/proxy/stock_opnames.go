@@ -45,7 +45,7 @@ func (s *ApiServer) HandleGetStockOpnameSummaries(c *gin.Context) {
 		}
 
 		summaries = append(summaries, summarizeOneDrugStockOpnames(currentDrug))
-		currentDrug = nil
+		currentDrug = append(currentDrug[:0], so)
 	}
 
 	if len(currentDrug) > 0 {
