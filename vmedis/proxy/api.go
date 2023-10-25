@@ -48,12 +48,6 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 			)
 
 			sales.GET(
-				"/statistics/daily",
-				cache.CacheByRequestURI(store, time.Minute),
-				s.HandleGetDailySalesStatistics,
-			)
-
-			sales.GET(
 				"/drugs",
 				s.HandleGetSoldDrugs,
 			)
@@ -62,6 +56,21 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 				"/dump",
 				s.HandleDumpSales,
 			)
+
+			statistics := sales.Group("/statistics")
+			{
+				statistics.GET(
+					"",
+					cache.CacheByRequestURI(store, time.Minute),
+					s.HandleGetSalesStatistics,
+				)
+
+				statistics.GET(
+					"/daily",
+					cache.CacheByRequestURI(store, time.Minute),
+					s.HandleGetDailySalesStatistics,
+				)
+			}
 		}
 
 		procurement := v1.Group("/procurement")
