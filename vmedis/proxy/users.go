@@ -8,7 +8,7 @@ import (
 )
 
 // Login handles the login request.
-// Currently it's a dummy login method. It doesn't check the password.
+// Currently it's a dummy login method. It doesn't do any authentication.
 func (s *ApiServer) HandleLogin(c *gin.Context) {
 	var req schema.LoginRequest
 	if err := c.BindJSON(&req); err != nil {
@@ -18,13 +18,9 @@ func (s *ApiServer) HandleLogin(c *gin.Context) {
 		return
 	}
 
+	// Get the user, or create a guest user.
 	var user models.User
-	s.DB.Where("email = ?", req.Email).First(&user)
+	s.DB.Where(models.User{Email: req.Email}).Attrs(models.User{Role: "guest"}).FirstOrCreate(&user)
 
-	role := user.Role
-	if role == "" {
-		role = "guest"
-	}
-
-	c.JSON(200, schema.User{Email: req.Email, Role: role})
+	c.JSON(200, schema.FromModelsUser(user))
 }
