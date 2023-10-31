@@ -7,8 +7,8 @@ import (
 	"github.com/turfaa/vmedis-proxy-api/vmedis/proxy/schema"
 )
 
-// Login handles the login request.
-// Currently it's a dummy login method. It doesn't do any authentication.
+// HandleLogin handles the login request.
+// Currently, it's a dummy login method. It doesn't do any authentication.
 func (s *ApiServer) HandleLogin(c *gin.Context) {
 	var req schema.LoginRequest
 	if err := c.BindJSON(&req); err != nil {

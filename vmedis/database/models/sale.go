@@ -25,7 +25,7 @@ type SaleUnit struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 
-	InvoiceNumber string `gorm:"uniqueIndex:idx_sale_unit_invoice_number_id_in_sale"`
+	InvoiceNumber string `gorm:"index;uniqueIndex:idx_sale_unit_invoice_number_id_in_sale"`
 	IDInSale      int    `gorm:"uniqueIndex:idx_sale_unit_invoice_number_id_in_sale"`
 	DrugCode      string `gorm:"index"`
 	DrugName      string `gorm:"index"`
