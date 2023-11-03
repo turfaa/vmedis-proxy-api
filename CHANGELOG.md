@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.8.0] - 2023-11-03
+### :sparkles: New Features
+- [`e71b67c`](https://github.com/turfaa/vmedis-proxy-api/commit/e71b67c882dd33e14ba1506bdb954359a5927eeb) - Add invoice calculators API *(commit by [@turfaa](https://github.com/turfaa))*
+
+
 ## [v0.7.0] - 2023-10-31
 ### :sparkles: New Features
 - [`38ddcd9`](https://github.com/turfaa/vmedis-proxy-api/commit/38ddcd9c9efb34b296dcfdeb728cbb97d32db72a) - **drugs-to-stock-opname**: Support conservative mode *(commit by [@turfaa](https://github.com/turfaa))*
@@ -88,3 +93,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v0.5.3]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.5.2...v0.5.3
 [v0.6.0]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.5.3...v0.6.0
 [v0.7.0]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.6.0...v0.7.0
+[v0.8.0]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.7.0...v0.8.0
