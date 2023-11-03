@@ -84,6 +84,12 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 				"/recommendations/dump",
 				s.HandleDumpProcurementRecommendations,
 			)
+
+			procurement.GET(
+				"/invoice-calculators",
+				cache.CacheByRequestURI(store, time.Hour),
+				s.HandleGetInvoiceCalculators,
+			)
 		}
 
 		drugs := v1.Group("/drugs")

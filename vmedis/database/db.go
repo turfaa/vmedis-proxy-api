@@ -48,12 +48,18 @@ func AutoMigrate(db *gorm.DB) error {
 		models.SaleUnit{},
 		models.StockOpname{},
 		models.User{},
+		models.InvoiceCalculator{},
+		models.InvoiceComponent{},
 	}
 
 	for _, model := range availableModels {
 		if err := db.AutoMigrate(model); err != nil {
 			return fmt.Errorf("auto migrate %T: %w", model, err)
 		}
+	}
+
+	if err := PrepopulateInvoiceCalculators(db); err != nil {
+		return fmt.Errorf("prepopulate invoice calculators: %w", err)
 	}
 
 	return nil
