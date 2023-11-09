@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/go-co-op/gocron"
@@ -16,8 +17,9 @@ import (
 
 const (
 	// DailySalesStatisticsSchedule is the schedule of the daily sales statistics dumper.
-	// It currently runs every the first second of every hour.
-	DailySalesStatisticsSchedule = "0 * * * *"
+	// It currently runs every hour + 30 seconds.
+	// We add the 30 seconds delay to allow the vmedis server's cache to clear, especially in the midnight.
+	DailySalesStatisticsSchedule = "30 0 * * * *"
 
 	// DailySalesSchedule is the schedule of the daily sales dumper.
 	// It currently runs every the first second of every hour.
@@ -50,7 +52,7 @@ func Run(vmedisClient *client.Client, db *gorm.DB, redisClient *redis.Client) {
 
 	scheduler := gocron.NewScheduler(time.Local)
 
-	if _, err := scheduler.Cron(DailySalesStatisticsSchedule).Do(DumpDailySalesStatistics, ctx, db, vmedisClient); err != nil {
+	if _, err := scheduler.CronWithSeconds(DailySalesStatisticsSchedule).Do(DumpDailySalesStatistics, ctx, db, vmedisClient); err != nil {
 		log.Fatalf("Error scheduling daily sales statistics dumper: %s\n", err)
 	}
 
@@ -74,7 +76,7 @@ func Run(vmedisClient *client.Client, db *gorm.DB, redisClient *redis.Client) {
 	scheduler.StartAsync()
 
 	done := make(chan os.Signal, 1)
-	signal.Notify(done, os.Interrupt, os.Kill)
+	signal.Notify(done, os.Interrupt, syscall.SIGTERM)
 
 	<-done
 
