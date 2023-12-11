@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.8.2] - 2023-12-11
+### :bug: Bug Fixes
+- [`f4f6035`](https://github.com/turfaa/vmedis-proxy-api/commit/f4f6035364d7264db8d7fbbcda537dd7193ccea1) - use 2 months for drugs to stock opname *(commit by [@turfaa](https://github.com/turfaa))*
+
+
 ## [v0.8.1] - 2023-11-09
 ### :bug: Bug Fixes
 - [`19c5e4f`](https://github.com/turfaa/vmedis-proxy-api/commit/19c5e4ff917a226f86fad4ea9654530a05e69af1) - **sales-statistics-dumper**: Add 30 seconds delay to fetch sales statistics *(commit by [@turfaa](https://github.com/turfaa))*
@@ -101,3 +106,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v0.7.0]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.6.0...v0.7.0
 [v0.8.0]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.7.0...v0.8.0
 [v0.8.1]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.8.0...v0.8.1
+[v0.8.2]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.8.1...v0.8.2
