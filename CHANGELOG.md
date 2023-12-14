@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.8.4] - 2023-12-14
+### :bug: Bug Fixes
+- [`9d5568f`](https://github.com/turfaa/vmedis-proxy-api/commit/9d5568fa0a6925e1948ae89e32cc29a9bf210db2) - remove unused variable *(commit by [@turfaa](https://github.com/turfaa))*
+
+
 ## [v0.8.2] - 2023-12-11
 ### :bug: Bug Fixes
 - [`f4f6035`](https://github.com/turfaa/vmedis-proxy-api/commit/f4f6035364d7264db8d7fbbcda537dd7193ccea1) - use 2 months for drugs to stock opname *(commit by [@turfaa](https://github.com/turfaa))*
@@ -107,3 +112,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v0.8.0]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.7.0...v0.8.0
 [v0.8.1]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.8.0...v0.8.1
 [v0.8.2]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.8.1...v0.8.2
+[v0.8.4]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.8.3...v0.8.4
