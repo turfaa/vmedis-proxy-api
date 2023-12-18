@@ -17,9 +17,8 @@ import (
 
 const (
 	// DailySalesStatisticsSchedule is the schedule of the daily sales statistics dumper.
-	// It currently runs every hour + 30 seconds.
-	// We add the 30 seconds delay to allow the vmedis server's cache to clear, especially in the midnight.
-	DailySalesStatisticsSchedule = "30 0 * * * *"
+	// It currently runs every hour - 30 seconds.
+	DailySalesStatisticsSchedule = "30 59 * * * *"
 
 	// DailySalesSchedule is the schedule of the daily sales dumper.
 	// It currently runs every the first second of every hour.
