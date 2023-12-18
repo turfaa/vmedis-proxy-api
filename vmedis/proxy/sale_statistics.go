@@ -30,7 +30,8 @@ func (s *ApiServer) HandleGetSalesStatistics(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, schema.SaleStatisticsResponse{History: stats})
+	dailyHistory := generateDailyHistory(stats)
+	c.JSON(200, schema.SaleStatisticsResponse{History: stats, DailyHistory: dailyHistory})
 }
 
 // HandleGetDailySalesStatistics handles the request to get the daily sales statistics.
@@ -45,7 +46,8 @@ func (s *ApiServer) HandleGetDailySalesStatistics(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, schema.SaleStatisticsResponse{History: stats})
+	dailyHistory := generateDailyHistory(stats)
+	c.JSON(200, schema.SaleStatisticsResponse{History: stats, DailyHistory: dailyHistory})
 }
 
 func (s *ApiServer) getSalesStatistics(ctx context.Context, from, until time.Time) ([]schema.SaleStatistics, error) {
@@ -82,4 +84,23 @@ func (s *ApiServer) getSalesStatistics(ctx context.Context, from, until time.Tim
 	}
 
 	return stats, nil
+}
+
+func generateDailyHistory(stats []schema.SaleStatistics) []schema.SaleStatistics {
+	res := make([]schema.SaleStatistics, 0, len(stats))
+	for _, stat := range stats {
+		if len(res) == 0 || !statsInSameDay(res[len(res)-1], stat) {
+			res = append(res, stat)
+		} else {
+			res[len(res)-1] = stat
+		}
+	}
+
+	return res
+}
+
+func statsInSameDay(stat1, stat2 schema.SaleStatistics) bool {
+	return stat1.PulledAt.Year() == stat2.PulledAt.Year() &&
+		stat1.PulledAt.Month() == stat2.PulledAt.Month() &&
+		stat1.PulledAt.Day() == stat2.PulledAt.Day()
 }

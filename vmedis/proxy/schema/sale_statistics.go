@@ -10,7 +10,8 @@ import (
 
 // SaleStatisticsResponse represents the sale statistics API response.
 type SaleStatisticsResponse struct {
-	History []SaleStatistics `json:"history"`
+	History      []SaleStatistics `json:"history"`
+	DailyHistory []SaleStatistics `json:"dailyHistory"`
 }
 
 // SaleStatistics represents the sale statistics from the beginning of the day until PulledAt.
