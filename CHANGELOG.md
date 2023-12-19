@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.9.1] - 2023-12-19
+### :bug: Bug Fixes
+- [`e508e13`](https://github.com/turfaa/vmedis-proxy-api/commit/e508e1350e3cf4e21f2298b0abdc9478b7963414) - change sales statistics dumper to run at *:59:30 *(commit by [@turfaa](https://github.com/turfaa))*
+
+
 ## [v0.9.0] - 2023-12-18
 ### :sparkles: New Features
 - [`5859c91`](https://github.com/turfaa/vmedis-proxy-api/commit/5859c914b787d9ec72e5585b0051c8eff6e4429e) - Add daily history *(commit by [@turfaa](https://github.com/turfaa))*
@@ -125,3 +130,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v0.8.4]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.8.3...v0.8.4
 [v0.8.5]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.8.4...v0.8.5
 [v0.9.0]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.8.5...v0.9.0
+[v0.9.1]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.9.0...v0.9.1
