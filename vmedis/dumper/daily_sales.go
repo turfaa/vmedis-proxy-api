@@ -82,24 +82,28 @@ func dumpSales(db *gorm.DB, sales []models.Sale) error {
 		}
 
 		for _, sale := range sales {
-			if err := tx.Clauses(clause.OnConflict{
-				Columns: []clause.Column{{Name: "invoice_number"}, {Name: "id_in_sale"}},
-				DoUpdates: clause.AssignmentColumns([]string{
-					"updated_at",
-					"drug_code",
-					"drug_name",
-					"batch",
-					"amount",
-					"unit",
-					"unit_price",
-					"price_category",
-					"discount",
-					"tuslah",
-					"embalase",
-					"total",
-				}),
-			}).Create(&sale.SaleUnits).Error; err != nil {
-				return fmt.Errorf("create sale units: %w", err)
+			if len(sale.SaleUnits) > 0 {
+				if err := tx.Clauses(clause.OnConflict{
+					Columns: []clause.Column{{Name: "invoice_number"}, {Name: "id_in_sale"}},
+					DoUpdates: clause.AssignmentColumns([]string{
+						"updated_at",
+						"drug_code",
+						"drug_name",
+						"batch",
+						"amount",
+						"unit",
+						"unit_price",
+						"price_category",
+						"discount",
+						"tuslah",
+						"embalase",
+						"total",
+					}),
+				}).Create(&sale.SaleUnits).Error; err != nil {
+					return fmt.Errorf("create sale units: %w", err)
+				}
+			} else {
+				log.Printf("sale %s has no sale units\n", sale.InvoiceNumber)
 			}
 		}
 
