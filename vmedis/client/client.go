@@ -108,7 +108,10 @@ func (c *Client) get(ctx context.Context, path string) (*http.Response, error) {
 }
 
 func (c *Client) getWithSessionId(ctx context.Context, path, sessionId string) (*http.Response, error) {
-	req, err := http.NewRequest("GET", c.BaseUrl+path, nil)
+	finalPath := c.BaseUrl + path
+	log.Printf("GET %s\n", finalPath)
+
+	req, err := http.NewRequest("GET", finalPath, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error creating request: %w", err)
 	}
