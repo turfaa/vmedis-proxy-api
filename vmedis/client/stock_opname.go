@@ -76,7 +76,7 @@ func (c *Client) GetAllTodayStockOpnames(ctx context.Context) ([]StockOpname, er
 // GetTodayStockOpnames gets all stock opnames from today from vmedis.
 // It calls the /laporan-stokopname-batch/index?page=<page> page and try to parse the stock opnames from it.
 func (c *Client) GetTodayStockOpnames(ctx context.Context, page int) (StockOpnamesResponse, error) {
-	res, err := c.get(ctx, fmt.Sprintf("/laporan-stokopname-batch/index?LaporanstokopnameBatchSearch%%5Bcari%%5D=4&LaporanstokopnameBatchSearch%%5Bbulan%%5D=12&LaporanstokopnameBatchSearch%%5Btahun%%5D=2023&LaporanstokopnameBatchSearch%%5Btanggalawal%%5D=21+Dec+2023&LaporanstokopnameBatchSearch%%5Btanggalakhir%%5D=23+Dec+2023++++&page=%d", page))
+	res, err := c.get(ctx, fmt.Sprintf("/laporan-stokopname-batch/index?page=%d", page))
 	if err != nil {
 		return StockOpnamesResponse{}, fmt.Errorf("get stock opnames: %w", err)
 	}
