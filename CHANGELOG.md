@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.9.7] - 2024-01-06
+### :bug: Bug Fixes
+- [`0140ef9`](https://github.com/turfaa/vmedis-proxy-api/commit/0140ef906844f27439162b3a190398d65fa0a4e0) - initiate summaries even if there's nothing so that the json will *(commit by [@turfaa](https://github.com/turfaa))*
+
+
 ## [v0.9.6] - 2024-01-04
 ### :bug: Bug Fixes
 - [`3e719df`](https://github.com/turfaa/vmedis-proxy-api/commit/3e719df710b706c90c10e7299be6492d1ad0bc3d) - update stock opname date *(commit by [@turfaa](https://github.com/turfaa))*
@@ -161,3 +166,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v0.9.4]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.9.3...v0.9.4
 [v0.9.5]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.9.4...v0.9.5
 [v0.9.6]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.9.5...v0.9.6
+[v0.9.7]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.9.6...v0.9.7
