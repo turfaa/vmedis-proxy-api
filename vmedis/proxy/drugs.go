@@ -71,7 +71,7 @@ func (s *ApiServer) HandleGetSalesBasedDrugsToStockOpname(c *gin.Context) {
 		return
 	}
 
-	startFrom, yesterdayUntil := time.Date(2024, 01, 9, 0, 0, 0, 0, time.Local), todayUntil.Add(-24*time.Hour)
+	startFrom, yesterdayUntil := time.Date(2024, 01, 06, 0, 0, 0, 0, time.Local), todayUntil.Add(-24*time.Hour)
 
 	type salesStat struct {
 		DrugCode    string
@@ -142,7 +142,7 @@ func (s *ApiServer) HandleGetConservativeDrugsToStockOpname(c *gin.Context) {
 		return
 	}
 
-	startFrom := time.Date(2024, 01, 9, 0, 0, 0, 0, time.Local)
+	startFrom := time.Date(2024, 01, 06, 0, 0, 0, 0, time.Local)
 
 	var alreadyStockOpnamedDrugCodes []string
 	if err := s.DB.Model(&models.StockOpname{}).Where("date BETWEEN ? AND ?", startFrom, todayUntil).Pluck("drug_code", &alreadyStockOpnamedDrugCodes).Error; err != nil {
