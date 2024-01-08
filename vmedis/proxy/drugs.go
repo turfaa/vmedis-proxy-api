@@ -71,7 +71,7 @@ func (s *ApiServer) HandleGetSalesBasedDrugsToStockOpname(c *gin.Context) {
 		return
 	}
 
-	lastMonthFrom, yesterdayUntil := time.Date(2024, 01, 03, 0, 0, 0, 0, time.Local), todayUntil.Add(-24*time.Hour)
+	startFrom, yesterdayUntil := time.Date(2024, 01, 9, 0, 0, 0, 0, time.Local), todayUntil.Add(-24*time.Hour)
 
 	type salesStat struct {
 		DrugCode    string
@@ -80,7 +80,7 @@ func (s *ApiServer) HandleGetSalesBasedDrugsToStockOpname(c *gin.Context) {
 	}
 
 	var salesStats []salesStat
-	if err := s.DB.Raw("SELECT drug_code, COUNT(*) AS occurrences, SUM(total) AS total_amount FROM sale_units WHERE invoice_number IN (SELECT invoice_number FROM sales WHERE sold_at BETWEEN ? AND ?) GROUP BY drug_code", lastMonthFrom, yesterdayUntil).Find(&salesStats).Error; err != nil {
+	if err := s.DB.Raw("SELECT drug_code, COUNT(*) AS occurrences, SUM(total) AS total_amount FROM sale_units WHERE invoice_number IN (SELECT invoice_number FROM sales WHERE sold_at BETWEEN ? AND ?) GROUP BY drug_code", startFrom, yesterdayUntil).Find(&salesStats).Error; err != nil {
 		c.JSON(500, gin.H{
 			"error": fmt.Sprintf("failed to get sales stats: %s", err),
 		})
@@ -88,7 +88,7 @@ func (s *ApiServer) HandleGetSalesBasedDrugsToStockOpname(c *gin.Context) {
 	}
 
 	var alreadyStockOpnamedDrugCodes []string
-	if err := s.DB.Model(&models.StockOpname{}).Where("date BETWEEN ? AND ?", lastMonthFrom, todayUntil).Pluck("drug_code", &alreadyStockOpnamedDrugCodes).Error; err != nil {
+	if err := s.DB.Model(&models.StockOpname{}).Where("date BETWEEN ? AND ?", startFrom, todayUntil).Pluck("drug_code", &alreadyStockOpnamedDrugCodes).Error; err != nil {
 		c.JSON(500, gin.H{
 			"error": fmt.Sprintf("failed to get already stock opnamed drug codes: %s", err),
 		})
@@ -142,10 +142,10 @@ func (s *ApiServer) HandleGetConservativeDrugsToStockOpname(c *gin.Context) {
 		return
 	}
 
-	lastMonthFrom := time.Date(2024, 01, 03, 0, 0, 0, 0, time.Local)
+	startFrom := time.Date(2024, 01, 9, 0, 0, 0, 0, time.Local)
 
 	var alreadyStockOpnamedDrugCodes []string
-	if err := s.DB.Model(&models.StockOpname{}).Where("date BETWEEN ? AND ?", lastMonthFrom, todayUntil).Pluck("drug_code", &alreadyStockOpnamedDrugCodes).Error; err != nil {
+	if err := s.DB.Model(&models.StockOpname{}).Where("date BETWEEN ? AND ?", startFrom, todayUntil).Pluck("drug_code", &alreadyStockOpnamedDrugCodes).Error; err != nil {
 		c.JSON(500, gin.H{
 			"error": fmt.Sprintf("failed to get already stock opnamed drug codes: %s", err),
 		})
