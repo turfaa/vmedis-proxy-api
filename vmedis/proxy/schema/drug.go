@@ -17,8 +17,8 @@ type Drug struct {
 	Manufacturer string  `json:"manufacturer,omitempty"`
 	Supplier     string  `json:"supplier,omitempty"`
 	MinimumStock Stock   `json:"minimumStock"`
-	Units        []Unit  `json:"units,omitempty"`
-	Stocks       []Stock `json:"stocks,omitempty"`
+	Units        []Unit  `json:"units"`
+	Stocks       []Stock `json:"stocks"`
 }
 
 // Unit is a unit of a drug.
