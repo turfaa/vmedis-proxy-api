@@ -44,6 +44,7 @@ func AutoMigrate(db *gorm.DB) error {
 		models.SaleStatistics{},
 		models.Drug{},
 		models.DrugUnit{},
+		models.DrugStock{},
 		models.Sale{},
 		models.SaleUnit{},
 		models.StockOpname{},

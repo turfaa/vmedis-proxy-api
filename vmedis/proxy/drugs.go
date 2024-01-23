@@ -180,7 +180,12 @@ func (s *ApiServer) getDrugs(additionalQuery func(tx *gorm.DB) *gorm.DB, drugsTh
 
 	var drugs []models.Drug
 	for _, updatedAtThreshold := range drugsUpdatedAtThresholds {
-		if err := additionalQuery(s.DB.Preload("Units").Where("updated_at >= ?", time.Now().Add(-updatedAtThreshold)).Order("name")).Find(&drugs).Error; err != nil {
+		if err := additionalQuery(
+			s.DB.Preload("Units").
+				Preload("Stocks").
+				Where("updated_at >= ?", time.Now().Add(-updatedAtThreshold)).
+				Order("name"),
+		).Find(&drugs).Error; err != nil {
 			return nil, fmt.Errorf("get drugs: %w", err)
 		}
 

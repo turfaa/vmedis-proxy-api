@@ -57,6 +57,11 @@ func FromClientStock(cs client.Stock) Stock {
 	}
 }
 
+// FromModelsDrugStock converts Stock from models.DrugStock to proxy schema.
+func FromModelsDrugStock(stock models.DrugStock) Stock {
+	return FromModelsStock(stock.Stock)
+}
+
 // FromModelsStock converts Stock from models.Stock to proxy schema.
 func FromModelsStock(stock models.Stock) Stock {
 	return Stock{

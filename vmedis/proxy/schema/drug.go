@@ -12,12 +12,13 @@ type DrugsResponse struct {
 
 // Drug is a drug in the inventory.
 type Drug struct {
-	VmedisCode   string `json:"vmedisCode,omitempty"`
-	Name         string `json:"name,omitempty"`
-	Manufacturer string `json:"manufacturer,omitempty"`
-	Supplier     string `json:"supplier,omitempty"`
-	MinimumStock Stock  `json:"minimumStock"`
-	Units        []Unit `json:"units,omitempty"`
+	VmedisCode   string  `json:"vmedisCode,omitempty"`
+	Name         string  `json:"name,omitempty"`
+	Manufacturer string  `json:"manufacturer,omitempty"`
+	Supplier     string  `json:"supplier,omitempty"`
+	MinimumStock Stock   `json:"minimumStock"`
+	Units        []Unit  `json:"units,omitempty"`
+	Stocks       []Stock `json:"stocks,omitempty"`
 }
 
 // Unit is a unit of a drug.
@@ -41,9 +42,14 @@ type Unit struct {
 
 // FromClientDrug converts Drug from client schema to proxy schema.
 func FromClientDrug(cd client.Drug) Drug {
-	var units []Unit
+	units := make([]Unit, 0, len(cd.Units))
 	for _, cu := range cd.Units {
 		units = append(units, FromClientUnit(cu))
+	}
+
+	stocks := make([]Stock, 0, len(cd.Stocks))
+	for _, cs := range cd.Stocks {
+		stocks = append(stocks, FromClientStock(cs))
 	}
 
 	return Drug{
@@ -53,6 +59,7 @@ func FromClientDrug(cd client.Drug) Drug {
 		Supplier:     cd.Supplier,
 		MinimumStock: FromClientStock(cd.MinimumStock),
 		Units:        units,
+		Stocks:       stocks,
 	}
 }
 
@@ -71,9 +78,14 @@ func FromClientUnit(cu client.Unit) Unit {
 
 // FromModelsDrug converts Drug from models.Drug to proxy schema.
 func FromModelsDrug(drug models.Drug) Drug {
-	var units []Unit
+	units := make([]Unit, 0, len(drug.Units))
 	for _, mu := range drug.Units {
 		units = append(units, FromModelsUnit(mu))
+	}
+
+	stocks := make([]Stock, 0, len(drug.Stocks))
+	for _, ms := range drug.Stocks {
+		stocks = append(stocks, FromModelsDrugStock(ms))
 	}
 
 	return Drug{
@@ -82,6 +94,7 @@ func FromModelsDrug(drug models.Drug) Drug {
 		Manufacturer: drug.Manufacturer,
 		MinimumStock: FromModelsStock(drug.MinimumStock),
 		Units:        units,
+		Stocks:       stocks,
 	}
 }
 

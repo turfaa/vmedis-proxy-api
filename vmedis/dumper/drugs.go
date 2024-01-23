@@ -2,6 +2,7 @@ package dumper
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"sync"
 	"time"
@@ -119,7 +120,7 @@ func DrugDetailsPuller(ctx context.Context, db *gorm.DB, vmedisClient *client.Cl
 						log.Printf("Error inserting drug details of id %d: %s\n", drug.VmedisID, err)
 					}
 
-					var units []models.DrugUnit
+					units := make([]models.DrugUnit, 0, len(d.Units))
 					for _, u := range d.Units {
 						units = append(units, models.DrugUnit{
 							Unit:                   u.Unit,
@@ -135,6 +136,21 @@ func DrugDetailsPuller(ctx context.Context, db *gorm.DB, vmedisClient *client.Cl
 
 					if err := dumpDrugUnits(db, units); err != nil {
 						log.Printf("Error inserting drug units of id %d: %s\n", drug.VmedisID, err)
+					}
+
+					stocks := make([]models.DrugStock, 0, len(d.Stocks))
+					for _, s := range d.Stocks {
+						stocks = append(stocks, models.DrugStock{
+							DrugVmedisCode: d.VmedisCode,
+							Stock: models.Stock{
+								Quantity: s.Quantity,
+								Unit:     s.Unit,
+							},
+						})
+					}
+
+					if err := dumpDrugStocks(db, d.VmedisCode, stocks); err != nil {
+						log.Printf("Error inserting drug stocks of id %d: %s\n", drug.VmedisID, err)
 					}
 
 				case <-closeChan:
@@ -205,4 +221,18 @@ func dumpDrugUnits(db *gorm.DB, units []models.DrugUnit) error {
 	}).
 		Create(&units).
 		Error
+}
+
+func dumpDrugStocks(db *gorm.DB, vmedisCode string, stocks []models.DrugStock) error {
+	return db.Transaction(func(tx *gorm.DB) error {
+		if err := db.Delete(models.DrugStock{}, "drug_vmedis_code = ?", vmedisCode).Error; err != nil {
+			return fmt.Errorf("delete drug stocks of '%s': %w", vmedisCode, err)
+		}
+
+		if len(stocks) == 0 {
+			return nil
+		}
+
+		return tx.Create(&stocks).Error
+	})
 }

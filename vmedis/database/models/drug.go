@@ -16,7 +16,8 @@ type Drug struct {
 	Manufacturer string `gorm:"index"`
 	MinimumStock Stock  `gorm:"embedded;embeddedPrefix:minimum_stock_"`
 
-	Units []DrugUnit `gorm:"foreignKey:DrugVmedisCode;references:VmedisCode"`
+	Units  []DrugUnit  `gorm:"foreignKey:DrugVmedisCode;references:VmedisCode"`
+	Stocks []DrugStock `gorm:"foreignKey:DrugVmedisCode;references:VmedisCode"`
 }
 
 // SmallestUnit returns the smallest unit of the drug.
@@ -61,6 +62,16 @@ type DrugUnit struct {
 	PriceOne   float64
 	PriceTwo   float64
 	PriceThree float64
+}
+
+// DrugStock represents a stock of a drug.
+type DrugStock struct {
+	ID        uint `gorm:"primarykey"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+
+	DrugVmedisCode string `gorm:"index"`
+	Stock          Stock  `gorm:"embedded"`
 }
 
 // Stock represents one instance of stock.
