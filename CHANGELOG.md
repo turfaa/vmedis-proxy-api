@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.10.1] - 2024-01-23
+### :bug: Bug Fixes
+- [`206a28c`](https://github.com/turfaa/vmedis-proxy-api/commit/206a28c0860bf35630fe2041b21a03a6eef4232f) - Do not omit empty on drug units and stocks *(commit by [@turfaa](https://github.com/turfaa))*
+
+
 ## [v0.10.0] - 2024-01-23
 ### :sparkles: New Features
 - [`11576b8`](https://github.com/turfaa/vmedis-proxy-api/commit/11576b828872d9d59bc62759b578d06c06ab9f54) - Support parsing stocks in drug details page *(commit by [@turfaa](https://github.com/turfaa))*
@@ -186,3 +191,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v0.9.8]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.9.7...v0.9.8
 [v0.9.9]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.9.8...v0.9.9
 [v0.10.0]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.9.9...v0.10.0
+[v0.10.1]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.10.0...v0.10.1
