@@ -23,6 +23,7 @@ type Drug struct {
 	Supplier     string `oos-column:"13"`
 	MinimumStock Stock  `oos-column:"6" form-name:"Obat[obatminstok]"`
 	Units        []Unit `form-name:"Obat[soid%d]"`
+	Stocks       []Stock
 }
 
 // Stock represents one instance of stock.
