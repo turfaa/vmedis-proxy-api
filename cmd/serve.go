@@ -6,10 +6,9 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/turfaa/vmedis-proxy-api/proxy"
+	"github.com/turfaa/vmedis-proxy-api/vmedis"
 	"golang.org/x/time/rate"
-
-	"github.com/turfaa/vmedis-proxy-api/vmedis/client"
-	"github.com/turfaa/vmedis-proxy-api/vmedis/proxy"
 )
 
 // serveCmd represents the serve command
@@ -25,7 +24,7 @@ var serveCmd = &cobra.Command{
 
 		proxy.Run(
 			proxy.Config{
-				VmedisClient: client.New(
+				VmedisClient: vmedis.New(
 					viper.GetString("base_url"),
 					viper.GetStringSlice("session_ids"),
 					viper.GetInt("concurrency"),

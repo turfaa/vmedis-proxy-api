@@ -7,9 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/turfaa/vmedis-proxy-api/database"
 	"gorm.io/gorm"
-
-	"github.com/turfaa/vmedis-proxy-api/vmedis/database"
 )
 
 var (

@@ -6,10 +6,9 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/turfaa/vmedis-proxy-api/dumper"
+	"github.com/turfaa/vmedis-proxy-api/vmedis"
 	"golang.org/x/time/rate"
-
-	"github.com/turfaa/vmedis-proxy-api/vmedis/client"
-	"github.com/turfaa/vmedis-proxy-api/vmedis/dumper"
 )
 
 // runDumperCmd represents the runDumper command
@@ -23,7 +22,7 @@ var runDumperCmd = &cobra.Command{
 		}
 
 		dumper.Run(
-			client.New(
+			vmedis.New(
 				viper.GetString("base_url"),
 				viper.GetStringSlice("session_ids"),
 				viper.GetInt("concurrency"),
