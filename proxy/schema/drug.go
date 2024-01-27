@@ -5,11 +5,6 @@ import (
 	"github.com/turfaa/vmedis-proxy-api/vmedis"
 )
 
-// DrugsResponse is the response of the drugs endpoint.
-type DrugsResponse struct {
-	Drugs []Drug `json:"drugs"`
-}
-
 // Drug is a drug in the inventory.
 type Drug struct {
 	VmedisCode   string  `json:"vmedisCode,omitempty"`

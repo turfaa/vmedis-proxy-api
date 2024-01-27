@@ -9,17 +9,19 @@ import (
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
-	"github.com/turfaa/vmedis-proxy-api/database/models"
-	"github.com/turfaa/vmedis-proxy-api/vmedis"
 	"gorm.io/gorm"
+
+	"github.com/turfaa/vmedis-proxy-api/drug"
+	"github.com/turfaa/vmedis-proxy-api/vmedis"
 )
 
 // ApiServer is the proxy api server.
 type ApiServer struct {
-	Client            *vmedis.Client
-	DB                *gorm.DB
-	RedisClient       *redis.Client
-	DrugDetailsPuller chan<- models.Drug
+	client      *vmedis.Client
+	db          *gorm.DB
+	redisClient *redis.Client
+
+	drugHandler *drug.ApiHandler
 }
 
 // GinEngine returns the gin engine of the proxy api server.
@@ -35,7 +37,7 @@ func (s *ApiServer) GinEngine() *gin.Engine {
 
 // SetupRoute sets up the routes of the proxy api server.
 func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
-	store := CompressedCache{Store: persist.NewRedisStore(s.RedisClient)}
+	store := CompressedCache{Store: persist.NewRedisStore(s.redisClient)}
 
 	v1 := router.Group("/api/v1")
 	{
@@ -96,17 +98,17 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 			drugs.GET(
 				"",
 				cache.CacheByRequestURI(store, time.Hour),
-				s.HandleGetDrugs,
+				s.drugHandler.GetDrugs,
 			)
 
 			drugs.GET(
 				"/to-stock-opname",
-				s.HandleGetDrugsToStockOpname,
+				s.drugHandler.GetDrugsToStockOpname,
 			)
 
 			drugs.POST(
 				"/dump",
-				s.HandleDumpDrugs,
+				s.drugHandler.DumpDrugs,
 			)
 		}
 
@@ -135,5 +137,15 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 				s.HandleLogin,
 			)
 		}
+	}
+}
+
+// NewApiServer creates a new api server.
+func NewApiServer(client *vmedis.Client, db *gorm.DB, redisClient *redis.Client) *ApiServer {
+	return &ApiServer{
+		client:      client,
+		db:          db,
+		redisClient: redisClient,
+		drugHandler: drug.NewApiHandler(db, client),
 	}
 }

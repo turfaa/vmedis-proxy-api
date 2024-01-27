@@ -7,13 +7,15 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+
 	"github.com/turfaa/vmedis-proxy-api/database/models"
 	"github.com/turfaa/vmedis-proxy-api/proxy/schema"
+	"github.com/turfaa/vmedis-proxy-api/time2"
 )
 
 // HandleGetSalesStatistics handles the request to get the sales statistics.
 func (s *ApiServer) HandleGetSalesStatistics(c *gin.Context) {
-	from, until, err := getTimeRangeFromQuery(c)
+	from, until, err := time2.GetTimeRangeFromQuery(c)
 	if err != nil {
 		c.JSON(400, gin.H{
 			"error": fmt.Sprintf("failed to parse time range query: %s", err),
@@ -35,7 +37,7 @@ func (s *ApiServer) HandleGetSalesStatistics(c *gin.Context) {
 
 // HandleGetDailySalesStatistics handles the request to get the daily sales statistics.
 func (s *ApiServer) HandleGetDailySalesStatistics(c *gin.Context) {
-	from, until := today()
+	from, until := time2.Today()
 
 	stats, err := s.getSalesStatistics(c, from, until)
 	if err != nil {
@@ -51,7 +53,7 @@ func (s *ApiServer) HandleGetDailySalesStatistics(c *gin.Context) {
 
 func (s *ApiServer) getSalesStatistics(ctx context.Context, from, until time.Time) ([]schema.SaleStatistics, error) {
 	var modelStats []models.SaleStatistics
-	if err := s.DB.
+	if err := s.db.
 		Where("pulled_at >= ? AND pulled_at <= ?", from, until).
 		Order("pulled_at ASC").
 		Find(&modelStats).
@@ -64,11 +66,11 @@ func (s *ApiServer) getSalesStatistics(ctx context.Context, from, until time.Tim
 		stats = append(stats, schema.FromModelsSaleStatistics(s))
 	}
 
-	if until == endOfToday() {
+	if until == time2.EndOfToday() {
 		ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 		defer cancel()
 
-		if latestStat, err := s.Client.GetDailySalesStatistics(ctx); err != nil {
+		if latestStat, err := s.client.GetDailySalesStatistics(ctx); err != nil {
 			log.Printf("failed to get latest statistics from API: %s", err)
 		} else {
 			latest, err := schema.FromSalesStatisticsClientSchema(time.Now(), latestStat)

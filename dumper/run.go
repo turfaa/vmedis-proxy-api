@@ -10,8 +10,9 @@ import (
 
 	"github.com/go-co-op/gocron"
 	"github.com/go-redis/redis/v8"
-	"github.com/turfaa/vmedis-proxy-api/vmedis"
 	"gorm.io/gorm"
+
+	"github.com/turfaa/vmedis-proxy-api/vmedis"
 )
 
 const (
@@ -45,9 +46,6 @@ func Run(vmedisClient *vmedis.Client, db *gorm.DB, redisClient *redis.Client) {
 	db = db.WithContext(ctx)
 	redisClient = redisClient.WithContext(ctx)
 
-	drugDetailsChan, closeDrugDetailsPuller := DrugDetailsPuller(ctx, db, vmedisClient)
-	defer closeDrugDetailsPuller()
-
 	scheduler := gocron.NewScheduler(time.Local)
 
 	if _, err := scheduler.CronWithSeconds(DailySalesStatisticsSchedule).Do(DumpDailySalesStatistics, ctx, db, vmedisClient); err != nil {
@@ -62,7 +60,7 @@ func Run(vmedisClient *vmedis.Client, db *gorm.DB, redisClient *redis.Client) {
 		log.Fatalf("Error scheduling daily stock opnames dumper: %s\n", err)
 	}
 
-	if _, err := scheduler.Cron(DrugSchedule).Do(DumpDrugs, ctx, db, vmedisClient, drugDetailsChan); err != nil {
+	if _, err := scheduler.Cron(DrugSchedule).Do(DumpDrugs, ctx, db, vmedisClient); err != nil {
 		log.Fatalf("Error scheduling drugs dumper: %s\n", err)
 	}
 

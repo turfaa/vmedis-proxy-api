@@ -5,9 +5,12 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
+
 	"github.com/turfaa/vmedis-proxy-api/database/models"
 	"github.com/turfaa/vmedis-proxy-api/dumper"
 	"github.com/turfaa/vmedis-proxy-api/proxy/schema"
+	"github.com/turfaa/vmedis-proxy-api/time2"
+
 	"gorm.io/datatypes"
 )
 
@@ -56,20 +59,20 @@ func (s *ApiServer) HandleGetStockOpnameSummaries(c *gin.Context) {
 
 // HandleDumpStockOpnames handles the request to dump the stock opnames.
 func (s *ApiServer) HandleDumpStockOpnames(c *gin.Context) {
-	go dumper.DumpDailyStockOpnames(context.Background(), s.DB, s.Client)
+	go dumper.DumpDailyStockOpnames(context.Background(), s.db, s.client)
 	c.JSON(200, gin.H{
 		"message": "dumping stock opnames",
 	})
 }
 
 func (s *ApiServer) getStockOpnames(c *gin.Context) ([]schema.StockOpname, error) {
-	timeFrom, timeUntil, err := getTimeRangeFromQuery(c)
+	timeFrom, timeUntil, err := time2.GetTimeRangeFromQuery(c)
 	if err != nil {
 		return nil, fmt.Errorf("get dates from query: %w", err)
 	}
 
 	var stockOpnames []models.StockOpname
-	if err := s.DB.Where("date >= ? AND date <= ?", datatypes.Date(timeFrom), datatypes.Date(timeUntil)).Order("vmedis_id").Find(&stockOpnames).Error; err != nil {
+	if err := s.db.Where("date >= ? AND date <= ?", datatypes.Date(timeFrom), datatypes.Date(timeUntil)).Order("vmedis_id").Find(&stockOpnames).Error; err != nil {
 		return nil, fmt.Errorf("get stock opnames from database: %w", err)
 	}
 

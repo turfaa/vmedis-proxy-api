@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"github.com/gin-gonic/gin"
+
 	"github.com/turfaa/vmedis-proxy-api/database/models"
 	"github.com/turfaa/vmedis-proxy-api/proxy/schema"
 )
@@ -19,7 +20,7 @@ func (s *ApiServer) HandleLogin(c *gin.Context) {
 
 	// Get the user, or create a guest user.
 	var user models.User
-	s.DB.Where(models.User{Email: req.Email}).Attrs(models.User{Role: "guest"}).FirstOrCreate(&user)
+	s.db.Where(models.User{Email: req.Email}).Attrs(models.User{Role: "guest"}).FirstOrCreate(&user)
 
 	c.JSON(200, schema.FromModelsUser(user))
 }

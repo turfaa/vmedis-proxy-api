@@ -7,9 +7,11 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+
 	"github.com/turfaa/vmedis-proxy-api/database/models"
 	"github.com/turfaa/vmedis-proxy-api/dumper"
 	"github.com/turfaa/vmedis-proxy-api/proxy/schema"
+	"github.com/turfaa/vmedis-proxy-api/time2"
 )
 
 // HandleGetSales handles the GET /sales endpoint.
@@ -55,7 +57,7 @@ func (s *ApiServer) HandleGetSoldDrugs(c *gin.Context) {
 	}
 
 	var drugsModels []models.Drug
-	if err := s.DB.Find(&drugsModels, "vmedis_code IN ?", drugCodes).Error; err != nil {
+	if err := s.db.Find(&drugsModels, "vmedis_code IN ?", drugCodes).Error; err != nil {
 		c.JSON(500, gin.H{
 			"error": fmt.Sprintf("failed to get drugs: %s", err),
 		})
@@ -88,7 +90,7 @@ func (s *ApiServer) HandleGetSoldDrugs(c *gin.Context) {
 
 // HandleDumpSales handles the request to dump today's sales.
 func (s *ApiServer) HandleDumpSales(c *gin.Context) {
-	go dumper.DumpDailySales(context.Background(), s.DB, s.Client)
+	go dumper.DumpDailySales(context.Background(), s.db, s.client)
 
 	c.JSON(200, gin.H{
 		"message": "dumping today's sales",
@@ -96,7 +98,7 @@ func (s *ApiServer) HandleDumpSales(c *gin.Context) {
 }
 
 func (s *ApiServer) getSales(c *gin.Context) ([]models.Sale, error) {
-	from, until, err := getTimeRangeFromQuery(c)
+	from, until, err := time2.GetTimeRangeFromQuery(c)
 	if err != nil {
 		return nil, fmt.Errorf("get dates from query: %w", err)
 	}
@@ -115,7 +117,7 @@ func (s *ApiServer) getSalesBetween(from, until time.Time) ([]models.Sale, error
 	}
 
 	var salesModels []models.Sale
-	if err := s.DB.Preload("SaleUnits").Find(&salesModels, "sold_at BETWEEN ? AND ?", from, until).Error; err != nil {
+	if err := s.db.Preload("SaleUnits").Find(&salesModels, "sold_at BETWEEN ? AND ?", from, until).Error; err != nil {
 		return nil, fmt.Errorf("get sales from database: %w", err)
 	}
 

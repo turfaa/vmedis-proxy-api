@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/gin-gonic/gin"
+
 	"github.com/turfaa/vmedis-proxy-api/dumper"
 	"github.com/turfaa/vmedis-proxy-api/proxy/schema"
 )
@@ -15,7 +16,7 @@ const (
 
 // HandleDumpProcurementRecommendations handles the request to calculate and dump the procurement recommendations.
 func (s *ApiServer) HandleDumpProcurementRecommendations(c *gin.Context) {
-	go dumper.DumpProcurementRecommendations(context.Background(), s.DB, s.RedisClient, s.Client)
+	go dumper.DumpProcurementRecommendations(context.Background(), s.db, s.redisClient, s.client)
 	c.JSON(200, gin.H{
 		"message": "dumping procurement recommendations",
 	})
@@ -23,7 +24,7 @@ func (s *ApiServer) HandleDumpProcurementRecommendations(c *gin.Context) {
 
 // HandleProcurementRecommendations handles the request to get the procurement recommendations.
 func (s *ApiServer) HandleProcurementRecommendations(c *gin.Context) {
-	compressed, err := s.RedisClient.Get(c, procurementRecommendationsKey).Result()
+	compressed, err := s.redisClient.Get(c, procurementRecommendationsKey).Result()
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": "failed to get procurement recommendations from Redis: " + err.Error(),
