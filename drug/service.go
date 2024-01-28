@@ -13,6 +13,7 @@ import (
 
 	"github.com/turfaa/vmedis-proxy-api/chans"
 	"github.com/turfaa/vmedis-proxy-api/database/models"
+	"github.com/turfaa/vmedis-proxy-api/kafkapb"
 	"github.com/turfaa/vmedis-proxy-api/slices2"
 	"github.com/turfaa/vmedis-proxy-api/vmedis"
 )
@@ -170,6 +171,7 @@ func (s *Service) DumpDrugsFromVmedisToDB(ctx context.Context) error {
 		}
 		log.Println("Upserted drugs to DB")
 
+		updatedDrugs := make([]*kafkapb.UpdatedDrugByVmedisID, 0, len(batch))
 		for _, drug := range batch {
 			log.Printf("Dumping drug %d details to DB", drug.VmedisID)
 			if err := s.DumpDrugDetailsFromVmedisToDB(ctx, drug.VmedisID); err != nil {
@@ -179,15 +181,19 @@ func (s *Service) DumpDrugsFromVmedisToDB(ctx context.Context) error {
 				log.Printf("Dumped drug %d details to DB", drug.VmedisID)
 			}
 
-			log.Printf("Producing %s message for drug %d", VmedisIDUpdated, drug.VmedisID)
+			updatedDrugs = append(updatedDrugs, &kafkapb.UpdatedDrugByVmedisID{
+				RequestKey: fmt.Sprintf("%s:%d", requestKey, drug.VmedisID),
+				VmedisId:   drug.VmedisID,
+			})
+		}
 
-			drugRequestKey := fmt.Sprintf("%s:%d", requestKey, drug.VmedisID)
-			if err := s.producer.ProduceUpdatedDrug(ctx, drugRequestKey, drug.VmedisID); err != nil {
-				log.Printf("Error producing %s message for drug %d: %s", VmedisIDUpdated, drug.VmedisID, err)
-				errs = append(errs, err)
-			} else {
-				log.Printf("Produced %s message for drug %d", VmedisIDUpdated, drug.VmedisID)
-			}
+		log.Printf("Producing %d %s messages [batch %d]", len(updatedDrugs), VmedisIDUpdatedTopic, batchNum)
+
+		if err := s.producer.ProduceUpdatedDrugsByVmedisID(ctx, updatedDrugs); err != nil {
+			log.Printf("Error producing %d %s messages [batch %d]: %s", len(updatedDrugs), VmedisIDUpdatedTopic, batchNum, err)
+			errs = append(errs, err)
+		} else {
+			log.Printf("Produced %d %s messages [batch %d]", len(updatedDrugs), VmedisIDUpdatedTopic, batchNum)
 		}
 
 		log.Printf("Finished dumping drugs batch %d, number of drugs: %d", batchNum, len(batch))

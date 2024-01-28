@@ -90,7 +90,7 @@ func (s *ApiServer) HandleGetSoldDrugs(c *gin.Context) {
 
 // HandleDumpSales handles the request to dump today's sales.
 func (s *ApiServer) HandleDumpSales(c *gin.Context) {
-	go dumper.DumpDailySales(context.Background(), s.db, s.client)
+	go dumper.DumpDailySales(context.Background(), s.db, s.client, s.drugProducer)
 
 	c.JSON(200, gin.H{
 		"message": "dumping today's sales",

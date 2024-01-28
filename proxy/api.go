@@ -22,7 +22,8 @@ type ApiServer struct {
 	db          *gorm.DB
 	redisClient *redis.Client
 
-	drugHandler *drug.ApiHandler
+	drugHandler  *drug.ApiHandler
+	drugProducer *drug.Producer
 }
 
 // GinEngine returns the gin engine of the proxy api server.
@@ -144,9 +145,10 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 // NewApiServer creates a new api server.
 func NewApiServer(client *vmedis.Client, db *gorm.DB, redisClient *redis.Client, kafkaWriter *kafka.Writer) *ApiServer {
 	return &ApiServer{
-		client:      client,
-		db:          db,
-		redisClient: redisClient,
-		drugHandler: drug.NewApiHandler(db, client, kafkaWriter),
+		client:       client,
+		db:           db,
+		redisClient:  redisClient,
+		drugHandler:  drug.NewApiHandler(db, client, kafkaWriter),
+		drugProducer: drug.NewProducer(kafkaWriter),
 	}
 }

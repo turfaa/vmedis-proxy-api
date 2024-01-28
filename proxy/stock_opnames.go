@@ -59,7 +59,7 @@ func (s *ApiServer) HandleGetStockOpnameSummaries(c *gin.Context) {
 
 // HandleDumpStockOpnames handles the request to dump the stock opnames.
 func (s *ApiServer) HandleDumpStockOpnames(c *gin.Context) {
-	go dumper.DumpDailyStockOpnames(context.Background(), s.db, s.client)
+	go dumper.DumpDailyStockOpnames(context.Background(), s.db, s.client, s.drugProducer)
 	c.JSON(200, gin.H{
 		"message": "dumping stock opnames",
 	})

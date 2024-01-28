@@ -13,6 +13,7 @@ import (
 	"github.com/segmentio/kafka-go"
 	"gorm.io/gorm"
 
+	"github.com/turfaa/vmedis-proxy-api/drug"
 	"github.com/turfaa/vmedis-proxy-api/vmedis"
 )
 
@@ -49,15 +50,17 @@ func Run(vmedisClient *vmedis.Client, db *gorm.DB, redisClient *redis.Client, ka
 
 	scheduler := gocron.NewScheduler(time.Local)
 
+	drugProducer := drug.NewProducer(kafkaWriter)
+
 	if _, err := scheduler.CronWithSeconds(DailySalesStatisticsSchedule).Do(DumpDailySalesStatistics, ctx, db, vmedisClient); err != nil {
 		log.Fatalf("Error scheduling daily sales statistics dumper: %s\n", err)
 	}
 
-	if _, err := scheduler.Cron(DailySalesSchedule).Do(DumpDailySales, ctx, db, vmedisClient); err != nil {
+	if _, err := scheduler.Cron(DailySalesSchedule).Do(DumpDailySales, ctx, db, vmedisClient, drugProducer); err != nil {
 		log.Fatalf("Error scheduling daily sales dumper: %s\n", err)
 	}
 
-	if _, err := scheduler.Cron(DailyStockOpnamesSchedule).Do(DumpDailyStockOpnames, ctx, db, vmedisClient); err != nil {
+	if _, err := scheduler.Cron(DailyStockOpnamesSchedule).Do(DumpDailyStockOpnames, ctx, db, vmedisClient, drugProducer); err != nil {
 		log.Fatalf("Error scheduling daily stock opnames dumper: %s\n", err)
 	}
 

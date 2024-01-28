@@ -7,11 +7,13 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/turfaa/vmedis-proxy-api/database/models"
-	"github.com/turfaa/vmedis-proxy-api/vmedis"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+
+	"github.com/turfaa/vmedis-proxy-api/database/models"
+	"github.com/turfaa/vmedis-proxy-api/kafkapb"
+	"github.com/turfaa/vmedis-proxy-api/vmedis"
 )
 
 var (
@@ -19,7 +21,7 @@ var (
 )
 
 // DumpDailyStockOpnames dumps the daily stock opnames.
-func DumpDailyStockOpnames(ctx context.Context, db *gorm.DB, vmedisClient *vmedis.Client) {
+func DumpDailyStockOpnames(ctx context.Context, db *gorm.DB, vmedisClient *vmedis.Client, drugProducer UpdatedDrugProducer) {
 	log.Println("Dumping stock opnames")
 
 	ctx, cancel := context.WithTimeout(ctx, time.Hour)
@@ -64,10 +66,24 @@ func DumpDailyStockOpnames(ctx context.Context, db *gorm.DB, vmedisClient *vmedi
 	log.Printf("Dumping %d stock opnames\n", len(soModels))
 	if err := dumpStockOpnames(db, soModels); err != nil {
 		log.Printf("Error dumping stock opnames: %s\n", err)
-		return
+	} else {
+		log.Println("Stock opnames dumped")
 	}
 
-	log.Println("Stock opnames dumped")
+	kafkaMessages := make([]*kafkapb.UpdatedDrugByVmedisCode, 0, len(sos))
+	for _, so := range sos {
+		kafkaMessages = append(kafkaMessages, &kafkapb.UpdatedDrugByVmedisCode{
+			RequestKey: fmt.Sprintf("stock-opname:%s:%s", so.DrugCode, so.BatchCode),
+			VmedisCode: so.DrugCode,
+		})
+	}
+
+	log.Printf("Producing %d updated drugs kafka messages", len(kafkaMessages))
+	if err := drugProducer.ProduceUpdatedDrugByVmedisCode(ctx, kafkaMessages); err != nil {
+		log.Printf("Error producing updated drugs: %s\n", err)
+	} else {
+		log.Printf("Produced %d updated drugs kafka messages", len(kafkaMessages))
+	}
 }
 
 func dumpStockOpnames(db *gorm.DB, stockOpnames []models.StockOpname) error {

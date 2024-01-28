@@ -12,7 +12,8 @@ import (
 )
 
 const (
-	VmedisIDUpdated = "drug_vmedis_id.updated"
+	VmedisIDUpdatedTopic   = "drug_vmedis_id.updated"
+	VmedisCodeUpdatedTopic = "drug_vmedis_code.updated"
 )
 
 var (
@@ -23,22 +24,44 @@ type Producer struct {
 	writer *kafka.Writer
 }
 
-func (p *Producer) ProduceUpdatedDrug(ctx context.Context, requestKey string, vmedisID int64) error {
-	message := kafkapb.UpdatedDrugByVmedisID{
-		RequestKey: requestKey,
-		VmedisId:   vmedisID,
+func (p *Producer) ProduceUpdatedDrugsByVmedisID(ctx context.Context, messages []*kafkapb.UpdatedDrugByVmedisID) error {
+	kafkaMessages := make([]kafka.Message, 0, len(messages))
+	for _, message := range messages {
+		messageStr, err := jsonpbMarshaler.MarshalToString(message)
+		if err != nil {
+			return fmt.Errorf("failed to marshal message: %w", err)
+		}
+
+		kafkaMessages = append(kafkaMessages, kafka.Message{
+			Topic: VmedisIDUpdatedTopic,
+			Key:   []byte(strconv.FormatInt(message.VmedisId, 10)),
+			Value: []byte(messageStr),
+		})
 	}
 
-	messageStr, err := jsonpbMarshaler.MarshalToString(&message)
-	if err != nil {
-		return fmt.Errorf("failed to marshal message: %w", err)
+	if err := p.writer.WriteMessages(ctx, kafkaMessages...); err != nil {
+		return fmt.Errorf("failed to produce message: %w", err)
 	}
 
-	if err := p.writer.WriteMessages(ctx, kafka.Message{
-		Topic: VmedisIDUpdated,
-		Key:   []byte(strconv.FormatInt(vmedisID, 10)),
-		Value: []byte(messageStr),
-	}); err != nil {
+	return nil
+}
+
+func (p *Producer) ProduceUpdatedDrugByVmedisCode(ctx context.Context, messages []*kafkapb.UpdatedDrugByVmedisCode) error {
+	kafkaMessages := make([]kafka.Message, 0, len(messages))
+	for _, message := range messages {
+		messageStr, err := jsonpbMarshaler.MarshalToString(message)
+		if err != nil {
+			return fmt.Errorf("failed to marshal message: %w", err)
+		}
+
+		kafkaMessages = append(kafkaMessages, kafka.Message{
+			Topic: VmedisCodeUpdatedTopic,
+			Key:   []byte(message.VmedisCode),
+			Value: []byte(messageStr),
+		})
+	}
+
+	if err := p.writer.WriteMessages(ctx, kafkaMessages...); err != nil {
 		return fmt.Errorf("failed to produce message: %w", err)
 	}
 

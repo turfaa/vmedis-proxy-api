@@ -6,14 +6,16 @@ import (
 	"log"
 	"time"
 
-	"github.com/turfaa/vmedis-proxy-api/database/models"
-	"github.com/turfaa/vmedis-proxy-api/vmedis"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+
+	"github.com/turfaa/vmedis-proxy-api/database/models"
+	"github.com/turfaa/vmedis-proxy-api/kafkapb"
+	"github.com/turfaa/vmedis-proxy-api/vmedis"
 )
 
 // DumpDailySales dumps the daily sales.
-func DumpDailySales(ctx context.Context, db *gorm.DB, vmedisClient *vmedis.Client) {
+func DumpDailySales(ctx context.Context, db *gorm.DB, vmedisClient *vmedis.Client, drugProducer UpdatedDrugProducer) {
 	log.Println("Dumping daily sales")
 
 	ctx, cancel := context.WithTimeout(ctx, time.Hour)
@@ -59,7 +61,24 @@ func DumpDailySales(ctx context.Context, db *gorm.DB, vmedisClient *vmedis.Clien
 
 	if err := dumpSales(db, salesModels); err != nil {
 		log.Printf("Error inserting daily sales: %s\n", err)
-		return
+	}
+
+	var messages []*kafkapb.UpdatedDrugByVmedisCode
+	for _, sale := range sales {
+		for _, saleUnit := range sale.SaleUnits {
+			messages = append(messages, &kafkapb.UpdatedDrugByVmedisCode{
+				RequestKey: fmt.Sprintf("sale:%s:%s", sale.InvoiceNumber, saleUnit.DrugCode),
+				VmedisCode: saleUnit.DrugCode,
+			})
+		}
+	}
+
+	log.Printf("Producing %d updated drug messages", len(messages))
+
+	if err := drugProducer.ProduceUpdatedDrugByVmedisCode(ctx, messages); err != nil {
+		log.Printf("Error producing updated drugs: %s\n", err)
+	} else {
+		log.Printf("Produced %d updated drug messages", len(messages))
 	}
 }
 
