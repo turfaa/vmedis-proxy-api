@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.11.0] - 2024-01-28
+### :sparkles: New Features
+- [`00eb975`](https://github.com/turfaa/vmedis-proxy-api/commit/00eb975e025d45dacb612538d9e6d3351543cf22) - Produce dumped drugs to Kafka *(commit by [@turfaa](https://github.com/turfaa))*
+- [`e827963`](https://github.com/turfaa/vmedis-proxy-api/commit/e827963d748e5eaba4246c730d3500cdf78bde22) - Produce sold drugs and stock opnamed drugs to Kafka *(commit by [@turfaa](https://github.com/turfaa))*
+- [`6d66d1d`](https://github.com/turfaa/vmedis-proxy-api/commit/6d66d1df23d57ac1c0111f166dd51c75b9e8f15b) - Use consumer to dump drug details *(commit by [@turfaa](https://github.com/turfaa))*
+
+### :recycle: Refactors
+- [`34e7703`](https://github.com/turfaa/vmedis-proxy-api/commit/34e7703928553227cad3d1e11ed2bcfd31f25a1c) - flatten project structure *(commit by [@turfaa](https://github.com/turfaa))*
+- [`b6b5718`](https://github.com/turfaa/vmedis-proxy-api/commit/b6b57182ab8b28e93da0dcc9c743ae0ffd96b508) - move drugs-related code to domain-based package *(commit by [@turfaa](https://github.com/turfaa))*
+
+
 ## [v0.10.1] - 2024-01-23
 ### :bug: Bug Fixes
 - [`206a28c`](https://github.com/turfaa/vmedis-proxy-api/commit/206a28c0860bf35630fe2041b21a03a6eef4232f) - Do not omit empty on drug units and stocks *(commit by [@turfaa](https://github.com/turfaa))*
@@ -192,3 +203,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v0.9.9]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.9.8...v0.9.9
 [v0.10.0]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.9.9...v0.10.0
 [v0.10.1]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.10.0...v0.10.1
+[v0.11.0]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.10.1...v0.11.0
