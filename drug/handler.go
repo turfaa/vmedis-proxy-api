@@ -145,6 +145,8 @@ func (h *ConsumerHandler) DumpDrugDetailsByVmedisCode(ctx context.Context, kafka
 		return nil
 	}
 
+	log.Printf("Processing message %s to dump drug details by vmedis code", payload.RequestKey)
+
 	if err := h.service.DumpDrugDetailsFromVmedisToDBByVmedisCode(ctx, payload.VmedisCode); err != nil {
 		return fmt.Errorf("failed to dump drug details by vmedis code: %s", err)
 	}
@@ -170,6 +172,8 @@ func (h *ConsumerHandler) DumpDrugDetailsByVmedisID(ctx context.Context, kafkaMe
 	if processed {
 		return nil
 	}
+
+	log.Printf("Processing message %s to dump drug details by vmedis id", payload.RequestKey)
 
 	if err := h.service.DumpDrugDetailsFromVmedisToDBByVmedisID(ctx, payload.VmedisId); err != nil {
 		return fmt.Errorf("failed to dump drug details by vmedis id: %s", err)
