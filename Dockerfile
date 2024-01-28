@@ -7,11 +7,10 @@ ARG TARGETARCH
 
 WORKDIR /app
 
-COPY go.mod go.sum main.go ./
+COPY go.mod go.sum ./
 RUN go mod download
 
-COPY cmd/ cmd/
-COPY vmedis/ vmedis/
+COPY . ./
 
 RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} CGO_ENABLED=0 go build -o /vmedis-proxy
 
