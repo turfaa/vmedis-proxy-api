@@ -8,6 +8,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/segmentio/kafka-go"
 	"gorm.io/gorm"
 
 	"github.com/turfaa/vmedis-proxy-api/chans"
@@ -32,8 +33,9 @@ var (
 
 // Service provides business logic related to drugs.
 type Service struct {
-	db     *Database
-	vmedis *vmedis.Client
+	db       *Database
+	vmedis   *vmedis.Client
+	producer *Producer
 }
 
 // GetDrugs returns all drugs.
@@ -144,6 +146,8 @@ func sortDrugsByNumberOfSales(drugs []Drug, saleStatisticsByDrugCode map[string]
 func (s *Service) DumpDrugsFromVmedisToDB(ctx context.Context) error {
 	log.Println("Dumping drugs from Vmedis to DB")
 
+	requestKey := fmt.Sprintf("dump_drugs_from_vmedis_to_db:%s", time.Now().Format("2006-01-02_15-04-05"))
+
 	drugs, err := s.vmedis.GetAllDrugs(ctx)
 	if err != nil {
 		return fmt.Errorf("get all drugs from Vmedis: %w", err)
@@ -171,9 +175,19 @@ func (s *Service) DumpDrugsFromVmedisToDB(ctx context.Context) error {
 			if err := s.DumpDrugDetailsFromVmedisToDB(ctx, drug.VmedisID); err != nil {
 				log.Printf("Error dumping drug %d details to DB: %s", drug.VmedisID, err)
 				errs = append(errs, err)
-				continue
+			} else {
+				log.Printf("Dumped drug %d details to DB", drug.VmedisID)
 			}
-			log.Printf("Dumped drug %d details to DB", drug.VmedisID)
+
+			log.Printf("Producing %s message for drug %d", VmedisIDUpdated, drug.VmedisID)
+
+			drugRequestKey := fmt.Sprintf("%s:%d", requestKey, drug.VmedisID)
+			if err := s.producer.ProduceUpdatedDrug(ctx, drugRequestKey, drug.VmedisID); err != nil {
+				log.Printf("Error producing %s message for drug %d: %s", VmedisIDUpdated, drug.VmedisID, err)
+				errs = append(errs, err)
+			} else {
+				log.Printf("Produced %s message for drug %d", VmedisIDUpdated, drug.VmedisID)
+			}
 		}
 
 		log.Printf("Finished dumping drugs batch %d, number of drugs: %d", batchNum, len(batch))
@@ -185,7 +199,7 @@ func (s *Service) DumpDrugsFromVmedisToDB(ctx context.Context) error {
 }
 
 // DumpDrugDetailsFromVmedisToDB dumps the details of a drug from Vmedis to DB.
-func (s *Service) DumpDrugDetailsFromVmedisToDB(ctx context.Context, vmedisID int) error {
+func (s *Service) DumpDrugDetailsFromVmedisToDB(ctx context.Context, vmedisID int64) error {
 	log.Printf("Starting to dump drug details of %d from Vmedis to DB", vmedisID)
 
 	log.Printf("Getting drug %d from Vmedis", vmedisID)
@@ -223,9 +237,10 @@ func (s *Service) DumpDrugDetailsFromVmedisToDB(ctx context.Context, vmedisID in
 }
 
 // NewService creates a new drug service.
-func NewService(db *gorm.DB, vmedisClient *vmedis.Client) *Service {
+func NewService(db *gorm.DB, vmedisClient *vmedis.Client, kafkaWriter *kafka.Writer) *Service {
 	return &Service{
-		db:     NewDatabase(db),
-		vmedis: vmedisClient,
+		db:       NewDatabase(db),
+		vmedis:   vmedisClient,
+		producer: NewProducer(kafkaWriter),
 	}
 }

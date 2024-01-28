@@ -9,3 +9,6 @@ rate_limit: 100
 redis_address: "localhost:6379"
 redis_password: ""
 redis_db: 0
+
+kafka_brokers:
+    - "localhost:9092"

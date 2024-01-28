@@ -12,7 +12,7 @@ import (
 
 // GetDrug gets the drug details from vmedis.
 // It calls the /obat-batch/view?id=<id> page and try to parse the drug from it.
-func (c *Client) GetDrug(ctx context.Context, id int) (Drug, error) {
+func (c *Client) GetDrug(ctx context.Context, id int64) (Drug, error) {
 	res, err := c.get(ctx, fmt.Sprintf("/obat-batch/view?id=%d", id))
 	if err != nil {
 		return Drug{}, fmt.Errorf("get drug: %w", err)

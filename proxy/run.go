@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/segmentio/kafka-go"
 	"gorm.io/gorm"
 
 	"github.com/turfaa/vmedis-proxy-api/vmedis"
@@ -20,6 +21,7 @@ type Config struct {
 	VmedisClient           *vmedis.Client
 	DB                     *gorm.DB
 	RedisClient            *redis.Client
+	KafkaWriter            *kafka.Writer
 	SessionRefreshInterval time.Duration
 }
 
@@ -36,7 +38,7 @@ func Run(config Config) {
 
 	log.Printf("Starting proxy server to %s with refresh interval %d\n", config.VmedisClient.BaseUrl, config.SessionRefreshInterval)
 
-	apiServer := NewApiServer(config.VmedisClient, config.DB, config.RedisClient)
+	apiServer := NewApiServer(config.VmedisClient, config.DB, config.RedisClient, config.KafkaWriter)
 	engine := apiServer.GinEngine()
 
 	httpServer := http.Server{
@@ -55,7 +57,7 @@ func Run(config Config) {
 	defer stop()
 
 	done := make(chan os.Signal, 1)
-	signal.Notify(done, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(done, os.Interrupt, syscall.SIGTERM, syscall.SIGINT, syscall.SIGINT)
 
 	select {
 	case err := <-serverError:

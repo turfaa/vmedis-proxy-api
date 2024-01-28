@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-co-op/gocron"
 	"github.com/go-redis/redis/v8"
+	"github.com/segmentio/kafka-go"
 	"gorm.io/gorm"
 
 	"github.com/turfaa/vmedis-proxy-api/vmedis"
@@ -39,7 +40,7 @@ const (
 
 // Run runs the data dumper.
 // All the dumper intervals and schedules are currently hardcoded.
-func Run(vmedisClient *vmedis.Client, db *gorm.DB, redisClient *redis.Client) {
+func Run(vmedisClient *vmedis.Client, db *gorm.DB, redisClient *redis.Client, kafkaWriter *kafka.Writer) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -60,7 +61,7 @@ func Run(vmedisClient *vmedis.Client, db *gorm.DB, redisClient *redis.Client) {
 		log.Fatalf("Error scheduling daily stock opnames dumper: %s\n", err)
 	}
 
-	if _, err := scheduler.Cron(DrugSchedule).Do(DumpDrugs, ctx, db, vmedisClient); err != nil {
+	if _, err := scheduler.Cron(DrugSchedule).Do(DumpDrugs, ctx, db, vmedisClient, kafkaWriter); err != nil {
 		log.Fatalf("Error scheduling drugs dumper: %s\n", err)
 	}
 
@@ -72,7 +73,7 @@ func Run(vmedisClient *vmedis.Client, db *gorm.DB, redisClient *redis.Client) {
 	scheduler.StartAsync()
 
 	done := make(chan os.Signal, 1)
-	signal.Notify(done, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(done, os.Interrupt, syscall.SIGTERM, syscall.SIGINT, syscall.SIGKILL)
 
 	<-done
 

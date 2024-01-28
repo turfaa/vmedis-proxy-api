@@ -4,11 +4,13 @@ import (
 	"log"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/segmentio/kafka-go"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/time/rate"
+
 	"github.com/turfaa/vmedis-proxy-api/dumper"
 	"github.com/turfaa/vmedis-proxy-api/vmedis"
-	"golang.org/x/time/rate"
 )
 
 // runDumperCmd represents the runDumper command
@@ -34,6 +36,12 @@ var runDumperCmd = &cobra.Command{
 				Password: viper.GetString("redis_password"),
 				DB:       viper.GetInt("redis_db"),
 			}),
+			&kafka.Writer{
+				Addr:         kafka.TCP(viper.GetStringSlice("kafka_brokers")...),
+				Balancer:     &kafka.LeastBytes{},
+				RequiredAcks: kafka.RequireOne,
+				Compression:  kafka.Snappy,
+			},
 		)
 	},
 }

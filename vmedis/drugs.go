@@ -132,7 +132,7 @@ func parseDrug(selection *goquery.Selection) (Drug, error) {
 		return Drug{}, fmt.Errorf("drug vmedis id not found")
 	}
 
-	id, err := strconv.Atoi(idStr)
+	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
 		return Drug{}, fmt.Errorf("parse drug vmedis id: %w", err)
 	}

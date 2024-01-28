@@ -9,6 +9,7 @@ import (
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
+	"github.com/segmentio/kafka-go"
 	"gorm.io/gorm"
 
 	"github.com/turfaa/vmedis-proxy-api/drug"
@@ -141,11 +142,11 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 }
 
 // NewApiServer creates a new api server.
-func NewApiServer(client *vmedis.Client, db *gorm.DB, redisClient *redis.Client) *ApiServer {
+func NewApiServer(client *vmedis.Client, db *gorm.DB, redisClient *redis.Client, kafkaWriter *kafka.Writer) *ApiServer {
 	return &ApiServer{
 		client:      client,
 		db:          db,
 		redisClient: redisClient,
-		drugHandler: drug.NewApiHandler(db, client),
+		drugHandler: drug.NewApiHandler(db, client, kafkaWriter),
 	}
 }

@@ -10,7 +10,7 @@ type Drug struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 
-	VmedisID     int    `gorm:"unique"`
+	VmedisID     int64  `gorm:"unique"`
 	VmedisCode   string `gorm:"unique"`
 	Name         string `gorm:"index"`
 	Manufacturer string `gorm:"index"`

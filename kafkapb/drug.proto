@@ -1,0 +1,9 @@
+syntax = "proto3";
+package vmedis;
+
+option go_package = "github.com/turfaa/vmedis-proxy-api/kafkapb";
+
+message UpdatedDrugByVmedisID {
+  string request_key = 1;
+  int64 vmedis_id = 2;
+}

@@ -4,11 +4,13 @@ import (
 	"log"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/segmentio/kafka-go"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/time/rate"
+
 	"github.com/turfaa/vmedis-proxy-api/proxy"
 	"github.com/turfaa/vmedis-proxy-api/vmedis"
-	"golang.org/x/time/rate"
 )
 
 // serveCmd represents the serve command
@@ -36,6 +38,12 @@ var serveCmd = &cobra.Command{
 					Password: viper.GetString("redis_password"),
 					DB:       viper.GetInt("redis_db"),
 				}),
+				KafkaWriter: &kafka.Writer{
+					Addr:         kafka.TCP(viper.GetStringSlice("kafka_brokers")...),
+					Balancer:     &kafka.LeastBytes{},
+					RequiredAcks: kafka.RequireOne,
+					Compression:  kafka.Snappy,
+				},
 				SessionRefreshInterval: viper.GetDuration("refresh_interval"),
 			},
 		)

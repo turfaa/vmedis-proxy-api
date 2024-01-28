@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/segmentio/kafka-go"
 	"gorm.io/gorm"
 
 	"github.com/turfaa/vmedis-proxy-api/time2"
@@ -115,8 +116,8 @@ func (h *ApiHandler) DumpDrugs(c *gin.Context) {
 }
 
 // NewApiHandler creates a new ApiHandler.
-func NewApiHandler(db *gorm.DB, vmedisClient *vmedis.Client) *ApiHandler {
+func NewApiHandler(db *gorm.DB, vmedisClient *vmedis.Client, kafkaWriter *kafka.Writer) *ApiHandler {
 	return &ApiHandler{
-		service: NewService(db, vmedisClient),
+		service: NewService(db, vmedisClient, kafkaWriter),
 	}
 }
