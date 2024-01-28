@@ -7,8 +7,9 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/turfaa/vmedis-proxy-api/database"
 	"gorm.io/gorm"
+
+	"github.com/turfaa/vmedis-proxy-api/database"
 )
 
 var (
@@ -69,6 +70,7 @@ func initAppCommand(command *cobra.Command) {
 	command.Flags().String("redis-address", "localhost:6379", "redis address")
 	command.Flags().String("redis-password", "", "redis password")
 	command.Flags().String("redis-db", "0", "redis db")
+	command.Flags().StringSlice("kafka-brokers", nil, "kafka brokers")
 
 	viper.BindPFlag("postgres_dsn", command.Flags().Lookup("postgres-dsn"))
 	viper.BindPFlag("sqlite_path", command.Flags().Lookup("sqlite-path"))
@@ -80,6 +82,7 @@ func initAppCommand(command *cobra.Command) {
 	viper.BindPFlag("redis_address", command.Flags().Lookup("redis-address"))
 	viper.BindPFlag("redis_password", command.Flags().Lookup("redis-password"))
 	viper.BindPFlag("redis_db", command.Flags().Lookup("redis-db"))
+	viper.BindPFlag("kafka_brokers", command.Flags().Lookup("kafka-brokers"))
 }
 
 func getDatabase() (*gorm.DB, error) {

@@ -99,7 +99,7 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 		{
 			drugs.GET(
 				"",
-				cache.CacheByRequestURI(store, time.Hour),
+				cache.CacheByRequestURI(store, time.Minute),
 				s.drugHandler.GetDrugs,
 			)
 

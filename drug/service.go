@@ -173,14 +173,6 @@ func (s *Service) DumpDrugsFromVmedisToDB(ctx context.Context) error {
 
 		updatedDrugs := make([]*kafkapb.UpdatedDrugByVmedisID, 0, len(batch))
 		for _, drug := range batch {
-			log.Printf("Dumping drug %d details to DB", drug.VmedisID)
-			if err := s.DumpDrugDetailsFromVmedisToDB(ctx, drug.VmedisID); err != nil {
-				log.Printf("Error dumping drug %d details to DB: %s", drug.VmedisID, err)
-				errs = append(errs, err)
-			} else {
-				log.Printf("Dumped drug %d details to DB", drug.VmedisID)
-			}
-
 			updatedDrugs = append(updatedDrugs, &kafkapb.UpdatedDrugByVmedisID{
 				RequestKey: fmt.Sprintf("%s:%d", requestKey, drug.VmedisID),
 				VmedisId:   drug.VmedisID,
@@ -204,8 +196,25 @@ func (s *Service) DumpDrugsFromVmedisToDB(ctx context.Context) error {
 	return nil
 }
 
-// DumpDrugDetailsFromVmedisToDB dumps the details of a drug from Vmedis to DB.
-func (s *Service) DumpDrugDetailsFromVmedisToDB(ctx context.Context, vmedisID int64) error {
+func (s *Service) DumpDrugDetailsFromVmedisToDBByVmedisCode(ctx context.Context, vmedisCode string) error {
+	log.Printf("Starting to dump drug details of %s from Vmedis to DB", vmedisCode)
+
+	log.Printf("Getting drug %s from DB", vmedisCode)
+	drugs, err := s.db.GetDrugsByVmedisCodesUpdatedAfter(ctx, []string{vmedisCode}, time.Now().Add(-drugsUpdatedAtThresholds[0]))
+	if err != nil {
+		return fmt.Errorf("get drug %s from DB: %w", vmedisCode, err)
+	}
+	if len(drugs) == 0 {
+		return fmt.Errorf("drug %s not found in DB", vmedisCode)
+	}
+
+	drug := drugs[0]
+
+	return s.DumpDrugDetailsFromVmedisToDBByVmedisID(ctx, drug.VmedisID)
+}
+
+// DumpDrugDetailsFromVmedisToDBByVmedisID dumps the details of a drug from Vmedis to DB.
+func (s *Service) DumpDrugDetailsFromVmedisToDBByVmedisID(ctx context.Context, vmedisID int64) error {
 	log.Printf("Starting to dump drug details of %d from Vmedis to DB", vmedisID)
 
 	log.Printf("Getting drug %d from Vmedis", vmedisID)

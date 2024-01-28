@@ -8,9 +8,12 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
+	"github.com/golang/protobuf/jsonpb"
 	"github.com/segmentio/kafka-go"
 	"gorm.io/gorm"
 
+	"github.com/turfaa/vmedis-proxy-api/kafkapb"
 	"github.com/turfaa/vmedis-proxy-api/time2"
 	"github.com/turfaa/vmedis-proxy-api/vmedis"
 )
@@ -119,5 +122,70 @@ func (h *ApiHandler) DumpDrugs(c *gin.Context) {
 func NewApiHandler(db *gorm.DB, vmedisClient *vmedis.Client, kafkaWriter *kafka.Writer) *ApiHandler {
 	return &ApiHandler{
 		service: NewService(db, vmedisClient, kafkaWriter),
+	}
+}
+
+type ConsumerHandler struct {
+	service *Service
+	cache   *Cache
+}
+
+func (h *ConsumerHandler) DumpDrugDetailsByVmedisCode(ctx context.Context, kafkaMessage kafka.Message) error {
+	var payload kafkapb.UpdatedDrugByVmedisCode
+	if err := jsonpb.UnmarshalString(string(kafkaMessage.Value), &payload); err != nil {
+		return fmt.Errorf("failed to unmarshal kafka message: %s", err)
+	}
+
+	processed, err := h.cache.HasDrugDetailsByVmedisCodeProcessed(ctx, payload.RequestKey)
+	if err != nil {
+		return fmt.Errorf("failed to check if drug details by vmedis code processed: %s", err)
+	}
+
+	if processed {
+		return nil
+	}
+
+	if err := h.service.DumpDrugDetailsFromVmedisToDBByVmedisCode(ctx, payload.VmedisCode); err != nil {
+		return fmt.Errorf("failed to dump drug details by vmedis code: %s", err)
+	}
+
+	if err := h.cache.MarkDrugDetailsByVmedisCodeProcessed(ctx, payload.RequestKey); err != nil {
+		return fmt.Errorf("failed to mark drug details by vmedis code processed: %s", err)
+	}
+
+	return nil
+}
+
+func (h *ConsumerHandler) DumpDrugDetailsByVmedisID(ctx context.Context, kafkaMessage kafka.Message) error {
+	var payload kafkapb.UpdatedDrugByVmedisID
+	if err := jsonpb.UnmarshalString(string(kafkaMessage.Value), &payload); err != nil {
+		return fmt.Errorf("failed to unmarshal kafka message: %s", err)
+	}
+
+	processed, err := h.cache.HasDrugDetailsByVmedisIDProcessed(ctx, payload.RequestKey)
+	if err != nil {
+		return fmt.Errorf("failed to check if drug details by vmedis id processed: %s", err)
+	}
+
+	if processed {
+		return nil
+	}
+
+	if err := h.service.DumpDrugDetailsFromVmedisToDBByVmedisID(ctx, payload.VmedisId); err != nil {
+		return fmt.Errorf("failed to dump drug details by vmedis id: %s", err)
+	}
+
+	if err := h.cache.MarkDrugDetailsByVmedisIDProcessed(ctx, payload.RequestKey); err != nil {
+		return fmt.Errorf("failed to mark drug details by vmedis id processed: %s", err)
+	}
+
+	return nil
+}
+
+// NewConsumerHandler creates a new ConsumerHandler.
+func NewConsumerHandler(db *gorm.DB, redisClient *redis.Client, vmedisClient *vmedis.Client, kafkaWriter *kafka.Writer) *ConsumerHandler {
+	return &ConsumerHandler{
+		service: NewService(db, vmedisClient, kafkaWriter),
+		cache:   NewCache(redisClient),
 	}
 }
