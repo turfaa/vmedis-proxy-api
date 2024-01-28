@@ -7,12 +7,14 @@ ARG TARGETARCH
 
 WORKDIR /app
 
+RUN go env -w GOMODCACHE=/root/.cache/go-build
+
 COPY go.mod go.sum ./
-RUN go mod download
+RUN --mount=type=cache,target=/root/.cache/go-build go mod download
 
 COPY . ./
 
-RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} CGO_ENABLED=0 go build -o /vmedis-proxy
+RUN --mount=type=cache,target=/root/.cache/go-build GOOS=${TARGETOS} GOARCH=${TARGETARCH} CGO_ENABLED=0 go build -o /vmedis-proxy
 
 FROM --platform=${BUILDPLATFORM:-linux/amd64} gcr.io/distroless/static-debian11 AS release
 
