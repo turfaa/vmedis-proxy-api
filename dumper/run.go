@@ -23,12 +23,12 @@ const (
 	DailySalesStatisticsSchedule = "30 59 * * * *"
 
 	// DailySalesSchedule is the schedule of the daily sales dumper.
-	// It currently runs every the first second of every hour.
-	DailySalesSchedule = "0 * * * *"
+	// It currently runs every 15 minutes.
+	DailySalesSchedule = "*/15 * * * *"
 
 	// DailyStockOpnamesSchedule is the schedule of the daily stock opnames dumper.
-	// It currently runs every xx.30 every day.
-	DailyStockOpnamesSchedule = "30 * * * *"
+	// It currently runs every 10 minutes every day.
+	DailyStockOpnamesSchedule = "*/10 * * * *"
 
 	// DrugSchedule is the schedule of the drugs' dumper.
 	// It currently runs at 12am and 2am every day.
