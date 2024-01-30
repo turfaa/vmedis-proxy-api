@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.11.4] - 2024-01-30
+### :bug: Bug Fixes
+- [`8134cbd`](https://github.com/turfaa/vmedis-proxy-api/commit/8134cbd2a2eed3fb3cabeab575c23ccc715df61b) - Allow zero drug stock *(commit by [@turfaa](https://github.com/turfaa))*
+
+
 ## [v0.11.3] - 2024-01-28
 ### :bug: Bug Fixes
 - [`37df300`](https://github.com/turfaa/vmedis-proxy-api/commit/37df300b6a69d076d7cda05e68cc3c1cf5370164) - Add logs in drug consumer *(commit by [@turfaa](https://github.com/turfaa))*
@@ -224,3 +229,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v0.11.1]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.11.0...v0.11.1
 [v0.11.2]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.11.1...v0.11.2
 [v0.11.3]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.11.2...v0.11.3
+[v0.11.4]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.11.3...v0.11.4
