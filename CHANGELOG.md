@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.11.5] - 2024-01-30
+### :bug: Bug Fixes
+- [`7c7f608`](https://github.com/turfaa/vmedis-proxy-api/commit/7c7f60816d4780e127d21741942ee0b8ef0535e8) - Put stock opname id as stock opname request key *(commit by [@turfaa](https://github.com/turfaa))*
+
+### :wrench: Chores
+- [`623a6a8`](https://github.com/turfaa/vmedis-proxy-api/commit/623a6a8898d7dfdf498897416e9e5d8a3adc1576) - do not use cache when building *(commit by [@turfaa](https://github.com/turfaa))*
+
+
 ## [v0.11.4] - 2024-01-30
 ### :bug: Bug Fixes
 - [`8134cbd`](https://github.com/turfaa/vmedis-proxy-api/commit/8134cbd2a2eed3fb3cabeab575c23ccc715df61b) - Allow zero drug stock *(commit by [@turfaa](https://github.com/turfaa))*
@@ -230,3 +238,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v0.11.2]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.11.1...v0.11.2
 [v0.11.3]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.11.2...v0.11.3
 [v0.11.4]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.11.3...v0.11.4
+[v0.11.5]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.11.4...v0.11.5
