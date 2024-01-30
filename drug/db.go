@@ -206,10 +206,6 @@ func (d *Database) UpsertVmedisDrugUnits(ctx context.Context, drugVmedisCode str
 
 // UpsertVmedisDrugStocks upserts the given drug stocks.
 func (d *Database) UpsertVmedisDrugStocks(ctx context.Context, drugVmedisCode string, stocks []vmedis.Stock) error {
-	if len(stocks) == 0 {
-		return nil
-	}
-
 	dbStocks := slices2.Map(stocks, func(stock vmedis.Stock) models.DrugStock {
 		return models.DrugStock{
 			DrugVmedisCode: drugVmedisCode,
