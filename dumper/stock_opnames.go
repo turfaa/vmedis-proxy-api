@@ -73,7 +73,7 @@ func DumpDailyStockOpnames(ctx context.Context, db *gorm.DB, vmedisClient *vmedi
 	kafkaMessages := make([]*kafkapb.UpdatedDrugByVmedisCode, 0, len(sos))
 	for _, so := range sos {
 		kafkaMessages = append(kafkaMessages, &kafkapb.UpdatedDrugByVmedisCode{
-			RequestKey: fmt.Sprintf("stock-opname:%s:%s", so.DrugCode, so.BatchCode),
+			RequestKey: fmt.Sprintf("stock-opname:%s:%s", so.ID, so.DrugCode),
 			VmedisCode: so.DrugCode,
 		})
 	}
