@@ -8,7 +8,7 @@ import (
 type Drug struct {
 	ID        uint `gorm:"primarykey"`
 	CreatedAt time.Time
-	UpdatedAt time.Time
+	UpdatedAt time.Time `gorm:"index"`
 
 	VmedisID     int64  `gorm:"unique"`
 	VmedisCode   string `gorm:"unique"`

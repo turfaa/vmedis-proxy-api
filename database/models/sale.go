@@ -4,8 +4,8 @@ import "time"
 
 // Sale represents a sale.
 type Sale struct {
-	ID        uint `gorm:"primarykey"`
-	CreatedAt time.Time
+	ID        uint      `gorm:"primarykey"`
+	CreatedAt time.Time `gorm:"index"`
 	UpdatedAt time.Time
 
 	// VmedisID is the ID of the sale in Vmedis.

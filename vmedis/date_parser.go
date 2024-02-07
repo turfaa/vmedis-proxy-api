@@ -1,6 +1,7 @@
 package vmedis
 
 import (
+	"strings"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
@@ -18,7 +19,7 @@ type Date struct {
 
 // UnmarshalDataColumn implements DataColumnUnmarshaler.
 func (d *Date) UnmarshalDataColumn(selection *goquery.Selection) error {
-	dateString := selection.Text()
+	dateString := strings.TrimSpace(selection.Text())
 
 	t, err := time.ParseInLocation(dateFormat, dateString, time.Local)
 	if err != nil {

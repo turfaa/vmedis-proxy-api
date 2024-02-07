@@ -12,7 +12,7 @@ const (
 	drugDetailsByVmedisCodeProcessedKey = "drug-details-by-vmedis-code-processed:%s"
 	drugDetailsByVmedisIDProcessedKey   = "drug-details-by-vmedis-id-processed:%s"
 
-	processedKeysExpiry = 24 * time.Hour
+	processedKeysExpiry = 30 * 24 * time.Hour
 )
 
 type Cache struct {

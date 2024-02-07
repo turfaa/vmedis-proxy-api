@@ -50,6 +50,8 @@ func AutoMigrate(db *gorm.DB) error {
 		models.User{},
 		models.InvoiceCalculator{},
 		models.InvoiceComponent{},
+		models.Procurement{},
+		models.ProcurementUnit{},
 	}
 
 	for _, model := range availableModels {

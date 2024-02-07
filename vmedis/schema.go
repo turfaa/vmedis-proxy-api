@@ -221,3 +221,37 @@ type StockOpname struct {
 	SalePriceDifference float64 `so-index:"25"`
 	Notes               string  `so-index:"26"`
 }
+
+type Procurement struct {
+	Date                   Date       `procurement-column:"1"`
+	InvoiceNumber          string     `procurement-column:"3"`
+	Supplier               string     `procurement-column:"4"`
+	Warehouse              string     `procurement-column:"9"`
+	PaymentType            string     `procurement-column:"10"`
+	Operator               string     `procurement-column:"11"`
+	CashDiscountPercentage Percentage `procurement-column:"12"`
+	DiscountPercentage     Percentage `procurement-column:"13"`
+	DiscountAmount         float64    `procurement-column:"14"`
+	TaxPercentage          Percentage `procurement-column:"15"`
+	TaxAmount              float64    `procurement-column:"16"`
+	MiscellaneousCost      float64    `procurement-column:"17"`
+	Total                  float64    `procurement-column:"18"`
+	ProcurementUnits       []ProcurementUnit
+}
+
+type ProcurementUnit struct {
+	IDInProcurement         int        `procurement-index:"1"`
+	DrugCode                string     `procurement-index:"2"`
+	DrugName                string     `procurement-index:"3"`
+	Amount                  float64    `procurement-index:"4"`
+	Unit                    string     `procurement-index:"5"`
+	UnitBasePrice           float64    `procurement-index:"6"`
+	DiscountPercentage      Percentage `procurement-index:"7"`
+	DiscountTwoPercentage   Percentage `procurement-index:"8"`
+	DiscountThreePercentage Percentage `procurement-index:"9"`
+	TotalUnitPrice          float64    `procurement-index:"10"`
+	UnitTaxedPrice          float64    `procurement-index:"11"`
+	ExpiryDate              Date       `procurement-index:"12"`
+	BatchNumber             string     `procurement-index:"13"`
+	Total                   float64    `procurement-index:"14"`
+}

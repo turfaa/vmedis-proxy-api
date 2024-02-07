@@ -14,6 +14,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/turfaa/vmedis-proxy-api/drug"
+	"github.com/turfaa/vmedis-proxy-api/procurement"
 	"github.com/turfaa/vmedis-proxy-api/vmedis"
 )
 
@@ -37,6 +38,10 @@ const (
 	// ProcurementRecommendationsSchedule is the schedule of the procurement recommendations' dumper.
 	// It currently runs at 11pm, 1am, and 3am every day.
 	ProcurementRecommendationsSchedule = "0 23,1,3 * * *"
+
+	// ProcurementsSchedule is the schedule of the procurements' dumper.
+	// It currently runs every 30 minutes at xx.05 and xx.35.
+	ProcurementsSchedule = "5,35 * * * * *"
 )
 
 // Run runs the data dumper.
@@ -52,6 +57,9 @@ func Run(vmedisClient *vmedis.Client, db *gorm.DB, redisClient *redis.Client, ka
 
 	drugProducer := drug.NewProducer(kafkaWriter)
 
+	drugService := drug.NewService(db, vmedisClient, kafkaWriter)
+	procurementService := procurement.NewService(db, vmedisClient, drugProducer)
+
 	if _, err := scheduler.CronWithSeconds(DailySalesStatisticsSchedule).Do(DumpDailySalesStatistics, ctx, db, vmedisClient); err != nil {
 		log.Fatalf("Error scheduling daily sales statistics dumper: %s\n", err)
 	}
@@ -64,12 +72,16 @@ func Run(vmedisClient *vmedis.Client, db *gorm.DB, redisClient *redis.Client, ka
 		log.Fatalf("Error scheduling daily stock opnames dumper: %s\n", err)
 	}
 
-	if _, err := scheduler.Cron(DrugSchedule).Do(DumpDrugs, ctx, db, vmedisClient, kafkaWriter); err != nil {
+	if _, err := scheduler.Cron(DrugSchedule).Do(DumpDrugs, ctx, drugService); err != nil {
 		log.Fatalf("Error scheduling drugs dumper: %s\n", err)
 	}
 
 	if _, err := scheduler.Cron(ProcurementRecommendationsSchedule).Do(DumpProcurementRecommendations, ctx, db, redisClient, vmedisClient); err != nil {
 		log.Fatalf("Error scheduling procurement recommendations dumper: %s\n", err)
+	}
+
+	if _, err := scheduler.Cron(ProcurementsSchedule).Do(DumpProcurements, ctx, procurementService); err != nil {
+		log.Fatalf("Error scheduling procurements dumper: %s\n", err)
 	}
 
 	log.Println("Starting data dumper")

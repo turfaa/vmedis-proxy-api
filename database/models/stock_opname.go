@@ -8,8 +8,8 @@ import (
 
 // StockOpname represents a stock opname.
 type StockOpname struct {
-	ID        uint `gorm:"primarykey"`
-	CreatedAt time.Time
+	ID        uint      `gorm:"primarykey"`
+	CreatedAt time.Time `gorm:"index"`
 	UpdatedAt time.Time
 
 	VmedisID            string         `gorm:"unique"`
