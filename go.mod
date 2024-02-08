@@ -13,7 +13,6 @@ require (
 	github.com/glebarez/sqlite v1.10.0
 	github.com/go-co-op/gocron v1.37.0
 	github.com/go-redis/redis/v8 v8.11.5
-	github.com/golang/protobuf v1.5.3
 	github.com/klauspost/compress v1.17.6
 	github.com/segmentio/kafka-go v0.4.47
 	github.com/spf13/cobra v1.8.0

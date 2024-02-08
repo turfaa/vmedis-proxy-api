@@ -9,8 +9,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
-	"github.com/golang/protobuf/jsonpb"
 	"github.com/segmentio/kafka-go"
+	"google.golang.org/protobuf/encoding/protojson"
 	"gorm.io/gorm"
 
 	"github.com/turfaa/vmedis-proxy-api/kafkapb"
@@ -132,7 +132,7 @@ type ConsumerHandler struct {
 
 func (h *ConsumerHandler) DumpDrugDetailsByVmedisCode(ctx context.Context, kafkaMessage kafka.Message) error {
 	var payload kafkapb.UpdatedDrugByVmedisCode
-	if err := jsonpb.UnmarshalString(string(kafkaMessage.Value), &payload); err != nil {
+	if err := protojson.Unmarshal(kafkaMessage.Value, &payload); err != nil {
 		return fmt.Errorf("failed to unmarshal kafka message: %s", err)
 	}
 
@@ -160,7 +160,7 @@ func (h *ConsumerHandler) DumpDrugDetailsByVmedisCode(ctx context.Context, kafka
 
 func (h *ConsumerHandler) DumpDrugDetailsByVmedisID(ctx context.Context, kafkaMessage kafka.Message) error {
 	var payload kafkapb.UpdatedDrugByVmedisID
-	if err := jsonpb.UnmarshalString(string(kafkaMessage.Value), &payload); err != nil {
+	if err := protojson.Unmarshal(kafkaMessage.Value, &payload); err != nil {
 		return fmt.Errorf("failed to unmarshal kafka message: %s", err)
 	}
 

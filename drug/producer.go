@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/golang/protobuf/jsonpb"
 	"github.com/segmentio/kafka-go"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/turfaa/vmedis-proxy-api/kafkapb"
 )
@@ -16,10 +16,6 @@ const (
 	VmedisCodeUpdatedTopic = "drug_vmedis_code.updated"
 )
 
-var (
-	jsonpbMarshaler = jsonpb.Marshaler{Indent: "  "}
-)
-
 type Producer struct {
 	writer *kafka.Writer
 }
@@ -27,7 +23,7 @@ type Producer struct {
 func (p *Producer) ProduceUpdatedDrugsByVmedisID(ctx context.Context, messages []*kafkapb.UpdatedDrugByVmedisID) error {
 	kafkaMessages := make([]kafka.Message, 0, len(messages))
 	for _, message := range messages {
-		messageStr, err := jsonpbMarshaler.MarshalToString(message)
+		messageJson, err := protojson.Marshal(message)
 		if err != nil {
 			return fmt.Errorf("failed to marshal message: %w", err)
 		}
@@ -35,7 +31,7 @@ func (p *Producer) ProduceUpdatedDrugsByVmedisID(ctx context.Context, messages [
 		kafkaMessages = append(kafkaMessages, kafka.Message{
 			Topic: VmedisIDUpdatedTopic,
 			Key:   []byte(strconv.FormatInt(message.VmedisId, 10)),
-			Value: []byte(messageStr),
+			Value: messageJson,
 		})
 	}
 
@@ -49,7 +45,7 @@ func (p *Producer) ProduceUpdatedDrugsByVmedisID(ctx context.Context, messages [
 func (p *Producer) ProduceUpdatedDrugByVmedisCode(ctx context.Context, messages []*kafkapb.UpdatedDrugByVmedisCode) error {
 	kafkaMessages := make([]kafka.Message, 0, len(messages))
 	for _, message := range messages {
-		messageStr, err := jsonpbMarshaler.MarshalToString(message)
+		messageJson, err := protojson.Marshal(message)
 		if err != nil {
 			return fmt.Errorf("failed to marshal message: %w", err)
 		}
@@ -57,7 +53,7 @@ func (p *Producer) ProduceUpdatedDrugByVmedisCode(ctx context.Context, messages 
 		kafkaMessages = append(kafkaMessages, kafka.Message{
 			Topic: VmedisCodeUpdatedTopic,
 			Key:   []byte(message.VmedisCode),
-			Value: []byte(messageStr),
+			Value: messageJson,
 		})
 	}
 
