@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.13.1] - 2024-02-08
+### :bug: Bug Fixes
+- [`16d1fce`](https://github.com/turfaa/vmedis-proxy-api/commit/16d1fce51262c7298e99908723d5e4bfd5b4ab45) - move limiter.Wait() to the top of getWithSessionId *(commit by [@turfaa](https://github.com/turfaa))*
+
+
 ## [v0.13.0] - 2024-02-08
 ### :sparkles: New Features
 - [`5b37563`](https://github.com/turfaa/vmedis-proxy-api/commit/5b37563328cdb5f7abbfe053f1d0f33102933beb) - Move vmedis session ids to database *(commit by [@turfaa](https://github.com/turfaa))*
@@ -276,3 +281,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v0.12.1]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.12.0...v0.12.1
 [v0.12.2]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.12.1...v0.12.2
 [v0.13.0]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.12.2...v0.13.0
+[v0.13.1]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.13.0...v0.13.1
