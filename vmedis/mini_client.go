@@ -73,8 +73,12 @@ func (c *MiniClient) RefreshTokens(ctx context.Context, tokens []string) (map[st
 }
 
 func (c *MiniClient) getWithSessionId(ctx context.Context, path, sessionId string) (*http.Response, error) {
+	if err := c.limiter.Wait(ctx); err != nil {
+		return nil, fmt.Errorf("error waiting for limiter: %w", err)
+	}
+
 	finalPath := c.baseUrl + path
-	log.Printf("GET %s\n", finalPath)
+	log.Printf("GET %s", finalPath)
 
 	req, err := http.NewRequest("GET", finalPath, nil)
 	if err != nil {
@@ -83,10 +87,6 @@ func (c *MiniClient) getWithSessionId(ctx context.Context, path, sessionId strin
 
 	req.Header.Add("Cookie", "PHPSESSID="+sessionId)
 	req = req.WithContext(ctx)
-
-	if err := c.limiter.Wait(ctx); err != nil {
-		return nil, fmt.Errorf("error waiting for limiter: %w", err)
-	}
 
 	res, err := c.httpClient.Do(req)
 	if err != nil {
