@@ -32,8 +32,10 @@ const (
 	DailyStockOpnamesSchedule = "*/10 * * * *"
 
 	// DrugSchedule is the schedule of the drugs' dumper.
-	// It currently runs at 12am and 2am every day.
-	DrugSchedule = "0 0,2 * * *"
+	// It currently runs at 12.25am and 2.25am every day.
+	// The additional 25 minutes is due to the vmedis server being consistently down
+	// at exactly 12.00am.
+	DrugSchedule = "25 0,2 * * *"
 
 	// ProcurementRecommendationsSchedule is the schedule of the procurement recommendations' dumper.
 	// It currently runs at 11pm, 1am, and 3am every day.
