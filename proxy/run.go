@@ -18,25 +18,15 @@ import (
 
 // Config is the proxy server configuration.
 type Config struct {
-	VmedisClient           *vmedis.Client
-	DB                     *gorm.DB
-	RedisClient            *redis.Client
-	KafkaWriter            *kafka.Writer
-	SessionRefreshInterval time.Duration
+	VmedisClient *vmedis.Client
+	DB           *gorm.DB
+	RedisClient  *redis.Client
+	KafkaWriter  *kafka.Writer
 }
 
 // Run runs the proxy server.
 func Run(config Config) {
-	log.Println("Checking if session ids are valid")
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-	defer cancel()
-
-	if err := config.VmedisClient.RefreshSessionIds(ctx); err != nil {
-		log.Fatalf("Session id check failed: %s\n", err)
-	}
-
-	log.Printf("Starting proxy server to %s with refresh interval %d\n", config.VmedisClient.BaseUrl, config.SessionRefreshInterval)
+	log.Printf("Starting proxy server to %s", config.VmedisClient.BaseUrl)
 
 	apiServer := NewApiServer(config.VmedisClient, config.DB, config.RedisClient, config.KafkaWriter)
 	engine := apiServer.GinEngine()
@@ -52,9 +42,6 @@ func Run(config Config) {
 	}()
 
 	log.Println("Proxy server started")
-
-	stop := config.VmedisClient.AutoRefreshSessionIds(config.SessionRefreshInterval)
-	defer stop()
 
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGTERM, syscall.SIGINT, syscall.SIGINT)

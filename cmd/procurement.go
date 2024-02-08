@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"log"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -27,20 +26,15 @@ var procurementCommands = []commandWithInit{
 			Use:   "dump",
 			Short: "Run one-time procurements dumper",
 			Run: func(cmd *cobra.Command, args []string) {
-				db, err := getDatabase()
-				if err != nil {
-					log.Fatalf("Error opening database: %s\n", err)
-				}
-
 				procurement.DumpProcurementsBetweenDatesFromVmedisToDB(
 					cmd.Context(),
 					viper.GetTime("start_date"),
 					viper.GetTime("end_date"),
-					db,
+					getDatabase(),
 					getRedisClient(),
 					getVmedisClient(),
 					getDrugProducer(),
-					drug.NewDatabase(db),
+					drug.NewDatabase(getDatabase()),
 				)
 			},
 		},
@@ -57,18 +51,13 @@ var procurementCommands = []commandWithInit{
 			Use:   "dump-recommendations",
 			Short: "Run one-time procurement recommendations dumper",
 			Run: func(cmd *cobra.Command, args []string) {
-				db, err := getDatabase()
-				if err != nil {
-					log.Fatalf("Error opening database: %s\n", err)
-				}
-
 				procurement.DumpProcurementRecommendations(
 					cmd.Context(),
-					db,
+					getDatabase(),
 					getRedisClient(),
 					getVmedisClient(),
 					getDrugProducer(),
-					drug.NewDatabase(db),
+					drug.NewDatabase(getDatabase()),
 				)
 			},
 		},

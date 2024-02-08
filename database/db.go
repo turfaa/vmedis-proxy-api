@@ -4,9 +4,10 @@ import (
 	"fmt"
 
 	"github.com/glebarez/sqlite"
-	"github.com/turfaa/vmedis-proxy-api/database/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	"github.com/turfaa/vmedis-proxy-api/database/models"
 )
 
 // SqliteDB returns the sqlite database.
@@ -28,6 +29,16 @@ func PostgresDB(dsn string) (*gorm.DB, error) {
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, fmt.Errorf("open postgres database: %w", err)
+	}
+
+	if err := db.Exec(`
+	DO $$ BEGIN
+		CREATE TYPE token_state AS ENUM ('UNCHECKED', 'ACTIVE', 'EXPIRED');
+	EXCEPTION
+		WHEN duplicate_object THEN null;
+	END $$;`).
+		Error; err != nil {
+		return nil, fmt.Errorf("create token_state enum: %w", err)
 	}
 
 	if err := AutoMigrate(db); err != nil {
@@ -52,6 +63,7 @@ func AutoMigrate(db *gorm.DB) error {
 		models.InvoiceComponent{},
 		models.Procurement{},
 		models.ProcurementUnit{},
+		models.VmedisToken{},
 	}
 
 	for _, model := range availableModels {

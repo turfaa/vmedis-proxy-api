@@ -1,10 +1,7 @@
 package cmd
 
 import (
-	"log"
-
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/turfaa/vmedis-proxy-api/proxy"
 )
@@ -15,18 +12,12 @@ var serveCmd = &cobra.Command{
 	Short: "Run the vmedis proxy api server",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		db, err := getDatabase()
-		if err != nil {
-			log.Fatalf("Error opening database: %s\n", err)
-		}
-
 		proxy.Run(
 			proxy.Config{
-				VmedisClient:           getVmedisClient(),
-				DB:                     db,
-				RedisClient:            getRedisClient(),
-				KafkaWriter:            getKafkaWriter(),
-				SessionRefreshInterval: viper.GetDuration("refresh_interval"),
+				VmedisClient: getVmedisClient(),
+				DB:           getDatabase(),
+				RedisClient:  getRedisClient(),
+				KafkaWriter:  getKafkaWriter(),
 			},
 		)
 	},

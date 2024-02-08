@@ -1,7 +1,8 @@
 package cmd
 
 import (
-	"sync"
+	"log"
+	"sync/atomic"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/segmentio/kafka-go"
@@ -12,81 +13,164 @@ import (
 	"github.com/turfaa/vmedis-proxy-api/database"
 	"github.com/turfaa/vmedis-proxy-api/drug"
 	"github.com/turfaa/vmedis-proxy-api/vmedis"
+	"github.com/turfaa/vmedis-proxy-api/vmedis/token"
 )
 
 var (
-	db     *gorm.DB
-	dbErr  error
-	dbOnce sync.Once
-
-	vmedisClient     *vmedis.Client
-	vmedisClientOnce sync.Once
-
-	redisClient     *redis.Client
-	redisClientOnce sync.Once
-
-	drugProducer     *drug.Producer
-	drugProducerOnce sync.Once
-
-	kafkaWriter     *kafka.Writer
-	kafkaWriterOnce sync.Once
+	db                atomic.Pointer[gorm.DB]
+	vmedisClient      atomic.Pointer[vmedis.Client]
+	redisClient       atomic.Pointer[redis.Client]
+	drugProducer      atomic.Pointer[drug.Producer]
+	kafkaWriter       atomic.Pointer[kafka.Writer]
+	tokenManager      atomic.Pointer[token.Manager]
+	vmedisMiniClient  atomic.Pointer[vmedis.MiniClient]
+	vmedisRateLimiter atomic.Pointer[rate.Limiter]
 )
 
-func getDatabase() (*gorm.DB, error) {
-	dbOnce.Do(func() {
-		if viper.GetString("postgres_dsn") != "" {
-			db, dbErr = database.PostgresDB(viper.GetString("postgres_dsn"))
-			return
-		}
+func getDatabase() *gorm.DB {
+	if val := db.Load(); val != nil {
+		return val
+	}
 
-		db, dbErr = database.SqliteDB(viper.GetString("sqlite_path"))
-	})
+	var (
+		newDB *gorm.DB
+		err   error
+	)
 
-	return db, dbErr
+	if viper.GetString("postgres_dsn") == "" {
+		newDB, err = database.SqliteDB(viper.GetString("sqlite_path"))
+	} else {
+		newDB, err = database.PostgresDB(viper.GetString("postgres_dsn"))
+	}
+
+	if err != nil {
+		log.Fatalf("Error opening database: %s", err)
+	}
+
+	if !db.CompareAndSwap(nil, newDB) {
+		return db.Load()
+	}
+
+	return newDB
 }
 
 func getVmedisClient() *vmedis.Client {
-	vmedisClientOnce.Do(func() {
-		vmedisClient = vmedis.New(
-			viper.GetString("base_url"),
-			viper.GetStringSlice("session_ids"),
-			viper.GetInt("concurrency"),
-			rate.NewLimiter(rate.Limit(viper.GetFloat64("rate_limit")), 1),
-		)
-	})
+	if val := vmedisClient.Load(); val != nil {
+		return val
+	}
 
-	return vmedisClient
+	newClient := vmedis.New(
+		viper.GetString("base_url"),
+		viper.GetInt("concurrency"),
+		getVmedisRateLimiter(),
+		getTokenManager(),
+	)
+
+	if !vmedisClient.CompareAndSwap(nil, newClient) {
+		return vmedisClient.Load()
+	}
+
+	return newClient
 }
 
 func getRedisClient() *redis.Client {
-	redisClientOnce.Do(func() {
-		redisClient = redis.NewClient(&redis.Options{
-			Addr:     viper.GetString("redis_address"),
-			Password: viper.GetString("redis_password"),
-			DB:       viper.GetInt("redis_db"),
-		})
+	if val := redisClient.Load(); val != nil {
+		return val
+	}
+
+	newClient := redis.NewClient(&redis.Options{
+		Addr:     viper.GetString("redis_address"),
+		Password: viper.GetString("redis_password"),
+		DB:       viper.GetInt("redis_db"),
 	})
 
-	return redisClient
+	if !redisClient.CompareAndSwap(nil, newClient) {
+		return redisClient.Load()
+	}
+
+	return newClient
 }
 
 func getDrugProducer() *drug.Producer {
-	drugProducerOnce.Do(func() {
-		drugProducer = drug.NewProducer(getKafkaWriter())
-	})
+	if val := drugProducer.Load(); val != nil {
+		return val
+	}
 
-	return drugProducer
+	newProducer := drug.NewProducer(getKafkaWriter())
+
+	if !drugProducer.CompareAndSwap(nil, newProducer) {
+		return drugProducer.Load()
+	}
+
+	return newProducer
 }
 
 func getKafkaWriter() *kafka.Writer {
-	kafkaWriterOnce.Do(func() {
-		kafkaWriter = &kafka.Writer{
-			Addr:         kafka.TCP(viper.GetStringSlice("kafka_brokers")...),
-			Balancer:     &kafka.LeastBytes{},
-			RequiredAcks: kafka.RequireOne,
-			Compression:  kafka.Snappy,
-		}
-	})
+	if val := kafkaWriter.Load(); val != nil {
+		return val
+	}
 
-	return kafkaWriter
+	newWriter := &kafka.Writer{
+		Addr:         kafka.TCP(viper.GetStringSlice("kafka_brokers")...),
+		Balancer:     &kafka.LeastBytes{},
+		RequiredAcks: kafka.RequireOne,
+		Compression:  kafka.Snappy,
+	}
+
+	if !kafkaWriter.CompareAndSwap(nil, newWriter) {
+		return kafkaWriter.Load()
+	}
+
+	return newWriter
+}
+
+func getTokenManager() *token.Manager {
+	if val := tokenManager.Load(); val != nil {
+		return val
+	}
+
+	newManager, err := token.NewManager(
+		getDatabase(),
+		getVmedisMiniClient(),
+		viper.GetDuration("refresh_interval"),
+	)
+	if err != nil {
+		log.Fatalf("Error creating token manager: %s", err)
+	}
+
+	if !tokenManager.CompareAndSwap(nil, newManager) {
+		return tokenManager.Load()
+	}
+
+	return newManager
+}
+
+func getVmedisMiniClient() *vmedis.MiniClient {
+	if val := vmedisMiniClient.Load(); val != nil {
+		return val
+	}
+
+	newClient := vmedis.NewMini(
+		viper.GetString("base_url"),
+		getVmedisRateLimiter(),
+	)
+
+	if !vmedisMiniClient.CompareAndSwap(nil, newClient) {
+		return vmedisMiniClient.Load()
+	}
+
+	return newClient
+}
+
+func getVmedisRateLimiter() *rate.Limiter {
+	if val := vmedisRateLimiter.Load(); val != nil {
+		return val
+	}
+
+	newLimiter := rate.NewLimiter(rate.Limit(viper.GetFloat64("rate_limit")), 1)
+	if !vmedisRateLimiter.CompareAndSwap(nil, newLimiter) {
+		return vmedisRateLimiter.Load()
+	}
+
+	return newLimiter
 }

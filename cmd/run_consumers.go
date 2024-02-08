@@ -17,14 +17,9 @@ var runConsumersCmd = &cobra.Command{
 	Use:   "run-consumers",
 	Short: "Run consumers",
 	Run: func(cmd *cobra.Command, args []string) {
-		db, err := getDatabase()
-		if err != nil {
-			log.Fatalf("Error opening database: %s\n", err)
-		}
-
 		drugConsumer := drug.NewConsumer(
 			viper.GetStringSlice("kafka_brokers"),
-			db,
+			getDatabase(),
 			getRedisClient(),
 			getVmedisClient(),
 			getKafkaWriter(),
