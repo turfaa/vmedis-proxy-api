@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.12.1] - 2024-02-08
+### :bug: Bug Fixes
+- [`39821c3`](https://github.com/turfaa/vmedis-proxy-api/commit/39821c39b0ac772d672bf359d68dad95f1229cbf) - Inline DrugStock in procurement recommendations using the experimental encoding/json/v2 candidate *(commit by [@turfaa](https://github.com/turfaa))*
+
+### :wrench: Chores
+- [`33e0da7`](https://github.com/turfaa/vmedis-proxy-api/commit/33e0da7318e4edb741721a6edb4c86461c2157cd) - Update all deps *(commit by [@turfaa](https://github.com/turfaa))*
+- [`8a7c704`](https://github.com/turfaa/vmedis-proxy-api/commit/8a7c704e8c972213b4098c7f8307444c0bf90e1d) - use protojson instead of jsonpb *(commit by [@turfaa](https://github.com/turfaa))*
+
+
 ## [v0.12.0] - 2024-02-08
 ### :sparkles: New Features
 - [`5878296`](https://github.com/turfaa/vmedis-proxy-api/commit/58782964a7a73b91d91b8e2cc0603d4fe58aa1e7) - Add procurements dumper *(commit by [@turfaa](https://github.com/turfaa))*
@@ -250,3 +259,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v0.11.4]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.11.3...v0.11.4
 [v0.11.5]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.11.4...v0.11.5
 [v0.12.0]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.11.5...v0.12.0
+[v0.12.1]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.12.0...v0.12.1
