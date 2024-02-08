@@ -12,6 +12,7 @@ require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/glebarez/sqlite v1.10.0
 	github.com/go-co-op/gocron v1.37.0
+	github.com/go-json-experiment/json v0.0.0-20231102232822-2e55bd4e08b0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/klauspost/compress v1.17.6
 	github.com/segmentio/kafka-go v0.4.47

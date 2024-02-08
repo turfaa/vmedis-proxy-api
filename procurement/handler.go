@@ -11,6 +11,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 
+	"github.com/turfaa/vmedis-proxy-api/gin2"
 	"github.com/turfaa/vmedis-proxy-api/vmedis"
 )
 
@@ -55,7 +56,8 @@ func (h *ApiHandler) GetRecommendations(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, recommendations)
+	// We need to use the experimental JSON renderer to make use of the new "inline" behaviour.
+	c.Render(200, gin2.ExperimentalJSONRenderer{Data: recommendations})
 }
 
 func (h *ApiHandler) DumpRecommendations(c *gin.Context) {
