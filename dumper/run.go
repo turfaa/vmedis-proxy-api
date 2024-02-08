@@ -41,7 +41,7 @@ const (
 
 	// ProcurementsSchedule is the schedule of the procurements' dumper.
 	// It currently runs every 30 minutes at xx.05 and xx.35.
-	ProcurementsSchedule = "5,35 * * * * *"
+	ProcurementsSchedule = "5,35 * * * *"
 )
 
 // Run runs the data dumper.
