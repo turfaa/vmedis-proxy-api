@@ -23,6 +23,15 @@ type Service struct {
 	drugUnitsGetter DrugUnitsGetter
 }
 
+func (s *Service) GetRecommendations(ctx context.Context) (RecommendationsResponse, error) {
+	recommendations, err := s.redisDB.GetRecommendations(ctx)
+	if err != nil {
+		return RecommendationsResponse{}, fmt.Errorf("get procurement recommendations from Redis: %w", err)
+	}
+
+	return recommendations, nil
+}
+
 func (s *Service) DumpProcurementsBetweenDatesFromVmedisToDB(
 	ctx context.Context,
 	startDate time.Time,
@@ -60,15 +69,6 @@ func (s *Service) DumpProcurementsBetweenDatesFromVmedisToDB(
 	log.Printf("Produced %d updated drugs by vmedis code", len(updatedDrugs))
 
 	return nil
-}
-
-func (s *Service) GetRecommendations(ctx context.Context) (RecommendationsResponse, error) {
-	recommendations, err := s.redisDB.GetRecommendations(ctx)
-	if err != nil {
-		return RecommendationsResponse{}, fmt.Errorf("get procurement recommendations from Redis: %w", err)
-	}
-
-	return recommendations, nil
 }
 
 func (s *Service) DumpRecommendationsFromVmedisToRedis(ctx context.Context) error {
@@ -177,6 +177,15 @@ func calculateRecommendation(stock vmedis.DrugStock, drugUnits []drug.Unit) (cho
 	}
 
 	return
+}
+
+func (s *Service) GetInvoiceCalculators(ctx context.Context) ([]InvoiceCalculator, error) {
+	calculators, err := s.db.GetInvoiceCalculators(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get invoice calculators from DB: %w", err)
+	}
+
+	return calculators, nil
 }
 
 func NewService(

@@ -79,22 +79,25 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 			}
 		}
 
+		// We are migrating to /procurements
 		procurementHandlers := v1.Group("/procurement")
-		{
-			procurementHandlers.GET(
+		procurementsHandlers := v1.Group("/procurements")
+
+		for _, group := range []*gin.RouterGroup{procurementHandlers, procurementsHandlers} {
+			group.GET(
 				"/recommendations",
 				s.procurementHandler.GetRecommendations,
 			)
 
-			procurementHandlers.POST(
+			group.POST(
 				"/recommendations/dump",
 				s.procurementHandler.DumpRecommendationsFromVmedisToRedis,
 			)
 
-			procurementHandlers.GET(
+			group.GET(
 				"/invoice-calculators",
 				cache.CacheByRequestURI(store, time.Hour),
-				s.HandleGetInvoiceCalculators,
+				s.procurementHandler.GetInvoiceCalculators,
 			)
 		}
 

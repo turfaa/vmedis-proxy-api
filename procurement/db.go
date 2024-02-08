@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
-	"gorm.io/datatypes"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
@@ -97,46 +96,18 @@ func (d *Database) UpsertVmedisProcurements(ctx context.Context, procurements []
 	})
 }
 
-func vmedisProcurementToDBProcurement(p vmedis.Procurement) models.Procurement {
-	return models.Procurement{
-		InvoiceNumber:          p.InvoiceNumber,
-		InvoiceDate:            datatypes.Date(p.Date.Time),
-		Supplier:               p.Supplier,
-		Warehouse:              p.Warehouse,
-		PaymentType:            p.PaymentType,
-		Operator:               p.Operator,
-		CashDiscountPercentage: p.CashDiscountPercentage.Value,
-		DiscountPercentage:     p.DiscountPercentage.Value,
-		DiscountAmount:         p.DiscountAmount,
-		TaxPercentage:          p.TaxPercentage.Value,
-		TaxAmount:              p.TaxAmount,
-		MiscellaneousCost:      p.MiscellaneousCost,
-		Total:                  p.Total,
-		ProcurementUnits: slices2.Map(p.ProcurementUnits, func(u vmedis.ProcurementUnit) models.ProcurementUnit {
-			unit := vmedisProcurementUnitToDBProcurementUnit(u)
-			unit.InvoiceNumber = p.InvoiceNumber
-			return unit
-		}),
+func (d *Database) GetInvoiceCalculators(ctx context.Context) ([]InvoiceCalculator, error) {
+	var invoiceCalculators []models.InvoiceCalculator
+	if err := d.dbCtx(ctx).
+		Model(&models.InvoiceCalculator{}).
+		Preload("Components").
+		Order("supplier").
+		Find(&invoiceCalculators).
+		Error; err != nil {
+		return nil, fmt.Errorf("get invoice calculators from DB: %w", err)
 	}
-}
 
-func vmedisProcurementUnitToDBProcurementUnit(u vmedis.ProcurementUnit) models.ProcurementUnit {
-	return models.ProcurementUnit{
-		IDInProcurement:         u.IDInProcurement,
-		DrugCode:                u.DrugCode,
-		DrugName:                u.DrugName,
-		Amount:                  u.Amount,
-		Unit:                    u.Unit,
-		UnitBasePrice:           u.UnitBasePrice,
-		DiscountPercentage:      u.DiscountPercentage.Value,
-		DiscountTwoPercentage:   u.DiscountTwoPercentage.Value,
-		DiscountThreePercentage: u.DiscountThreePercentage.Value,
-		TotalUnitPrice:          u.TotalUnitPrice,
-		UnitTaxedPrice:          u.UnitTaxedPrice,
-		ExpiryDate:              u.ExpiryDate.Time,
-		BatchNumber:             u.BatchNumber,
-		Total:                   u.Total,
-	}
+	return slices2.Map(invoiceCalculators, FromDBInvoiceCalculator), nil
 }
 
 func (d *Database) dbCtx(ctx context.Context) *gorm.DB {

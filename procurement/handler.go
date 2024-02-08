@@ -34,10 +34,22 @@ func (h *ApiHandler) DumpRecommendationsFromVmedisToRedis(c *gin.Context) {
 			log.Printf("Failed to dump recommendations from vmedis to redis: %s", err)
 		}
 	}()
-	
+
 	c.JSON(200, gin.H{
 		"message": "dumping recommendations from vmedis to redis",
 	})
+}
+
+func (h *ApiHandler) GetInvoiceCalculators(c *gin.Context) {
+	calculators, err := h.service.GetInvoiceCalculators(c)
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": fmt.Sprintf("failed to get invoice calculators: %s", err),
+		})
+		return
+	}
+
+	c.JSON(200, InvoiceCalculatorsResponse{Calculators: calculators})
 }
 
 func NewApiHandler(
