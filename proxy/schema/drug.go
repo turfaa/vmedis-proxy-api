@@ -2,7 +2,6 @@ package schema
 
 import (
 	"github.com/turfaa/vmedis-proxy-api/database/models"
-	"github.com/turfaa/vmedis-proxy-api/vmedis"
 )
 
 // Drug is a drug in the inventory.
@@ -33,42 +32,6 @@ type Unit struct {
 	PriceOne   float64 `json:"priceOne,omitempty"`
 	PriceTwo   float64 `json:"priceTwo,omitempty"`
 	PriceThree float64 `json:"priceThree,omitempty"`
-}
-
-// FromClientDrug converts Drug from client schema to proxy schema.
-func FromClientDrug(cd vmedis.Drug) Drug {
-	units := make([]Unit, 0, len(cd.Units))
-	for _, cu := range cd.Units {
-		units = append(units, FromClientUnit(cu))
-	}
-
-	stocks := make([]Stock, 0, len(cd.Stocks))
-	for _, cs := range cd.Stocks {
-		stocks = append(stocks, FromClientStock(cs))
-	}
-
-	return Drug{
-		VmedisCode:   cd.VmedisCode,
-		Name:         cd.Name,
-		Manufacturer: cd.Manufacturer,
-		Supplier:     cd.Supplier,
-		MinimumStock: FromClientStock(cd.MinimumStock),
-		Units:        units,
-		Stocks:       stocks,
-	}
-}
-
-// FromClientUnit converts Unit from client schema to proxy schema.
-func FromClientUnit(cu vmedis.Unit) Unit {
-	return Unit{
-		Unit:                   cu.Unit,
-		ParentUnit:             cu.ParentUnit,
-		ConversionToParentUnit: cu.ConversionToParentUnit,
-		UnitOrder:              cu.UnitOrder,
-		PriceOne:               cu.PriceOne,
-		PriceTwo:               cu.PriceTwo,
-		PriceThree:             cu.PriceThree,
-	}
 }
 
 // FromModelsDrug converts Drug from models.Drug to proxy schema.

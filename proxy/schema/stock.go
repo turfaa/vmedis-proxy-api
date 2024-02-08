@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/turfaa/vmedis-proxy-api/database/models"
-	"github.com/turfaa/vmedis-proxy-api/vmedis"
 )
 
 // Stock represents one instance of stock.
@@ -49,15 +48,6 @@ func (s *Stock) UnmarshalText(text []byte) error {
 	return nil
 }
 
-// FromClientStock converts Stock from client schema to proxy schema.
-func FromClientStock(cs vmedis.Stock) Stock {
-	return Stock{
-		Unit:     cs.Unit,
-		Quantity: cs.Quantity,
-	}
-}
-
-// FromModelsDrugStock converts Stock from models.DrugStock to proxy schema.
 func FromModelsDrugStock(stock models.DrugStock) Stock {
 	return FromModelsStock(stock.Stock)
 }
