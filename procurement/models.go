@@ -1,11 +1,35 @@
 package procurement
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/turfaa/vmedis-proxy-api/database/models"
 	"github.com/turfaa/vmedis-proxy-api/drug"
 )
+
+type DumpProcurementsRequest struct {
+	StartDate string `json:"startDate"`
+	EndDate   string `json:"endDate"`
+}
+
+func (r DumpProcurementsRequest) ExtractDates() (time.Time, time.Time, error) {
+	if r.StartDate == "" || r.EndDate == "" {
+		return time.Now().AddDate(0, 0, -14), time.Now(), nil
+	}
+
+	startDate, err := time.Parse(time.DateOnly, r.StartDate)
+	if err != nil {
+		return time.Time{}, time.Time{}, fmt.Errorf("parse start date '%s': %w", r.StartDate, err)
+	}
+
+	endDate, err := time.Parse(time.DateOnly, r.EndDate)
+	if err != nil {
+		return time.Time{}, time.Time{}, fmt.Errorf("parse end date '%s': %w", r.EndDate, err)
+	}
+
+	return startDate, endDate, nil
+}
 
 type RecommendationsResponse struct {
 	Recommendations []Recommendation `json:"recommendations"`

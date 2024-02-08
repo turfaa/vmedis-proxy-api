@@ -91,13 +91,18 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 
 			group.POST(
 				"/recommendations/dump",
-				s.procurementHandler.DumpRecommendationsFromVmedisToRedis,
+				s.procurementHandler.DumpRecommendations,
 			)
 
 			group.GET(
 				"/invoice-calculators",
 				cache.CacheByRequestURI(store, time.Hour),
 				s.procurementHandler.GetInvoiceCalculators,
+			)
+
+			group.POST(
+				"/dump",
+				s.procurementHandler.DumpProcurements,
 			)
 		}
 
