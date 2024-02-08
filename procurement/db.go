@@ -2,9 +2,12 @@ package procurement
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
+	"time"
 
+	"github.com/go-redis/redis/v8"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -12,6 +15,11 @@ import (
 	"github.com/turfaa/vmedis-proxy-api/database/models"
 	"github.com/turfaa/vmedis-proxy-api/slices2"
 	"github.com/turfaa/vmedis-proxy-api/vmedis"
+	"github.com/turfaa/vmedis-proxy-api/zstd2"
+)
+
+var (
+	procurementRecommendationsRedisKey = "static_key.procurement_recommendations.json.zstd"
 )
 
 type Database struct {
@@ -89,16 +97,6 @@ func (d *Database) UpsertVmedisProcurements(ctx context.Context, procurements []
 	})
 }
 
-func (d *Database) dbCtx(ctx context.Context) *gorm.DB {
-	return d.db.WithContext(ctx)
-}
-
-func NewDatabase(db *gorm.DB) *Database {
-	return &Database{
-		db: db,
-	}
-}
-
 func vmedisProcurementToDBProcurement(p vmedis.Procurement) models.Procurement {
 	return models.Procurement{
 		InvoiceNumber:          p.InvoiceNumber,
@@ -138,5 +136,58 @@ func vmedisProcurementUnitToDBProcurementUnit(u vmedis.ProcurementUnit) models.P
 		ExpiryDate:              u.ExpiryDate.Time,
 		BatchNumber:             u.BatchNumber,
 		Total:                   u.Total,
+	}
+}
+
+func (d *Database) dbCtx(ctx context.Context) *gorm.DB {
+	return d.db.WithContext(ctx)
+}
+
+func NewDatabase(db *gorm.DB) *Database {
+	return &Database{
+		db: db,
+	}
+}
+
+type RedisDatabase struct {
+	redis *redis.Client
+}
+
+func (d *RedisDatabase) GetRecommendations(ctx context.Context) (RecommendationsResponse, error) {
+	compressed, err := d.redis.Get(ctx, procurementRecommendationsRedisKey).Result()
+	if err != nil {
+		return RecommendationsResponse{}, fmt.Errorf("get procurement recommendations from Redis: %w", err)
+	}
+
+	data, err := zstd2.Decompress([]byte(compressed))
+	if err != nil {
+		return RecommendationsResponse{}, fmt.Errorf("decompress procurement recommendations: %w", err)
+	}
+
+	var response RecommendationsResponse
+	if err := json.Unmarshal(data, &response); err != nil {
+		return RecommendationsResponse{}, fmt.Errorf("unmarshal procurement recommendations: %w", err)
+	}
+
+	return response, nil
+}
+
+func (d *RedisDatabase) SetRecommendations(ctx context.Context, recommendations RecommendationsResponse) error {
+	data, err := json.Marshal(recommendations)
+	if err != nil {
+		return fmt.Errorf("marshal procurement recommendations: %w", err)
+	}
+
+	compressed, err := zstd2.Compress(data)
+	if err != nil {
+		return fmt.Errorf("compress procurement recommendations: %w", err)
+	}
+
+	return d.redis.Set(ctx, procurementRecommendationsRedisKey, string(compressed), 30*24*time.Hour).Err()
+}
+
+func NewRedisDatabase(redisClient *redis.Client) *RedisDatabase {
+	return &RedisDatabase{
+		redis: redisClient,
 	}
 }

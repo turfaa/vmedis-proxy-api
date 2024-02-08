@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/chenyahui/gin-cache/persist"
+
+	"github.com/turfaa/vmedis-proxy-api/zstd2"
 )
 
 // CompressedCache wraps a CacheStore and compresses the data before storing it.
@@ -19,24 +21,24 @@ func (c CompressedCache) Set(key string, value interface{}, expire time.Duration
 		return fmt.Errorf("serialize: %w", err)
 	}
 
-	compressed, err := zlibCompress(payload)
+	compressed, err := zstd2.Compress(payload)
 	if err != nil {
-		return fmt.Errorf("zlib compress: %w", err)
+		return fmt.Errorf("zstd compress: %w", err)
 	}
 
-	return c.Store.Set(key+".zlib", compressed, expire)
+	return c.Store.Set(key+".zstd", compressed, expire)
 }
 
 // Get retrieves an item from the underlying CacheStore and decompresses it.
 func (c CompressedCache) Get(key string, value interface{}) error {
 	var compressed []byte
-	if err := c.Store.Get(key+".zlib", &compressed); err != nil {
+	if err := c.Store.Get(key+".zstd", &compressed); err != nil {
 		return fmt.Errorf("get: %w", err)
 	}
 
-	uncompressed, err := zlibDecompress(compressed)
+	uncompressed, err := zstd2.Decompress(compressed)
 	if err != nil {
-		return fmt.Errorf("zlib decompress: %w", err)
+		return fmt.Errorf("zstd decompress: %w", err)
 	}
 
 	return persist.Deserialize(uncompressed, value)

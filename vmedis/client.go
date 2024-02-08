@@ -125,7 +125,7 @@ func (c *Client) getWithSessionId(ctx context.Context, path, sessionId string) (
 
 	res, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("error executing request: %w", err)
+		return nil, fmt.Errorf("error executing request with session id %s: %w", sessionId, err)
 	}
 
 	return res, nil

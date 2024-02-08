@@ -14,6 +14,18 @@ type DrugsResponse struct {
 	Drugs []Drug `json:"drugs"`
 }
 
+type WithStock struct {
+	Drug  Drug  `json:"drug"`
+	Stock Stock `json:"stock"`
+}
+
+func FromVmedisDrugStock(ds vmedis.DrugStock) WithStock {
+	return WithStock{
+		Drug:  FromVmedisDrug(ds.Drug),
+		Stock: FromVmedisStock(ds.Stock),
+	}
+}
+
 // Drug is a drug in the inventory.
 type Drug struct {
 	VmedisCode   string  `json:"vmedisCode,omitempty"`

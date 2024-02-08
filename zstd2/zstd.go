@@ -1,13 +1,19 @@
-package proxy
+package zstd2
 
 import (
 	"bytes"
-	"compress/zlib"
+
+	"github.com/klauspost/compress/zstd"
 )
 
-func zlibCompress(data []byte) ([]byte, error) {
+func Compress(data []byte) ([]byte, error) {
 	var buf bytes.Buffer
-	w := zlib.NewWriter(&buf)
+
+	w, err := zstd.NewWriter(&buf, zstd.WithEncoderLevel(zstd.SpeedBestCompression))
+	if err != nil {
+		return nil, err
+	}
+
 	if _, err := w.Write(data); err != nil {
 		return nil, err
 	}
@@ -19,10 +25,10 @@ func zlibCompress(data []byte) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func zlibDecompress(data []byte) ([]byte, error) {
+func Decompress(data []byte) ([]byte, error) {
 	var buf bytes.Buffer
 
-	r, err := zlib.NewReader(bytes.NewReader(data))
+	r, err := zstd.NewReader(bytes.NewReader(data))
 	if err != nil {
 		return nil, err
 	}

@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/turfaa/vmedis-proxy-api/drug"
 	"github.com/turfaa/vmedis-proxy-api/procurement"
 )
 
@@ -24,7 +25,7 @@ var procurementCommands = []commandWithInit{
 	{
 		command: &cobra.Command{
 			Use:   "dump",
-			Short: "Run procurements one-time dumper",
+			Short: "Run one-time procurements dumper",
 			Run: func(cmd *cobra.Command, args []string) {
 				db, err := getDatabase()
 				if err != nil {
@@ -36,8 +37,10 @@ var procurementCommands = []commandWithInit{
 					viper.GetTime("start_date"),
 					viper.GetTime("end_date"),
 					db,
+					getRedisClient(),
 					getVmedisClient(),
 					getDrugProducer(),
+					drug.NewDatabase(db),
 				)
 			},
 		},
@@ -49,12 +52,36 @@ var procurementCommands = []commandWithInit{
 			viper.BindPFlag("end_date", cmd.Flags().Lookup("end-date"))
 		},
 	},
+	{
+		command: &cobra.Command{
+			Use:   "dump-recommendations",
+			Short: "Run one-time procurement recommendations dumper",
+			Run: func(cmd *cobra.Command, args []string) {
+				db, err := getDatabase()
+				if err != nil {
+					log.Fatalf("Error opening database: %s\n", err)
+				}
+
+				procurement.DumpProcurementRecommendations(
+					cmd.Context(),
+					db,
+					getRedisClient(),
+					getVmedisClient(),
+					getDrugProducer(),
+					drug.NewDatabase(db),
+				)
+			},
+		},
+	},
 }
 
 func init() {
 	for _, cmd := range procurementCommands {
 		procurementsCmd.AddCommand(cmd.command)
-		cmd.init(cmd.command)
+
+		if cmd.init != nil {
+			cmd.init(cmd.command)
+		}
 	}
 
 	initAppCommand(procurementsCmd)

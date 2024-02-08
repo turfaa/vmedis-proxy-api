@@ -13,6 +13,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/turfaa/vmedis-proxy-api/drug"
+	"github.com/turfaa/vmedis-proxy-api/procurement"
 	"github.com/turfaa/vmedis-proxy-api/vmedis"
 )
 
@@ -22,8 +23,10 @@ type ApiServer struct {
 	db          *gorm.DB
 	redisClient *redis.Client
 
-	drugHandler  *drug.ApiHandler
 	drugProducer *drug.Producer
+
+	drugHandler        *drug.ApiHandler
+	procurementHandler *procurement.ApiHandler
 }
 
 // GinEngine returns the gin engine of the proxy api server.
@@ -76,19 +79,19 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 			}
 		}
 
-		procurement := v1.Group("/procurement")
+		procurementHandlers := v1.Group("/procurement")
 		{
-			procurement.GET(
+			procurementHandlers.GET(
 				"/recommendations",
-				s.HandleProcurementRecommendations,
+				s.procurementHandler.GetRecommendations,
 			)
 
-			procurement.POST(
+			procurementHandlers.POST(
 				"/recommendations/dump",
-				s.HandleDumpProcurementRecommendations,
+				s.procurementHandler.DumpRecommendationsFromVmedisToRedis,
 			)
 
-			procurement.GET(
+			procurementHandlers.GET(
 				"/invoice-calculators",
 				cache.CacheByRequestURI(store, time.Hour),
 				s.HandleGetInvoiceCalculators,
@@ -143,12 +146,22 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 }
 
 // NewApiServer creates a new api server.
-func NewApiServer(client *vmedis.Client, db *gorm.DB, redisClient *redis.Client, kafkaWriter *kafka.Writer) *ApiServer {
+func NewApiServer(
+	client *vmedis.Client,
+	db *gorm.DB,
+	redisClient *redis.Client,
+	kafkaWriter *kafka.Writer,
+) *ApiServer {
+	drugProducer := drug.NewProducer(kafkaWriter)
+	drugDB := drug.NewDatabase(db)
+
 	return &ApiServer{
 		client:       client,
 		db:           db,
 		redisClient:  redisClient,
-		drugHandler:  drug.NewApiHandler(db, client, kafkaWriter),
-		drugProducer: drug.NewProducer(kafkaWriter),
+		drugProducer: drugProducer,
+
+		drugHandler:        drug.NewApiHandler(db, client, kafkaWriter),
+		procurementHandler: procurement.NewApiHandler(db, redisClient, client, drugProducer, drugDB),
 	}
 }

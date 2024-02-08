@@ -121,6 +121,45 @@ func (d *Database) GetDrugSaleStatisticsBetweenTimes(
 	return stats, nil
 }
 
+// GetDrugUnitsByDrugVmedisCodes returns drug units by drug vmedis codes.
+// The drug units are sorted from the smallest to the largest.
+func (d *Database) GetDrugUnitsByDrugVmedisCodes(ctx context.Context, drugVmedisCodes []string) (map[string][]Unit, error) {
+	var units []models.DrugUnit
+	if err := d.dbCtx(ctx).Where("drug_vmedis_code IN ?", drugVmedisCodes).Find(&units).Error; err != nil {
+		return nil, fmt.Errorf("get drug units by drug vmedis codes %v: %w", drugVmedisCodes, err)
+	}
+
+	unitsByDrugVmedisCode := make(map[string][]Unit, len(drugVmedisCodes))
+	for _, unit := range units {
+		unitsByDrugVmedisCode[unit.DrugVmedisCode] = append(unitsByDrugVmedisCode[unit.DrugVmedisCode], FromDBDrugUnit(unit))
+	}
+
+	for drugVmedisCode, drugUnits := range unitsByDrugVmedisCode {
+		sorted := make([]Unit, 0, len(drugUnits))
+
+		last := ""
+		for {
+			found := false
+			for _, u := range drugUnits {
+				if u.ParentUnit == last {
+					sorted = append(sorted, u)
+					last = u.Unit
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				break
+			}
+		}
+
+		unitsByDrugVmedisCode[drugVmedisCode] = sorted
+	}
+
+	return unitsByDrugVmedisCode, nil
+}
+
 // UpsertVmedisDrug upserts the given drug.
 func (d *Database) UpsertVmedisDrug(ctx context.Context, drug vmedis.Drug, keyColumn string, updateColumns []string) error {
 	return d.UpsertVmedisDrugs(ctx, []vmedis.Drug{drug}, keyColumn, updateColumns)
