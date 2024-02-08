@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.12.0] - 2024-02-08
+### :sparkles: New Features
+- [`5878296`](https://github.com/turfaa/vmedis-proxy-api/commit/58782964a7a73b91d91b8e2cc0603d4fe58aa1e7) - Add procurements dumper *(commit by [@turfaa](https://github.com/turfaa))*
+- [`42f3e1e`](https://github.com/turfaa/vmedis-proxy-api/commit/42f3e1e479e71de4906e3140ac4f2157312a47d9) - Support dumping procurements via API *(commit by [@turfaa](https://github.com/turfaa))*
+
+### :recycle: Refactors
+- [`2db79d0`](https://github.com/turfaa/vmedis-proxy-api/commit/2db79d0141a2d1a6a91c52d8c096212b2cf68c49) - move procurement recommendations to the procurement package *(commit by [@turfaa](https://github.com/turfaa))*
+- [`07d237f`](https://github.com/turfaa/vmedis-proxy-api/commit/07d237f9768192791756e44a6ca551ff4fe0a738) - move invoice calculators to the procurement package *(commit by [@turfaa](https://github.com/turfaa))*
+
+
 ## [v0.11.5] - 2024-01-30
 ### :bug: Bug Fixes
 - [`7c7f608`](https://github.com/turfaa/vmedis-proxy-api/commit/7c7f60816d4780e127d21741942ee0b8ef0535e8) - Put stock opname id as stock opname request key *(commit by [@turfaa](https://github.com/turfaa))*
@@ -239,3 +249,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v0.11.3]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.11.2...v0.11.3
 [v0.11.4]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.11.3...v0.11.4
 [v0.11.5]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.11.4...v0.11.5
+[v0.12.0]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.11.5...v0.12.0
