@@ -35,10 +35,12 @@ var runConsumersCmd = &cobra.Command{
 		done := make(chan os.Signal, 1)
 		signal.Notify(done, os.Interrupt, syscall.SIGTERM, syscall.SIGINT, syscall.SIGKILL)
 
-		<-done
+		go func() {
+			<-done
 
-		log.Println("Shutting down consumers")
-		drugConsumer.Close()
+			log.Println("Shutting down consumers")
+			drugConsumer.Close()
+		}()
 
 		wg.Wait()
 		log.Println("Consumers shut down successfully")
