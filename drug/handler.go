@@ -69,7 +69,7 @@ func (h *ApiHandler) GetConservativeDrugsToStockOpname(c *gin.Context) {
 		return
 	}
 
-	startFrom, yesterdayUntil := time.Date(2024, 01, 06, 0, 0, 0, 0, time.Local), todayUntil.Add(-24*time.Hour)
+	startFrom, yesterdayUntil := time.Date(2024, 2, 19, 0, 0, 0, 0, time.Local), todayUntil.Add(-24*time.Hour)
 
 	drugs, err := h.service.GetDrugsToStockOpname(c, startFrom, yesterdayUntil)
 	if err != nil {
@@ -92,7 +92,7 @@ func (h *ApiHandler) GetSalesBasedDrugsToStockOpname(c *gin.Context) {
 		return
 	}
 
-	startFrom, yesterdayUntil := time.Date(2024, 01, 06, 0, 0, 0, 0, time.Local), todayUntil.Add(-24*time.Hour)
+	startFrom, yesterdayUntil := time.Date(2024, 2, 19, 0, 0, 0, 0, time.Local), todayUntil.Add(-24*time.Hour)
 
 	drugs, err := h.service.GetSalesBasedDrugsToStockOpname(c, startFrom, yesterdayUntil)
 	if err != nil {
