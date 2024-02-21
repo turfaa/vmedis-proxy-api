@@ -25,7 +25,7 @@ type Client struct {
 	concurrency int
 	limiter     *rate.Limiter
 
-	tokenManager *token.Manager
+	tokenProvider *token.Provider
 }
 
 // New creates a new client.
@@ -33,19 +33,19 @@ func New(
 	baseUrl string,
 	concurrency int,
 	limiter *rate.Limiter,
-	tokenManager *token.Manager,
+	tokenProvider *token.Provider,
 ) *Client {
 	return &Client{
-		BaseUrl:      baseUrl,
-		httpClient:   &http.Client{},
-		concurrency:  concurrency,
-		limiter:      limiter,
-		tokenManager: tokenManager,
+		BaseUrl:       baseUrl,
+		httpClient:    &http.Client{},
+		concurrency:   concurrency,
+		limiter:       limiter,
+		tokenProvider: tokenProvider,
 	}
 }
 
 func (c *Client) get(ctx context.Context, path string) (*http.Response, error) {
-	sessionId, err := c.tokenManager.GetActiveToken()
+	sessionId, err := c.tokenProvider.GetActiveToken()
 	if err != nil {
 		return nil, fmt.Errorf("get active session id: %w", err)
 	}

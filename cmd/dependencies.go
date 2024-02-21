@@ -22,9 +22,9 @@ var (
 	redisClient       atomic.Pointer[redis.Client]
 	drugProducer      atomic.Pointer[drug.Producer]
 	kafkaWriter       atomic.Pointer[kafka.Writer]
-	tokenManager      atomic.Pointer[token.Manager]
-	vmedisMiniClient  atomic.Pointer[vmedis.MiniClient]
+	tokenProvider     atomic.Pointer[token.Provider]
 	vmedisRateLimiter atomic.Pointer[rate.Limiter]
+	tokenRefresher    atomic.Pointer[token.Refresher]
 )
 
 func getDatabase() *gorm.DB {
@@ -63,7 +63,7 @@ func getVmedisClient() *vmedis.Client {
 		viper.GetString("base_url"),
 		viper.GetInt("concurrency"),
 		getVmedisRateLimiter(),
-		getTokenManager(),
+		getTokenProvider(),
 	)
 
 	if !vmedisClient.CompareAndSwap(nil, newClient) {
@@ -124,42 +124,35 @@ func getKafkaWriter() *kafka.Writer {
 	return newWriter
 }
 
-func getTokenManager() *token.Manager {
-	if val := tokenManager.Load(); val != nil {
+func getTokenProvider() *token.Provider {
+	if val := tokenProvider.Load(); val != nil {
 		return val
 	}
 
-	newManager, err := token.NewManager(
-		getDatabase(),
-		getVmedisMiniClient(),
-		viper.GetDuration("refresh_interval"),
-	)
+	newProvider, err := token.NewProvider(getDatabase(), viper.GetDuration("refresh_interval"))
 	if err != nil {
-		log.Fatalf("Error creating token manager: %s", err)
+		log.Fatalf("Error creating token provider: %s", err)
 	}
 
-	if !tokenManager.CompareAndSwap(nil, newManager) {
-		return tokenManager.Load()
+	if !tokenProvider.CompareAndSwap(nil, newProvider) {
+		return tokenProvider.Load()
 	}
 
-	return newManager
+	return newProvider
 }
 
-func getVmedisMiniClient() *vmedis.MiniClient {
-	if val := vmedisMiniClient.Load(); val != nil {
+func getTokenRefresher() *token.Refresher {
+	if val := tokenRefresher.Load(); val != nil {
 		return val
 	}
 
-	newClient := vmedis.NewMini(
-		viper.GetString("base_url"),
-		getVmedisRateLimiter(),
-	)
+	newRefresher := token.NewRefresher(getDatabase(), getVmedisClient())
 
-	if !vmedisMiniClient.CompareAndSwap(nil, newClient) {
-		return vmedisMiniClient.Load()
+	if !tokenRefresher.CompareAndSwap(nil, newRefresher) {
+		return tokenRefresher.Load()
 	}
 
-	return newClient
+	return newRefresher
 }
 
 func getVmedisRateLimiter() *rate.Limiter {

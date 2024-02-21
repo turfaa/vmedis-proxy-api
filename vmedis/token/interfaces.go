@@ -6,6 +6,6 @@ import (
 	"github.com/turfaa/vmedis-proxy-api/database/models"
 )
 
-type Refresher interface {
+type ExternalRefresher interface {
 	RefreshTokens(ctx context.Context, tokens []string) (map[string]models.TokenState, error)
 }

@@ -36,7 +36,16 @@ func (d *Database) Transaction(ctx context.Context, f func(d *Database) error) e
 func (d *Database) GetNonExpiredTokens(ctx context.Context) ([]models.VmedisToken, error) {
 	var tokens []models.VmedisToken
 	if err := d.withContext(ctx).Where("state != 'EXPIRED'").Find(&tokens).Error; err != nil {
-		return nil, fmt.Errorf("get non expired tokens: %w", err)
+		return nil, fmt.Errorf("get non expired tokens from DB: %w", err)
+	}
+
+	return tokens, nil
+}
+
+func (d *Database) GetActiveTokens(ctx context.Context) ([]models.VmedisToken, error) {
+	var tokens []models.VmedisToken
+	if err := d.withContext(ctx).Where("state = 'ACTIVE'").Find(&tokens).Error; err != nil {
+		return nil, fmt.Errorf("get active tokens from DB: %w", err)
 	}
 
 	return tokens, nil
