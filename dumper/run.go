@@ -14,7 +14,6 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/turfaa/vmedis-proxy-api/drug"
-	"github.com/turfaa/vmedis-proxy-api/procurement"
 	"github.com/turfaa/vmedis-proxy-api/vmedis"
 )
 
@@ -36,14 +35,6 @@ const (
 	// The additional 25 minutes is due to the vmedis server being consistently down
 	// at exactly 12.00am.
 	DrugSchedule = "25 0,2 * * *"
-
-	// ProcurementRecommendationsSchedule is the schedule of the procurement recommendations' dumper.
-	// It currently runs at 11pm, 1am, and 3am every day.
-	ProcurementRecommendationsSchedule = "0 23,1,3 * * *"
-
-	// ProcurementsSchedule is the schedule of the procurements' dumper.
-	// It currently runs every 30 minutes at xx.05 and xx.35.
-	ProcurementsSchedule = "5,35 * * * *"
 )
 
 // Run runs the data dumper.
@@ -58,10 +49,7 @@ func Run(vmedisClient *vmedis.Client, db *gorm.DB, redisClient *redis.Client, ka
 	scheduler := gocron.NewScheduler(time.Local)
 
 	drugProducer := drug.NewProducer(kafkaWriter)
-	drugDB := drug.NewDatabase(db)
-
 	drugService := drug.NewService(db, vmedisClient, kafkaWriter)
-	procurementService := procurement.NewService(db, redisClient, vmedisClient, drugProducer, drugDB)
 
 	if _, err := scheduler.CronWithSeconds(DailySalesStatisticsSchedule).Do(DumpDailySalesStatistics, ctx, db, vmedisClient); err != nil {
 		log.Fatalf("Error scheduling daily sales statistics dumper: %s", err)
@@ -77,14 +65,6 @@ func Run(vmedisClient *vmedis.Client, db *gorm.DB, redisClient *redis.Client, ka
 
 	if _, err := scheduler.Cron(DrugSchedule).Do(DumpDrugs, ctx, drugService); err != nil {
 		log.Fatalf("Error scheduling drugs dumper: %s", err)
-	}
-
-	if _, err := scheduler.Cron(ProcurementRecommendationsSchedule).Do(DumpProcurementRecommendations, ctx, procurementService); err != nil {
-		log.Fatalf("Error scheduling procurement recommendations dumper: %s", err)
-	}
-
-	if _, err := scheduler.Cron(ProcurementsSchedule).Do(DumpProcurements, ctx, procurementService); err != nil {
-		log.Fatalf("Error scheduling procurements dumper: %s", err)
 	}
 
 	log.Println("Starting data dumper")
