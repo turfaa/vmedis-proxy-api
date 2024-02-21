@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.14.0] - 2024-02-21
+### :sparkles: New Features
+- [`f82e38c`](https://github.com/turfaa/vmedis-proxy-api/commit/f82e38c4afff8fabc7c889ee2844d96d8437215d) - Divide token provider and refresher, create a command to refresh tokens *(commit by [@turfaa](https://github.com/turfaa))*
+
+
 ## [v0.13.6] - 2024-02-21
 ### :bug: Bug Fixes
 - [`23ea1b1`](https://github.com/turfaa/vmedis-proxy-api/commit/23ea1b16d7666c3b7a194c9af350ccb4012770e5) - remove procurement-related jobs from dumper *(commit by [@turfaa](https://github.com/turfaa))*
@@ -312,3 +317,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v0.13.4]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.13.3...v0.13.4
 [v0.13.5]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.13.4...v0.13.5
 [v0.13.6]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.13.5...v0.13.6
+[v0.14.0]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.13.6...v0.14.0
