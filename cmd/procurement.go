@@ -26,10 +26,16 @@ var procurementCommands = []commandWithInit{
 			Use:   "dump",
 			Short: "Run one-time procurements dumper",
 			Run: func(cmd *cobra.Command, args []string) {
+				startDate := viper.GetTime("start_date")
+				startTime := time.Date(startDate.Year(), startDate.Month(), startDate.Day(), 0, 0, 0, 0, time.Local)
+
+				endDate := viper.GetTime("end_date")
+				endTime := time.Date(endDate.Year(), endDate.Month(), endDate.Day(), 23, 59, 59, 0, time.Local)
+
 				procurement.DumpProcurementsBetweenDatesFromVmedisToDB(
 					cmd.Context(),
-					viper.GetTime("start_date"),
-					viper.GetTime("end_date"),
+					startTime,
+					endTime,
 					getDatabase(),
 					getRedisClient(),
 					getVmedisClient(),
