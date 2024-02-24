@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.15.0] - 2024-02-24
+### :sparkles: New Features
+- [`6846fd1`](https://github.com/turfaa/vmedis-proxy-api/commit/6846fd14ceb4ae26b2bd980e0a8a7483ccc4a9e6) - Add stock opname summaries API *(commit by [@turfaa](https://github.com/turfaa))*
+
+### :recycle: Refactors
+- [`3e91588`](https://github.com/turfaa/vmedis-proxy-api/commit/3e91588d2129335350aeb69bc353e13c9e557f64) - Move stock opname codes to a new package *(commit by [@turfaa](https://github.com/turfaa))*
+
+
 ## [v0.14.0] - 2024-02-21
 ### :sparkles: New Features
 - [`f82e38c`](https://github.com/turfaa/vmedis-proxy-api/commit/f82e38c4afff8fabc7c889ee2844d96d8437215d) - Divide token provider and refresher, create a command to refresh tokens *(commit by [@turfaa](https://github.com/turfaa))*
@@ -318,3 +326,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v0.13.5]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.13.4...v0.13.5
 [v0.13.6]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.13.5...v0.13.6
 [v0.14.0]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.13.6...v0.14.0
+[v0.15.0]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.14.0...v0.15.0
