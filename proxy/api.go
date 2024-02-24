@@ -14,6 +14,7 @@ import (
 
 	"github.com/turfaa/vmedis-proxy-api/drug"
 	"github.com/turfaa/vmedis-proxy-api/procurement"
+	"github.com/turfaa/vmedis-proxy-api/stockopname"
 	"github.com/turfaa/vmedis-proxy-api/vmedis"
 )
 
@@ -27,6 +28,7 @@ type ApiServer struct {
 
 	drugHandler        *drug.ApiHandler
 	procurementHandler *procurement.ApiHandler
+	stockOpnameHandler *stockopname.ApiHandler
 }
 
 // GinEngine returns the gin engine of the proxy api server.
@@ -129,17 +131,17 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 		{
 			stockOpnames.GET(
 				"",
-				s.HandleGetStockOpnames,
+				s.stockOpnameHandler.GetStockOpnames,
 			)
 
 			stockOpnames.GET(
-				"/summaries",
-				s.HandleGetStockOpnameSummaries,
+				"/compacted",
+				s.stockOpnameHandler.GetCompactedStockOpnames,
 			)
 
 			stockOpnames.POST(
 				"/dump",
-				s.HandleDumpStockOpnames,
+				s.stockOpnameHandler.DumpTodayStockOpnames,
 			)
 		}
 
@@ -171,5 +173,6 @@ func NewApiServer(
 
 		drugHandler:        drug.NewApiHandler(db, client, kafkaWriter),
 		procurementHandler: procurement.NewApiHandler(db, redisClient, client, drugProducer, drugDB),
+		stockOpnameHandler: stockopname.NewApiHandler(db, client, drugProducer),
 	}
 }

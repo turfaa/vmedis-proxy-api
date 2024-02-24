@@ -1,4 +1,4 @@
-package schema
+package stockopname
 
 import (
 	"time"
@@ -11,12 +11,7 @@ type StockOpnamesResponse struct {
 	StockOpnames []StockOpname `json:"stockOpnames"`
 }
 
-// StockOpnameSummariesResponse represents the stock opname summaries API response.
-type StockOpnameSummariesResponse struct {
-	Summaries []StockOpnameSummary `json:"summaries"`
-}
-
-// StockOpname represents the stock opname.
+// StockOpname represents a stock opname.
 type StockOpname struct {
 	VmedisID            string  `json:"vmedisId"`
 	Date                string  `json:"date"`
@@ -32,26 +27,6 @@ type StockOpname struct {
 	Notes               string  `json:"notes"`
 }
 
-// StockOpnameSummary is the summary of a series of stock opname for the same drug.
-type StockOpnameSummary struct {
-	Date                string        `json:"date"`
-	DrugCode            string        `json:"drugCode"`
-	DrugName            string        `json:"drugName"`
-	Unit                string        `json:"unit"`
-	Changes             []StockChange `json:"changes"`
-	QuantityDifference  float64       `json:"quantityDifference"`
-	HPPDifference       float64       `json:"hppDifference"`
-	SalePriceDifference float64       `json:"salePriceDifference"`
-}
-
-// StockChange represents the stock change in one stock opname.
-type StockChange struct {
-	BatchCode       string  `json:"batchCode"`
-	InitialQuantity float64 `json:"initialQuantity"`
-	RealQuantity    float64 `json:"realQuantity"`
-}
-
-// FromModelsStockOpname converts StockOpname from models.StockOpname to proxy schema.
 func FromModelsStockOpname(stockOpname models.StockOpname) StockOpname {
 	return StockOpname{
 		VmedisID:            stockOpname.VmedisID,
@@ -67,4 +42,25 @@ func FromModelsStockOpname(stockOpname models.StockOpname) StockOpname {
 		SalePriceDifference: stockOpname.SalePriceDifference,
 		Notes:               stockOpname.Notes,
 	}
+}
+
+type CompactedStockOpnamesResponse struct {
+	StockOpnames []CompactedStockOpname `json:"stockOpnames"`
+}
+
+type CompactedStockOpname struct {
+	Date                string        `json:"date"`
+	DrugCode            string        `json:"drugCode"`
+	DrugName            string        `json:"drugName"`
+	Unit                string        `json:"unit"`
+	Changes             []StockChange `json:"changes"`
+	QuantityDifference  float64       `json:"quantityDifference"`
+	HPPDifference       float64       `json:"hppDifference"`
+	SalePriceDifference float64       `json:"salePriceDifference"`
+}
+
+type StockChange struct {
+	BatchCode       string  `json:"batchCode"`
+	InitialQuantity float64 `json:"initialQuantity"`
+	RealQuantity    float64 `json:"realQuantity"`
 }
