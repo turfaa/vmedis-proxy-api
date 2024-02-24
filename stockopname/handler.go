@@ -56,6 +56,26 @@ func (h *ApiHandler) GetCompactedStockOpnames(c *gin.Context) {
 	c.JSON(200, CompactedStockOpnamesResponse{StockOpnames: stockOpnames})
 }
 
+func (h *ApiHandler) GetStockOpnameSummaries(c *gin.Context) {
+	from, to, err := time2.GetTimeRangeFromQuery(c)
+	if err != nil {
+		c.JSON(400, gin.H{
+			"error": fmt.Sprintf("invalid time range: %s", err),
+		})
+		return
+	}
+
+	summaries, err := h.service.GetStockOpnameSummariesBetweenTime(c, from, to)
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": fmt.Sprintf("failed to get stock opname summaries: %s", err),
+		})
+		return
+	}
+
+	c.JSON(200, SummariesResponse{Summaries: summaries})
+}
+
 func (h *ApiHandler) DumpTodayStockOpnames(c *gin.Context) {
 	go func() {
 		if err := h.service.DumpTodayStockOpnamesFromVmedisToDB(context.Background()); err != nil {

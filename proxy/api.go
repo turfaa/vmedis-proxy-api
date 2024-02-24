@@ -139,6 +139,11 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 				s.stockOpnameHandler.GetCompactedStockOpnames,
 			)
 
+			stockOpnames.GET(
+				"/summaries",
+				s.stockOpnameHandler.GetStockOpnameSummaries,
+			)
+
 			stockOpnames.POST(
 				"/dump",
 				s.stockOpnameHandler.DumpTodayStockOpnames,

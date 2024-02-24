@@ -59,6 +59,20 @@ type CompactedStockOpname struct {
 	SalePriceDifference float64       `json:"salePriceDifference"`
 }
 
+type SummariesResponse struct {
+	Summaries []Summary `json:"summaries"`
+}
+
+type Summary struct {
+	DrugCode            string        `json:"drugCode"`
+	DrugName            string        `json:"drugName"`
+	Unit                string        `json:"unit"`
+	Changes             []StockChange `json:"changes"`
+	QuantityDifference  float64       `json:"quantityDifference"`
+	HPPDifference       float64       `json:"hppDifference"`
+	SalePriceDifference float64       `json:"salePriceDifference"`
+}
+
 type StockChange struct {
 	BatchCode       string  `json:"batchCode"`
 	InitialQuantity float64 `json:"initialQuantity"`

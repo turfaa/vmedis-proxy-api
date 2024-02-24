@@ -84,6 +84,41 @@ func compactOneDrugStockOpnames(stockOpnames []StockOpname) CompactedStockOpname
 	return compacted
 }
 
+func (s *Service) GetStockOpnameSummariesBetweenTime(ctx context.Context, from, to time.Time) ([]Summary, error) {
+	stockOpnames, err := s.db.GetStockOpnamesBetweenTime(ctx, from, to)
+	if err != nil {
+		return nil, fmt.Errorf("get stock opnames from DB: %w", err)
+	}
+
+	summaryMap := make(map[string]Summary, len(stockOpnames))
+	for _, so := range stockOpnames {
+		key := fmt.Sprintf("%s#%s", so.DrugCode, so.Unit)
+		summaryMap[key] = addStockOpnameToSummary(summaryMap[key], so)
+	}
+
+	summaries := make([]Summary, 0, len(summaryMap))
+	for _, summary := range summaryMap {
+		summaries = append(summaries, summary)
+	}
+
+	return summaries, nil
+}
+
+func addStockOpnameToSummary(summary Summary, stockOpname StockOpname) Summary {
+	summary.DrugCode = stockOpname.DrugCode
+	summary.DrugName = stockOpname.DrugName
+	summary.Unit = stockOpname.Unit
+	summary.Changes = append(summary.Changes, StockChange{
+		BatchCode:       stockOpname.BatchCode,
+		InitialQuantity: stockOpname.InitialQuantity,
+		RealQuantity:    stockOpname.RealQuantity,
+	})
+	summary.QuantityDifference += stockOpname.QuantityDifference
+	summary.HPPDifference += stockOpname.HPPDifference
+	summary.SalePriceDifference += stockOpname.SalePriceDifference
+	return summary
+}
+
 func (s *Service) DumpTodayStockOpnamesFromVmedisToDB(ctx context.Context) error {
 	log.Println("Dumping stock opnames")
 
