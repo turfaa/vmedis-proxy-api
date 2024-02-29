@@ -2,9 +2,7 @@ package email2
 
 import (
 	"crypto/tls"
-	"encoding/json"
 	"fmt"
-	"log"
 	"net/smtp"
 	"time"
 
@@ -19,8 +17,6 @@ type Emailer struct {
 
 func (e *Emailer) Send(mail *email.Email, timeout time.Duration) error {
 	if err := mail.SendWithTLS(e.smtpAddress, e.auth, e.tlsConfig); err != nil {
-		js, _ := json.Marshal(mail)
-		log.Printf("Failed to send email: %s", js)
 		return fmt.Errorf("send email with TLS: %w", err)
 	}
 
