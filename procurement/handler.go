@@ -11,7 +11,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 
-	"github.com/turfaa/vmedis-proxy-api/gin2"
+	"github.com/turfaa/vmedis-proxy-api/pkg2/gin2"
 	"github.com/turfaa/vmedis-proxy-api/vmedis"
 )
 

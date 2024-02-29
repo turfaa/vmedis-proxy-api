@@ -6,7 +6,7 @@ import (
 
 	"github.com/chenyahui/gin-cache/persist"
 
-	"github.com/turfaa/vmedis-proxy-api/zstd2"
+	"github.com/turfaa/vmedis-proxy-api/pkg2/zstd2"
 )
 
 // CompressedCache wraps a CacheStore and compresses the data before storing it.

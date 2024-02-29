@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
-	"github.com/turfaa/vmedis-proxy-api/time2"
+	"github.com/turfaa/vmedis-proxy-api/pkg2/time2"
 	"github.com/turfaa/vmedis-proxy-api/vmedis"
 )
 

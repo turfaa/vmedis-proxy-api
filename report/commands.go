@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/turfaa/vmedis-proxy-api/time2"
+	"github.com/turfaa/vmedis-proxy-api/pkg2/time2"
 )
 
 func SendIQVIALastMonthReport(

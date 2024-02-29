@@ -11,10 +11,10 @@ import (
 	"github.com/segmentio/kafka-go"
 	"gorm.io/gorm"
 
-	"github.com/turfaa/vmedis-proxy-api/chans"
 	"github.com/turfaa/vmedis-proxy-api/database/models"
 	"github.com/turfaa/vmedis-proxy-api/kafkapb"
-	"github.com/turfaa/vmedis-proxy-api/slices2"
+	"github.com/turfaa/vmedis-proxy-api/pkg2/chans"
+	"github.com/turfaa/vmedis-proxy-api/pkg2/slices2"
 	"github.com/turfaa/vmedis-proxy-api/vmedis"
 )
 

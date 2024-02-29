@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/turfaa/vmedis-proxy-api/database/models"
-	"github.com/turfaa/vmedis-proxy-api/slices2"
+	slices22 "github.com/turfaa/vmedis-proxy-api/pkg2/slices2"
 )
 
 type Refresher struct {
@@ -25,7 +25,7 @@ func (m *Refresher) RefreshTokens(ctx context.Context) error {
 			return fmt.Errorf("get non expired tokens from DB: %w", err)
 		}
 
-		nonExpiredTokenStrings := slices2.Map(nonExpiredTokens, func(t models.VmedisToken) string {
+		nonExpiredTokenStrings := slices22.Map(nonExpiredTokens, func(t models.VmedisToken) string {
 			return t.Token
 		})
 
@@ -48,7 +48,7 @@ func (m *Refresher) RefreshTokens(ctx context.Context) error {
 			return fmt.Errorf("upsert tokens state: %w", err)
 		}
 
-		activeTokens := slices2.Filter(nonExpiredTokenStrings, func(token string) bool {
+		activeTokens := slices22.Filter(nonExpiredTokenStrings, func(token string) bool {
 			return refreshResult[token] == models.TokenStateActive
 		})
 

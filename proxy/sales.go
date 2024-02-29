@@ -10,8 +10,8 @@ import (
 
 	"github.com/turfaa/vmedis-proxy-api/database/models"
 	"github.com/turfaa/vmedis-proxy-api/dumper"
+	"github.com/turfaa/vmedis-proxy-api/pkg2/time2"
 	"github.com/turfaa/vmedis-proxy-api/proxy/schema"
-	"github.com/turfaa/vmedis-proxy-api/time2"
 )
 
 // HandleGetSales handles the GET /sales endpoint.

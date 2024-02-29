@@ -9,13 +9,13 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/turfaa/vmedis-proxy-api/database/models"
+	time22 "github.com/turfaa/vmedis-proxy-api/pkg2/time2"
 	"github.com/turfaa/vmedis-proxy-api/proxy/schema"
-	"github.com/turfaa/vmedis-proxy-api/time2"
 )
 
 // HandleGetSalesStatistics handles the request to get the sales statistics.
 func (s *ApiServer) HandleGetSalesStatistics(c *gin.Context) {
-	from, until, err := time2.GetTimeRangeFromQuery(c)
+	from, until, err := time22.GetTimeRangeFromQuery(c)
 	if err != nil {
 		c.JSON(400, gin.H{
 			"error": fmt.Sprintf("failed to parse time range query: %s", err),
@@ -37,7 +37,7 @@ func (s *ApiServer) HandleGetSalesStatistics(c *gin.Context) {
 
 // HandleGetDailySalesStatistics handles the request to get the daily sales statistics.
 func (s *ApiServer) HandleGetDailySalesStatistics(c *gin.Context) {
-	from, until := time2.Today()
+	from, until := time22.Today()
 
 	stats, err := s.getSalesStatistics(c, from, until)
 	if err != nil {
@@ -66,7 +66,7 @@ func (s *ApiServer) getSalesStatistics(ctx context.Context, from, until time.Tim
 		stats = append(stats, schema.FromModelsSaleStatistics(s))
 	}
 
-	if until == time2.EndOfToday() {
+	if until == time22.EndOfToday() {
 		ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 		defer cancel()
 

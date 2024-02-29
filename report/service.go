@@ -13,9 +13,9 @@ import (
 	"github.com/jordan-wright/email"
 	"github.com/xuri/excelize/v2"
 
+	"github.com/turfaa/vmedis-proxy-api/pkg2/slices2"
 	"github.com/turfaa/vmedis-proxy-api/procurement"
 	"github.com/turfaa/vmedis-proxy-api/sale"
-	"github.com/turfaa/vmedis-proxy-api/slices2"
 )
 
 type Service struct {
