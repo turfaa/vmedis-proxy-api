@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.16.0] - 2024-02-29
+### :sparkles: New Features
+- [`0891058`](https://github.com/turfaa/vmedis-proxy-api/commit/08910583ed2a0242f6ac37203a5deb37dc4946f6) - Support sending procurement report to IQVIA *(commit by [@turfaa](https://github.com/turfaa))*
+- [`71c5ff0`](https://github.com/turfaa/vmedis-proxy-api/commit/71c5ff0f22539e8f3ddebe5fbf043450d3b6f7e5) - Support sending sales report to IQVIA *(commit by [@turfaa](https://github.com/turfaa))*
+
+### :recycle: Refactors
+- [`f435f04`](https://github.com/turfaa/vmedis-proxy-api/commit/f435f04d5b17e973e5f79224764b9cda3aa6f513) - Create pkg2 package *(commit by [@turfaa](https://github.com/turfaa))*
+
+
 ## [v0.15.0] - 2024-02-24
 ### :sparkles: New Features
 - [`6846fd1`](https://github.com/turfaa/vmedis-proxy-api/commit/6846fd14ceb4ae26b2bd980e0a8a7483ccc4a9e6) - Add stock opname summaries API *(commit by [@turfaa](https://github.com/turfaa))*
@@ -327,3 +336,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v0.13.6]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.13.5...v0.13.6
 [v0.14.0]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.13.6...v0.14.0
 [v0.15.0]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.14.0...v0.15.0
+[v0.16.0]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.15.0...v0.16.0
