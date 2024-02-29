@@ -12,10 +12,15 @@ import (
 
 	"github.com/jordan-wright/email"
 	"github.com/xuri/excelize/v2"
+
+	"github.com/turfaa/vmedis-proxy-api/procurement"
+	"github.com/turfaa/vmedis-proxy-api/sale"
+	"github.com/turfaa/vmedis-proxy-api/slices2"
 )
 
 type Service struct {
 	aggregatedProcurementsGetter AggregatedProcurementsGetter
+	aggregatedSalesGetter        AggregatedSalesGetter
 	sender                       EmailSender
 }
 
@@ -36,8 +41,12 @@ func (s *Service) SendAggregatedProcurementsAndSalesXLSX(
 		}
 	}()
 
-	if err := s.GenerateAggregatedProcurementsXLSXSheet(ctx, fromTime, toTime, f); err != nil {
+	if err := s.GenerateAggregatedProcurementsXLSXSheet(ctx, f, fromTime, toTime); err != nil {
 		return fmt.Errorf("generate aggregated procurements sheet: %w", err)
+	}
+
+	if err := s.GenerateAggregatedSalesXLSXSheet(ctx, f, fromTime, toTime); err != nil {
+		return fmt.Errorf("generate aggregated sales sheet: %w", err)
 	}
 
 	if err := f.DeleteSheet("Sheet1"); err != nil {
@@ -68,26 +77,63 @@ func (s *Service) SendAggregatedProcurementsAndSalesXLSX(
 	return nil
 }
 
-func (s *Service) GenerateAggregatedProcurementsXLSXSheet(ctx context.Context, from time.Time, to time.Time, file *excelize.File) error {
+func (s *Service) GenerateAggregatedProcurementsXLSXSheet(ctx context.Context, file *excelize.File, from time.Time, to time.Time) error {
 	procurements, err := s.aggregatedProcurementsGetter.GetAggregatedProcurementsBetweenTime(ctx, from, to)
 	if err != nil {
 		return fmt.Errorf("get aggregated procurements between %s and %s: %w", from, to, err)
 	}
 
-	if _, err := file.NewSheet("Pembelian"); err != nil {
-		return fmt.Errorf("create procurement sheet: %w", err)
+	drugs := slices2.Map(procurements, func(p procurement.AggregatedProcurement) DrugQuantity {
+		return DrugQuantity{
+			DrugName: p.DrugName,
+			Quantity: p.Quantity,
+			Unit:     p.Unit,
+		}
+	})
+
+	if err := GenerateDrugQuantitySheet(file, "Pembelian", drugs); err != nil {
+		return fmt.Errorf("generate drug quantity sheet: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Service) GenerateAggregatedSalesXLSXSheet(ctx context.Context, file *excelize.File, from time.Time, to time.Time) error {
+	sales, err := s.aggregatedSalesGetter.GetAggregatedSalesBetweenTime(ctx, from, to)
+	if err != nil {
+		return fmt.Errorf("get aggregated sales between %s and %s: %w", from, to, err)
+	}
+
+	drugs := slices2.Map(sales, func(s sale.AggregatedSale) DrugQuantity {
+		return DrugQuantity{
+			DrugName: s.DrugName,
+			Quantity: s.Quantity,
+			Unit:     s.Unit,
+		}
+	})
+
+	if err := GenerateDrugQuantitySheet(file, "Penjualan", drugs); err != nil {
+		return fmt.Errorf("generate drug quantity sheet: %w", err)
+	}
+
+	return nil
+}
+
+func GenerateDrugQuantitySheet(file *excelize.File, sheetName string, drugs []DrugQuantity) error {
+	if _, err := file.NewSheet(sheetName); err != nil {
+		return fmt.Errorf("create excel sheet: %w", err)
 	}
 
 	var errs []error
 
-	errs = append(errs, file.SetCellStr("Pembelian", "A1", "Nama Obat"))
-	errs = append(errs, file.SetCellStr("Pembelian", "B1", "Kuantitas"))
-	errs = append(errs, file.SetCellStr("Pembelian", "C1", "Satuan"))
+	errs = append(errs, file.SetCellStr(sheetName, "A1", "Nama Obat"))
+	errs = append(errs, file.SetCellStr(sheetName, "B1", "Kuantitas"))
+	errs = append(errs, file.SetCellStr(sheetName, "C1", "Satuan"))
 
-	for i, p := range procurements {
-		errs = append(errs, file.SetCellStr("Pembelian", fmt.Sprintf("A%d", i+2), p.DrugName))
-		errs = append(errs, file.SetCellFloat("Pembelian", fmt.Sprintf("B%d", i+2), p.Quantity, 2, 64))
-		errs = append(errs, file.SetCellStr("Pembelian", fmt.Sprintf("C%d", i+2), p.Unit))
+	for i, d := range drugs {
+		errs = append(errs, file.SetCellStr(sheetName, fmt.Sprintf("A%d", i+2), d.DrugName))
+		errs = append(errs, file.SetCellFloat(sheetName, fmt.Sprintf("B%d", i+2), d.Quantity, 2, 64))
+		errs = append(errs, file.SetCellStr(sheetName, fmt.Sprintf("C%d", i+2), d.Unit))
 	}
 
 	return errors.Join(errs...)
@@ -163,10 +209,12 @@ func (s *Service) GenerateAggregatedProcurementsCSV(ctx context.Context, from ti
 
 func NewService(
 	aggregatedProcurementsGetter AggregatedProcurementsGetter,
+	aggregatedSalesGetter AggregatedSalesGetter,
 	sender EmailSender,
 ) *Service {
 	return &Service{
 		aggregatedProcurementsGetter: aggregatedProcurementsGetter,
+		aggregatedSalesGetter:        aggregatedSalesGetter,
 		sender:                       sender,
 	}
 }

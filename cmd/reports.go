@@ -20,6 +20,7 @@ var reportCommands = []commandWithInit{
 				report.SendIQVIALastMonthReport(
 					cmd.Context(),
 					getProcurementService(),
+					getSaleService(),
 					getEmailer(),
 					viper.GetString("email.from"),
 					viper.GetStringSlice("email.iqvia.to"),

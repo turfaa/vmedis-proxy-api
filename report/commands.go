@@ -11,12 +11,13 @@ import (
 func SendIQVIALastMonthReport(
 	ctx context.Context,
 	aggregatedProcurementsGetter AggregatedProcurementsGetter,
+	aggregatedSalesGetter AggregatedSalesGetter,
 	sender EmailSender,
 	from string,
 	to []string,
 	cc []string,
 ) {
-	service := NewService(aggregatedProcurementsGetter, sender)
+	service := NewService(aggregatedProcurementsGetter, aggregatedSalesGetter, sender)
 
 	fromTime, toTime := time2.BeginningOfLastMonth(), time2.EndOfLastMonth()
 

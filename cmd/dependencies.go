@@ -17,6 +17,7 @@ import (
 	"github.com/turfaa/vmedis-proxy-api/drug"
 	"github.com/turfaa/vmedis-proxy-api/email2"
 	"github.com/turfaa/vmedis-proxy-api/procurement"
+	"github.com/turfaa/vmedis-proxy-api/sale"
 	"github.com/turfaa/vmedis-proxy-api/vmedis"
 	"github.com/turfaa/vmedis-proxy-api/vmedis/token"
 )
@@ -33,6 +34,7 @@ var (
 	drugService        atomic.Pointer[drug.Service]
 	drugDatabase       atomic.Pointer[drug.Database]
 	procurementService atomic.Pointer[procurement.Service]
+	saleService        atomic.Pointer[sale.Service]
 	emailer            atomic.Pointer[email2.Emailer]
 )
 
@@ -224,6 +226,22 @@ func getProcurementService() *procurement.Service {
 
 	if !procurementService.CompareAndSwap(nil, newService) {
 		return procurementService.Load()
+	}
+
+	return newService
+}
+
+func getSaleService() *sale.Service {
+	if val := saleService.Load(); val != nil {
+		return val
+	}
+
+	newService := sale.NewService(
+		getDatabase(),
+	)
+
+	if !saleService.CompareAndSwap(nil, newService) {
+		return saleService.Load()
 	}
 
 	return newService
