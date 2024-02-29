@@ -23,6 +23,10 @@ type Service struct {
 	drugUnitsGetter DrugUnitsGetter
 }
 
+func (s *Service) GetAggregatedProcurementsBetweenTime(ctx context.Context, from time.Time, to time.Time) ([]AggregatedProcurement, error) {
+	return s.db.GetAggregatedProcurementsBetweenTime(ctx, from, to)
+}
+
 func (s *Service) GetRecommendations(ctx context.Context) (RecommendationsResponse, error) {
 	recommendations, err := s.redisDB.GetRecommendations(ctx)
 	if err != nil {

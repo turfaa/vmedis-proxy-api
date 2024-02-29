@@ -96,6 +96,37 @@ func (d *Database) UpsertVmedisProcurements(ctx context.Context, procurements []
 	})
 }
 
+func (d *Database) GetAggregatedProcurementsBetweenTime(ctx context.Context, from time.Time, to time.Time) ([]AggregatedProcurement, error) {
+	var procurements []AggregatedProcurement
+	if err := d.dbCtx(ctx).
+		Raw(
+			`
+SELECT 
+	drugs.name AS drug_name,
+	procurements.amount AS quantity,
+	procurements.unit AS unit
+FROM
+	(
+		SELECT drug_code, SUM(amount) as amount, unit
+		FROM 
+			procurement_units JOIN procurements ON procurement_units.invoice_number = procurements.invoice_number
+		WHERE
+			procurements.invoice_date BETWEEN ? AND ?
+		GROUP BY drug_code, unit
+	) procurements
+	JOIN drugs ON procurements.drug_code = drugs.vmedis_code
+ORDER BY drugs.name`,
+			from,
+			to,
+		).
+		Find(&procurements).
+		Error; err != nil {
+		return nil, fmt.Errorf("get aggregated procurements between %s and %s from DB: %w", from, to, err)
+	}
+
+	return procurements, nil
+}
+
 func (d *Database) GetInvoiceCalculators(ctx context.Context) ([]InvoiceCalculator, error) {
 	var invoiceCalculators []models.InvoiceCalculator
 	if err := d.dbCtx(ctx).

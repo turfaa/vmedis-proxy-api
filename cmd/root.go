@@ -67,6 +67,10 @@ func initAppCommand(command *cobra.Command) {
 	command.Flags().String("redis-password", "", "redis password")
 	command.Flags().String("redis-db", "0", "redis db")
 	command.Flags().StringSlice("kafka-brokers", nil, "kafka brokers")
+	command.Flags().String("email.smtp-address", "", "smtp address")
+	command.Flags().String("email.smtp-username", "", "smtp username")
+	command.Flags().String("email.smtp-password", "", "smtp password")
+	command.Flags().String("email.from", "", "email from")
 
 	viper.BindPFlag("postgres_dsn", command.Flags().Lookup("postgres-dsn"))
 	viper.BindPFlag("sqlite_path", command.Flags().Lookup("sqlite-path"))
@@ -78,4 +82,7 @@ func initAppCommand(command *cobra.Command) {
 	viper.BindPFlag("redis_password", command.Flags().Lookup("redis-password"))
 	viper.BindPFlag("redis_db", command.Flags().Lookup("redis-db"))
 	viper.BindPFlag("kafka_brokers", command.Flags().Lookup("kafka-brokers"))
+	viper.BindPFlag("email.smtp_address", command.Flags().Lookup("email.smtp-address"))
+	viper.BindPFlag("email.smtp_username", command.Flags().Lookup("email.smtp-username"))
+	viper.BindPFlag("email.smtp_password", command.Flags().Lookup("email.smtp-password"))
 }

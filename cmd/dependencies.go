@@ -1,7 +1,10 @@
 package cmd
 
 import (
+	"crypto/tls"
 	"log"
+	"net"
+	"net/smtp"
 	"sync/atomic"
 
 	"github.com/go-redis/redis/v8"
@@ -12,19 +15,25 @@ import (
 
 	"github.com/turfaa/vmedis-proxy-api/database"
 	"github.com/turfaa/vmedis-proxy-api/drug"
+	"github.com/turfaa/vmedis-proxy-api/email2"
+	"github.com/turfaa/vmedis-proxy-api/procurement"
 	"github.com/turfaa/vmedis-proxy-api/vmedis"
 	"github.com/turfaa/vmedis-proxy-api/vmedis/token"
 )
 
 var (
-	db                atomic.Pointer[gorm.DB]
-	vmedisClient      atomic.Pointer[vmedis.Client]
-	redisClient       atomic.Pointer[redis.Client]
-	drugProducer      atomic.Pointer[drug.Producer]
-	kafkaWriter       atomic.Pointer[kafka.Writer]
-	tokenProvider     atomic.Pointer[token.Provider]
-	vmedisRateLimiter atomic.Pointer[rate.Limiter]
-	tokenRefresher    atomic.Pointer[token.Refresher]
+	db                 atomic.Pointer[gorm.DB]
+	vmedisClient       atomic.Pointer[vmedis.Client]
+	redisClient        atomic.Pointer[redis.Client]
+	drugProducer       atomic.Pointer[drug.Producer]
+	kafkaWriter        atomic.Pointer[kafka.Writer]
+	tokenProvider      atomic.Pointer[token.Provider]
+	vmedisRateLimiter  atomic.Pointer[rate.Limiter]
+	tokenRefresher     atomic.Pointer[token.Refresher]
+	drugService        atomic.Pointer[drug.Service]
+	drugDatabase       atomic.Pointer[drug.Database]
+	procurementService atomic.Pointer[procurement.Service]
+	emailer            atomic.Pointer[email2.Emailer]
 )
 
 func getDatabase() *gorm.DB {
@@ -166,4 +175,85 @@ func getVmedisRateLimiter() *rate.Limiter {
 	}
 
 	return newLimiter
+}
+
+func getDrugService() *drug.Service {
+	if val := drugService.Load(); val != nil {
+		return val
+	}
+
+	newService := drug.NewService(
+		getDatabase(),
+		getVmedisClient(),
+		getKafkaWriter(),
+	)
+
+	if !drugService.CompareAndSwap(nil, newService) {
+		return drugService.Load()
+	}
+
+	return newService
+}
+
+func getDrugDatabase() *drug.Database {
+	if val := drugDatabase.Load(); val != nil {
+		return val
+	}
+
+	newDatabase := drug.NewDatabase(getDatabase())
+
+	if !drugDatabase.CompareAndSwap(nil, newDatabase) {
+		return drugDatabase.Load()
+	}
+
+	return newDatabase
+}
+
+func getProcurementService() *procurement.Service {
+	if val := procurementService.Load(); val != nil {
+		return val
+	}
+
+	newService := procurement.NewService(
+		getDatabase(),
+		getRedisClient(),
+		getVmedisClient(),
+		getDrugProducer(),
+		getDrugDatabase(),
+	)
+
+	if !procurementService.CompareAndSwap(nil, newService) {
+		return procurementService.Load()
+	}
+
+	return newService
+}
+
+func getEmailer() *email2.Emailer {
+	if val := emailer.Load(); val != nil {
+		return val
+	}
+
+	smtpAddress := viper.GetString("email.smtp_address")
+	smtpHost, _, err := net.SplitHostPort(smtpAddress)
+	if err != nil {
+		log.Fatalf("Error parsing SMTP address '%s': %s", smtpAddress, err)
+	}
+
+	newPool := email2.NewEmailer(
+		smtpAddress,
+		smtp.PlainAuth(
+			"",
+			viper.GetString("email.smtp_username"),
+			viper.GetString("email.smtp_password"),
+			smtpHost,
+		),
+		&tls.Config{ServerName: smtpHost, InsecureSkipVerify: true},
+	)
+
+	if !emailer.CompareAndSwap(nil, newPool) {
+		return emailer.Load()
+	}
+
+	return newPool
 }

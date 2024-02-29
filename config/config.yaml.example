@@ -10,3 +10,12 @@ redis_db: 0
 
 kafka_brokers:
     - "localhost:9092"
+
+email:
+  smtp_address: "smtp.example.com:567"
+  smtp_username: ""
+  smtp_password: ""
+  from: ""
+  iqvia:
+    to: []
+    cc: []

@@ -50,3 +50,13 @@ func EndOfDate(date string) (time.Time, error) {
 
 	return time.Date(t.Year(), t.Month(), t.Day(), 23, 59, 59, 999999999, time.Local), nil
 }
+
+func BeginningOfLastMonth() time.Time {
+	year, month, _ := time.Now().AddDate(0, -1, 0).Date()
+	return time.Date(year, month, 1, 0, 0, 0, 0, time.Local)
+}
+
+func EndOfLastMonth() time.Time {
+	year, month, _ := time.Now().AddDate(0, -1, 0).Date()
+	return time.Date(year, month+1, 0, 23, 59, 59, 999999999, time.Local)
+}

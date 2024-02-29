@@ -82,3 +82,9 @@ func FromDBInvoiceComponent(component models.InvoiceComponent) InvoiceComponent 
 		Multiplier: component.Multiplier,
 	}
 }
+
+type AggregatedProcurement struct {
+	DrugName string  `json:"drugName"`
+	Quantity float64 `json:"quantity"`
+	Unit     string  `json:"unit"`
+}
