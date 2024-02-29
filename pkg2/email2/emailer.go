@@ -18,7 +18,7 @@ type Emailer struct {
 
 func (e *Emailer) Send(mail *email.Email, timeout time.Duration) error {
 	if err := mail.SendWithTLS(e.smtpAddress, e.auth, e.tlsConfig); err != nil {
-		log.Printf("Failed to send email with emailer: %+v", *e)
+		log.Printf("Failed to send email: %+v", *mail)
 		return fmt.Errorf("send email with TLS: %w", err)
 	}
 
