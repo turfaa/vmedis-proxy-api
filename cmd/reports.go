@@ -12,7 +12,7 @@ var reportsCmd = &cobra.Command{
 	Short: "Reports commands",
 }
 
-var reportCommands = []commandWithInit{
+var reportsCommands = []commandWithInit{
 	{
 		command: &cobra.Command{
 			Use: "send-to-iqvia",
@@ -39,13 +39,5 @@ var reportCommands = []commandWithInit{
 }
 
 func init() {
-	for _, cmd := range reportCommands {
-		reportsCmd.AddCommand(cmd.command)
-
-		if cmd.init != nil {
-			cmd.init(cmd.command)
-		}
-	}
-
-	rootCmd.AddCommand(reportsCmd)
+	initSubcommands(reportsCmd, reportsCommands)
 }

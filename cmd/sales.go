@@ -11,7 +11,7 @@ var salesCmd = &cobra.Command{
 	Short: "Sales commands",
 }
 
-var saleCommands = []commandWithInit{
+var salesCommands = []commandWithInit{
 	{
 		command: &cobra.Command{
 			Use:   "dump",
@@ -45,13 +45,5 @@ var saleCommands = []commandWithInit{
 }
 
 func init() {
-	for _, cmd := range saleCommands {
-		salesCmd.AddCommand(cmd.command)
-
-		if cmd.init != nil {
-			cmd.init(cmd.command)
-		}
-	}
-
-	initAppCommand(salesCmd)
+	initSubcommands(salesCmd, salesCommands)
 }

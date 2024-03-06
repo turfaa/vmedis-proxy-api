@@ -15,12 +15,7 @@ var procurementsCmd = &cobra.Command{
 	Short: "Procurements commands",
 }
 
-type commandWithInit struct {
-	command *cobra.Command
-	init    func(cmd *cobra.Command)
-}
-
-var procurementCommands = []commandWithInit{
+var procurementsCommands = []commandWithInit{
 	{
 		command: &cobra.Command{
 			Use:   "dump",
@@ -71,13 +66,5 @@ var procurementCommands = []commandWithInit{
 }
 
 func init() {
-	for _, cmd := range procurementCommands {
-		procurementsCmd.AddCommand(cmd.command)
-
-		if cmd.init != nil {
-			cmd.init(cmd.command)
-		}
-	}
-
-	initAppCommand(procurementsCmd)
+	initSubcommands(procurementsCmd, procurementsCommands)
 }

@@ -11,25 +11,23 @@ var stockOpnamesCmd = &cobra.Command{
 	Short: "Stock opnames commands",
 }
 
-var stockOpnamesCommands = []cobra.Command{
+var stockOpnamesCommands = []commandWithInit{
 	{
-		Use:   "dump",
-		Short: "Dump today's stock opnames",
-		Run: func(cmd *cobra.Command, args []string) {
-			stockopname.DumpTodayStockOpnames(
-				cmd.Context(),
-				getDatabase(),
-				getVmedisClient(),
-				getDrugProducer(),
-			)
+		command: &cobra.Command{
+			Use:   "dump",
+			Short: "Dump today's stock opnames",
+			Run: func(cmd *cobra.Command, args []string) {
+				stockopname.DumpTodayStockOpnames(
+					cmd.Context(),
+					getDatabase(),
+					getVmedisClient(),
+					getDrugProducer(),
+				)
+			},
 		},
 	},
 }
 
 func init() {
-	for _, cmd := range stockOpnamesCommands {
-		stockOpnamesCmd.AddCommand(&cmd)
-	}
-
-	initAppCommand(stockOpnamesCmd)
+	initSubcommands(stockOpnamesCmd, stockOpnamesCommands)
 }

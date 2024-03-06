@@ -11,23 +11,21 @@ var tokensCmd = &cobra.Command{
 	Short: "Tokens commands",
 }
 
-var tokensCommands = []cobra.Command{
+var tokensCommands = []commandWithInit{
 	{
-		Use:   "refresh",
-		Short: "Refresh tokens",
-		Run: func(cmd *cobra.Command, args []string) {
-			refresher := getTokenRefresher()
-			if err := refresher.RefreshTokens(cmd.Context()); err != nil {
-				log.Fatal(err)
-			}
+		command: &cobra.Command{
+			Use:   "refresh",
+			Short: "Refresh tokens",
+			Run: func(cmd *cobra.Command, args []string) {
+				refresher := getTokenRefresher()
+				if err := refresher.RefreshTokens(cmd.Context()); err != nil {
+					log.Fatal(err)
+				}
+			},
 		},
 	},
 }
 
 func init() {
-	for _, cmd := range tokensCommands {
-		tokensCmd.AddCommand(&cmd)
-	}
-	
-	initAppCommand(tokensCmd)
+	initSubcommands(tokensCmd, tokensCommands)
 }
