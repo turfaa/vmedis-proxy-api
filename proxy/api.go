@@ -14,6 +14,7 @@ import (
 
 	"github.com/turfaa/vmedis-proxy-api/drug"
 	"github.com/turfaa/vmedis-proxy-api/procurement"
+	"github.com/turfaa/vmedis-proxy-api/sale"
 	"github.com/turfaa/vmedis-proxy-api/stockopname"
 	"github.com/turfaa/vmedis-proxy-api/vmedis"
 )
@@ -27,6 +28,7 @@ type ApiServer struct {
 	drugProducer *drug.Producer
 
 	drugHandler        *drug.ApiHandler
+	saleHandler        *sale.ApiHandler
 	procurementHandler *procurement.ApiHandler
 	stockOpnameHandler *stockopname.ApiHandler
 }
@@ -52,33 +54,24 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 		{
 			sales.GET(
 				"",
-				s.HandleGetSales,
+				s.saleHandler.GetSales,
 			)
 
 			sales.GET(
 				"/drugs",
-				s.HandleGetSoldDrugs,
+				s.saleHandler.GetSoldDrugs,
+			)
+
+			sales.GET(
+				"/statistics",
+				cache.CacheByRequestURI(store, time.Minute),
+				s.saleHandler.GetSalesStatistics,
 			)
 
 			sales.POST(
 				"/dump",
-				s.HandleDumpSales,
+				s.saleHandler.DumpTodaySales,
 			)
-
-			statistics := sales.Group("/statistics")
-			{
-				statistics.GET(
-					"",
-					cache.CacheByRequestURI(store, time.Minute),
-					s.HandleGetSalesStatistics,
-				)
-
-				statistics.GET(
-					"/daily",
-					cache.CacheByRequestURI(store, time.Minute),
-					s.HandleGetDailySalesStatistics,
-				)
-			}
 		}
 
 		// We are migrating to /procurements
@@ -169,6 +162,7 @@ func NewApiServer(
 ) *ApiServer {
 	drugProducer := drug.NewProducer(kafkaWriter)
 	drugDB := drug.NewDatabase(db)
+	drugService := drug.NewService(db, client, kafkaWriter)
 
 	return &ApiServer{
 		client:       client,
@@ -177,6 +171,7 @@ func NewApiServer(
 		drugProducer: drugProducer,
 
 		drugHandler:        drug.NewApiHandler(db, client, kafkaWriter),
+		saleHandler:        sale.NewApiHandler(db, client, drugService, drugProducer),
 		procurementHandler: procurement.NewApiHandler(db, redisClient, client, drugProducer, drugDB),
 		stockOpnameHandler: stockopname.NewApiHandler(db, client, drugProducer),
 	}

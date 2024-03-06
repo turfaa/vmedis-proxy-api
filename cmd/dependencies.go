@@ -238,6 +238,9 @@ func getSaleService() *sale.Service {
 
 	newService := sale.NewService(
 		getDatabase(),
+		getVmedisClient(),
+		getDrugService(),
+		getDrugProducer(),
 	)
 
 	if !saleService.CompareAndSwap(nil, newService) {

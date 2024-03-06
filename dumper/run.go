@@ -14,6 +14,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/turfaa/vmedis-proxy-api/drug"
+	"github.com/turfaa/vmedis-proxy-api/sale"
 	"github.com/turfaa/vmedis-proxy-api/stockopname"
 	"github.com/turfaa/vmedis-proxy-api/vmedis"
 )
@@ -53,12 +54,13 @@ func Run(vmedisClient *vmedis.Client, db *gorm.DB, redisClient *redis.Client, ka
 	drugService := drug.NewService(db, vmedisClient, kafkaWriter)
 
 	stockOpnameService := stockopname.NewService(db, vmedisClient, drugProducer)
+	saleService := sale.NewService(db, vmedisClient, drugService, drugProducer)
 
-	if _, err := scheduler.CronWithSeconds(DailySalesStatisticsSchedule).Do(DumpDailySalesStatistics, ctx, db, vmedisClient); err != nil {
+	if _, err := scheduler.CronWithSeconds(DailySalesStatisticsSchedule).Do(DumpDailySalesStatistics, ctx, saleService); err != nil {
 		log.Fatalf("Error scheduling daily sales statistics dumper: %s", err)
 	}
 
-	if _, err := scheduler.Cron(DailySalesSchedule).Do(DumpDailySales, ctx, db, vmedisClient, drugProducer); err != nil {
+	if _, err := scheduler.Cron(DailySalesSchedule).Do(DumpDailySales, ctx, saleService); err != nil {
 		log.Fatalf("Error scheduling daily sales dumper: %s", err)
 	}
 

@@ -44,6 +44,12 @@ func (s *Service) GetDrugs(ctx context.Context) ([]Drug, error) {
 	return getDrugsFromDB(ctx, s.db.GetDrugsUpdatedAfter, 1000)
 }
 
+func (s *Service) GetDrugsByVmedisCodes(ctx context.Context, vmedisCodes []string) ([]Drug, error) {
+	return getDrugsFromDB(ctx, func(ctx context.Context, minimumUpdatedTime time.Time) ([]models.Drug, error) {
+		return s.db.GetDrugsByVmedisCodesUpdatedAfter(ctx, vmedisCodes, minimumUpdatedTime)
+	}, len(vmedisCodes))
+}
+
 // GetDrugsToStockOpname returns the drugs to stock opname.
 // Drugs that have been already stock opnamed between the given times will be excluded.
 func (s *Service) GetDrugsToStockOpname(ctx context.Context, startTime time.Time, endTime time.Time) ([]Drug, error) {
