@@ -37,7 +37,7 @@ func New(
 ) *Client {
 	return &Client{
 		BaseUrl:       baseUrl,
-		httpClient:    &http.Client{},
+		httpClient:    &http.Client{Timeout: time.Minute},
 		concurrency:   concurrency,
 		limiter:       limiter,
 		tokenProvider: tokenProvider,
