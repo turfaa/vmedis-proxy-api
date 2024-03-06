@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.17.0] - 2024-03-06
+### :sparkles: New Features
+- [`98ac189`](https://github.com/turfaa/vmedis-proxy-api/commit/98ac1895e7b135f52ef9f0b5dea908c77d866a00) - Add sales-related commands *(commit by [@turfaa](https://github.com/turfaa))*
+- [`561e7df`](https://github.com/turfaa/vmedis-proxy-api/commit/561e7dffb89acb1961a9054448073036c29c6166) - Add drugs dumper command *(commit by [@turfaa](https://github.com/turfaa))*
+- [`14fa785`](https://github.com/turfaa/vmedis-proxy-api/commit/14fa785b26c90f15e959b5b93d2c6876ce40bffd) - Remove universal dumper (cron simulator) because we're now using real cronjobs from Kubernetes *(commit by [@turfaa](https://github.com/turfaa))*
+
+### :recycle: Refactors
+- [`16f3a8f`](https://github.com/turfaa/vmedis-proxy-api/commit/16f3a8f4d2c1e9e1165c06237e691710edd2a809) - Move sales logics to the sale package *(commit by [@turfaa](https://github.com/turfaa))*
+
+
 ## [v0.16.5] - 2024-02-29
 ### :bug: Bug Fixes
 - [`5854ede`](https://github.com/turfaa/vmedis-proxy-api/commit/5854edea7fc4304d42d639dcea4bc4ab9b6979a1) - remove debug *(commit by [@turfaa](https://github.com/turfaa))*
@@ -367,3 +377,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v0.16.3]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.16.2...v0.16.3
 [v0.16.4]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.16.3...v0.16.4
 [v0.16.5]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.16.4...v0.16.5
+[v0.17.0]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.16.5...v0.17.0
