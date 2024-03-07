@@ -20,7 +20,8 @@ import (
 
 // ApiHandler is the handler for drug-related APIs.
 type ApiHandler struct {
-	service *Service
+	service                    *Service
+	stockOpnameLookupStartTime time.Time
 }
 
 // GetDrugs handles requests to get all drugs.
@@ -69,9 +70,9 @@ func (h *ApiHandler) GetConservativeDrugsToStockOpname(c *gin.Context) {
 		return
 	}
 
-	startFrom, yesterdayUntil := time.Date(2024, 2, 19, 0, 0, 0, 0, time.Local), todayUntil.Add(-24*time.Hour)
+	yesterdayUntil := todayUntil.Add(-24 * time.Hour)
 
-	drugs, err := h.service.GetDrugsToStockOpname(c, startFrom, yesterdayUntil)
+	drugs, err := h.service.GetDrugsToStockOpname(c, h.stockOpnameLookupStartTime, yesterdayUntil)
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": fmt.Sprintf("failed to get drugs to stock opname: %s", err),
@@ -92,9 +93,9 @@ func (h *ApiHandler) GetSalesBasedDrugsToStockOpname(c *gin.Context) {
 		return
 	}
 
-	startFrom, yesterdayUntil := time.Date(2024, 2, 19, 0, 0, 0, 0, time.Local), todayUntil.Add(-24*time.Hour)
+	yesterdayUntil := todayUntil.Add(-24 * time.Hour)
 
-	drugs, err := h.service.GetSalesBasedDrugsToStockOpname(c, startFrom, yesterdayUntil)
+	drugs, err := h.service.GetSalesBasedDrugsToStockOpname(c, h.stockOpnameLookupStartTime, yesterdayUntil)
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": fmt.Sprintf("failed to get sales-based drugs to stock opname: %s", err),
@@ -119,9 +120,11 @@ func (h *ApiHandler) DumpDrugs(c *gin.Context) {
 }
 
 // NewApiHandler creates a new ApiHandler.
-func NewApiHandler(db *gorm.DB, vmedisClient *vmedis.Client, kafkaWriter *kafka.Writer) *ApiHandler {
+func NewApiHandler(config ApiHandlerConfig) *ApiHandler {
+	startTime := time.Date(config.StockOpnameLookupStartDate.Year(), config.StockOpnameLookupStartDate.Month(), config.StockOpnameLookupStartDate.Day(), 0, 0, 0, 0, time.Local)
 	return &ApiHandler{
-		service: NewService(db, vmedisClient, kafkaWriter),
+		service:                    config.Service,
+		stockOpnameLookupStartTime: startTime,
 	}
 }
 

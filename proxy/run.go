@@ -10,25 +10,38 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/segmentio/kafka-go"
 	"gorm.io/gorm"
 
-	"github.com/turfaa/vmedis-proxy-api/vmedis"
+	"github.com/turfaa/vmedis-proxy-api/drug"
+	"github.com/turfaa/vmedis-proxy-api/procurement"
+	"github.com/turfaa/vmedis-proxy-api/sale"
+	"github.com/turfaa/vmedis-proxy-api/stockopname"
 )
 
 // Config is the proxy server configuration.
 type Config struct {
-	VmedisClient *vmedis.Client
-	DB           *gorm.DB
-	RedisClient  *redis.Client
-	KafkaWriter  *kafka.Writer
+	DB          *gorm.DB
+	RedisClient *redis.Client
+
+	DrugHandler        *drug.ApiHandler
+	SaleHandler        *sale.ApiHandler
+	ProcurementHandler *procurement.ApiHandler
+	StockOpnameHandler *stockopname.ApiHandler
 }
 
 // Run runs the proxy server.
 func Run(config Config) {
-	log.Printf("Starting proxy server to %s", config.VmedisClient.BaseUrl)
+	log.Println("Starting proxy server")
 
-	apiServer := NewApiServer(config.VmedisClient, config.DB, config.RedisClient, config.KafkaWriter)
+	apiServer := NewApiServer(
+		config.DB,
+		config.RedisClient,
+		config.DrugHandler,
+		config.SaleHandler,
+		config.ProcurementHandler,
+		config.StockOpnameHandler,
+	)
+
 	engine := apiServer.GinEngine()
 
 	httpServer := http.Server{

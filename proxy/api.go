@@ -9,23 +9,18 @@ import (
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
-	"github.com/segmentio/kafka-go"
 	"gorm.io/gorm"
 
 	"github.com/turfaa/vmedis-proxy-api/drug"
 	"github.com/turfaa/vmedis-proxy-api/procurement"
 	"github.com/turfaa/vmedis-proxy-api/sale"
 	"github.com/turfaa/vmedis-proxy-api/stockopname"
-	"github.com/turfaa/vmedis-proxy-api/vmedis"
 )
 
 // ApiServer is the proxy api server.
 type ApiServer struct {
-	client      *vmedis.Client
 	db          *gorm.DB
 	redisClient *redis.Client
-
-	drugProducer *drug.Producer
 
 	drugHandler        *drug.ApiHandler
 	saleHandler        *sale.ApiHandler
@@ -155,24 +150,21 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 
 // NewApiServer creates a new api server.
 func NewApiServer(
-	client *vmedis.Client,
 	db *gorm.DB,
 	redisClient *redis.Client,
-	kafkaWriter *kafka.Writer,
+
+	drugHandler *drug.ApiHandler,
+	saleHandler *sale.ApiHandler,
+	procurementHandler *procurement.ApiHandler,
+	stockOpnameHandler *stockopname.ApiHandler,
 ) *ApiServer {
-	drugProducer := drug.NewProducer(kafkaWriter)
-	drugDB := drug.NewDatabase(db)
-	drugService := drug.NewService(db, client, kafkaWriter)
-
 	return &ApiServer{
-		client:       client,
-		db:           db,
-		redisClient:  redisClient,
-		drugProducer: drugProducer,
+		db:          db,
+		redisClient: redisClient,
 
-		drugHandler:        drug.NewApiHandler(db, client, kafkaWriter),
-		saleHandler:        sale.NewApiHandler(db, client, drugService, drugProducer),
-		procurementHandler: procurement.NewApiHandler(db, redisClient, client, drugProducer, drugDB),
-		stockOpnameHandler: stockopname.NewApiHandler(db, client, drugProducer),
+		drugHandler:        drugHandler,
+		saleHandler:        saleHandler,
+		procurementHandler: procurementHandler,
+		stockOpnameHandler: stockOpnameHandler,
 	}
 }

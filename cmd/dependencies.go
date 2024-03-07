@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/smtp"
 	"sync/atomic"
+	"time"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/segmentio/kafka-go"
@@ -18,6 +19,7 @@ import (
 	"github.com/turfaa/vmedis-proxy-api/pkg2/email2"
 	"github.com/turfaa/vmedis-proxy-api/procurement"
 	"github.com/turfaa/vmedis-proxy-api/sale"
+	"github.com/turfaa/vmedis-proxy-api/stockopname"
 	"github.com/turfaa/vmedis-proxy-api/vmedis"
 	"github.com/turfaa/vmedis-proxy-api/vmedis/token"
 )
@@ -36,6 +38,11 @@ var (
 	procurementService atomic.Pointer[procurement.Service]
 	saleService        atomic.Pointer[sale.Service]
 	emailer            atomic.Pointer[email2.Emailer]
+	stockOpnameService atomic.Pointer[stockopname.Service]
+	drugHandler        atomic.Pointer[drug.ApiHandler]
+	saleHandler        atomic.Pointer[sale.ApiHandler]
+	procurementHandler atomic.Pointer[procurement.ApiHandler]
+	stockOpnameHandler atomic.Pointer[stockopname.ApiHandler]
 )
 
 func getDatabase() *gorm.DB {
@@ -277,4 +284,83 @@ func getEmailer() *email2.Emailer {
 	}
 
 	return newPool
+}
+
+func getStockOpnameService() *stockopname.Service {
+	if val := stockOpnameService.Load(); val != nil {
+		return val
+	}
+
+	newService := stockopname.NewService(
+		getDatabase(),
+		getVmedisClient(),
+		getDrugProducer(),
+	)
+
+	if !stockOpnameService.CompareAndSwap(nil, newService) {
+		return stockOpnameService.Load()
+	}
+
+	return newService
+}
+
+func getDrugHandler(stockOpnameLookupStartDate time.Time) *drug.ApiHandler {
+	if val := drugHandler.Load(); val != nil {
+		return val
+	}
+
+	newHandler := drug.NewApiHandler(
+		drug.ApiHandlerConfig{
+			Service:                    getDrugService(),
+			StockOpnameLookupStartDate: stockOpnameLookupStartDate.Local(),
+		},
+	)
+
+	if !drugHandler.CompareAndSwap(nil, newHandler) {
+		return drugHandler.Load()
+	}
+
+	return newHandler
+}
+
+func getSaleHandler() *sale.ApiHandler {
+	if val := saleHandler.Load(); val != nil {
+		return val
+	}
+
+	newHandler := sale.NewApiHandler(getSaleService())
+
+	if !saleHandler.CompareAndSwap(nil, newHandler) {
+		return saleHandler.Load()
+	}
+
+	return newHandler
+}
+
+func getProcurementHandler() *procurement.ApiHandler {
+	if val := procurementHandler.Load(); val != nil {
+		return val
+	}
+
+	newHandler := procurement.NewApiHandler(getProcurementService())
+
+	if !procurementHandler.CompareAndSwap(nil, newHandler) {
+		return procurementHandler.Load()
+	}
+
+	return newHandler
+}
+
+func getStockOpnameHandler() *stockopname.ApiHandler {
+	if val := stockOpnameHandler.Load(); val != nil {
+		return val
+	}
+
+	newHandler := stockopname.NewApiHandler(getStockOpnameService())
+
+	if !stockOpnameHandler.CompareAndSwap(nil, newHandler) {
+		return stockOpnameHandler.Load()
+	}
+
+	return newHandler
 }

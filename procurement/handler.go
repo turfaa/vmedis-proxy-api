@@ -8,11 +8,8 @@ import (
 	"log"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
-	"gorm.io/gorm"
 
 	"github.com/turfaa/vmedis-proxy-api/pkg2/gin2"
-	"github.com/turfaa/vmedis-proxy-api/vmedis"
 )
 
 type ApiHandler struct {
@@ -84,20 +81,8 @@ func (h *ApiHandler) GetInvoiceCalculators(c *gin.Context) {
 	c.JSON(200, InvoiceCalculatorsResponse{Calculators: calculators})
 }
 
-func NewApiHandler(
-	db *gorm.DB,
-	redisClient *redis.Client,
-	vmedisClient *vmedis.Client,
-	drugProducer UpdatedDrugProducer,
-	drugUnitsGetter DrugUnitsGetter,
-) *ApiHandler {
+func NewApiHandler(service *Service) *ApiHandler {
 	return &ApiHandler{
-		service: &Service{
-			db:              NewDatabase(db),
-			redisDB:         NewRedisDatabase(redisClient),
-			vmedis:          vmedisClient,
-			drugProducer:    drugProducer,
-			drugUnitsGetter: drugUnitsGetter,
-		},
+		service: service,
 	}
 }

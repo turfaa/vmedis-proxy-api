@@ -5,10 +5,8 @@ import (
 	"log"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 
 	"github.com/turfaa/vmedis-proxy-api/pkg2/time2"
-	"github.com/turfaa/vmedis-proxy-api/vmedis"
 )
 
 type ApiHandler struct {
@@ -93,13 +91,8 @@ func (s *ApiHandler) DumpTodaySales(c *gin.Context) {
 	})
 }
 
-func NewApiHandler(
-	db *gorm.DB,
-	vmedisClient *vmedis.Client,
-	drugsGetter DrugsGetter,
-	drugProducer UpdatedDrugProducer,
-) *ApiHandler {
+func NewApiHandler(service *Service) *ApiHandler {
 	return &ApiHandler{
-		service: NewService(db, vmedisClient, drugsGetter, drugProducer),
+		service: service,
 	}
 }

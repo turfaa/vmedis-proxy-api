@@ -19,3 +19,5 @@ email:
   iqvia:
     to: []
     cc: []
+
+stock-opname-start-date: "2024-03-07"
