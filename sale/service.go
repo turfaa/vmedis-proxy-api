@@ -92,7 +92,7 @@ func (s *Service) GetSalesStatisticsBetweenTime(ctx context.Context, from time.T
 		return nil, fmt.Errorf("get live sales statistics from vmedis: %w", err)
 	}
 
-	liveStats, err := FromVmedisSalesStatistics(to, liveStatsVmedis)
+	liveStats, err := FromVmedisSalesStatistics(time.Now(), liveStatsVmedis)
 	if err != nil {
 		return nil, fmt.Errorf("invalid live sales statistics from Vmedis (%+v): %w", liveStatsVmedis, err)
 	}
