@@ -3,9 +3,10 @@ package database
 import (
 	"fmt"
 
-	"github.com/turfaa/vmedis-proxy-api/database/models"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+
+	"github.com/turfaa/vmedis-proxy-api/database/models"
 )
 
 // PrepopulateInvoiceCalculators prepopulates invoice calculators.
@@ -210,7 +211,7 @@ func PrepopulateInvoiceCalculators(db *gorm.DB) error {
 				{
 					Supplier:   "Glory Majesty Indonesia",
 					Name:       "Total",
-					Multiplier: 1,
+					Multiplier: 0.99,
 				},
 			},
 		},
@@ -251,7 +252,7 @@ func PrepopulateInvoiceCalculators(db *gorm.DB) error {
 
 	if err := db.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "supplier"}},
-		UpdateAll: true,
+		DoNothing: true,
 	}).Omit(clause.Associations).Create(&calculators).Error; err != nil {
 		return fmt.Errorf("create invoice calculators: %w", err)
 	}
@@ -259,7 +260,7 @@ func PrepopulateInvoiceCalculators(db *gorm.DB) error {
 	for _, calculator := range calculators {
 		if err := db.Clauses(clause.OnConflict{
 			Columns:   []clause.Column{{Name: "supplier"}, {Name: "name"}},
-			UpdateAll: true,
+			DoNothing: true,
 		}).Create(calculator.Components).Error; err != nil {
 			return fmt.Errorf("create invoice components: %w", err)
 		}
