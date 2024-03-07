@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.18.0] - 2024-03-07
+### :sparkles: New Features
+- [`4ad4523`](https://github.com/turfaa/vmedis-proxy-api/commit/4ad4523ce50b2a48c59fff59ad05ab00738e019f) - Allow changing stock opname start date from config *(commit by [@turfaa](https://github.com/turfaa))*
+
+### :bug: Bug Fixes
+- [`2fe7bfa`](https://github.com/turfaa/vmedis-proxy-api/commit/2fe7bfa8c1ebef594a4ec9ddc483df996e76fa10) - Add default http timeout in vmedis client *(commit by [@turfaa](https://github.com/turfaa))*
+
+
 ## [v0.17.0] - 2024-03-06
 ### :sparkles: New Features
 - [`98ac189`](https://github.com/turfaa/vmedis-proxy-api/commit/98ac1895e7b135f52ef9f0b5dea908c77d866a00) - Add sales-related commands *(commit by [@turfaa](https://github.com/turfaa))*
@@ -378,3 +386,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v0.16.4]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.16.3...v0.16.4
 [v0.16.5]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.16.4...v0.16.5
 [v0.17.0]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.16.5...v0.17.0
+[v0.18.0]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.17.0...v0.18.0
