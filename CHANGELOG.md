@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.18.3] - 2024-03-07
+### :bug: Bug Fixes
+- [`0500df5`](https://github.com/turfaa/vmedis-proxy-api/commit/0500df5a198c19ceec33555dac768439ee06face) - on prepopulate invoice calculator conflict, do nothing *(commit by [@turfaa](https://github.com/turfaa))*
+
+
 ## [v0.18.2] - 2024-03-07
 ### :bug: Bug Fixes
 - [`18986db`](https://github.com/turfaa/vmedis-proxy-api/commit/18986db52de4d7f6c569dd79cba8c10d0a406ba7) - Augment vmedis id when stock opnames have the same vmedis id *(commit by [@turfaa](https://github.com/turfaa))*
@@ -399,3 +404,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v0.18.0]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.17.0...v0.18.0
 [v0.18.1]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.18.0...v0.18.1
 [v0.18.2]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.18.1...v0.18.2
+[v0.18.3]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.18.2...v0.18.3
