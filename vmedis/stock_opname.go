@@ -70,6 +70,8 @@ func (c *Client) GetAllTodayStockOpnames(ctx context.Context) ([]StockOpname, er
 	}
 
 	wg.Wait()
+
+	augmentDuplicatedStockOpnameCodes(stockOpnames)
 	return stockOpnames, nil
 }
 
@@ -86,6 +88,7 @@ func (c *Client) GetTodayStockOpnames(ctx context.Context, page int) (StockOpnam
 		return StockOpnamesResponse{}, fmt.Errorf("parse stock opnames: %w", err)
 	}
 
+	augmentDuplicatedStockOpnameCodes(sos.StockOpnames)
 	return sos, nil
 }
 
@@ -117,4 +120,22 @@ func parseStockOpname(selection *goquery.Selection) (StockOpname, error) {
 	}
 
 	return so, nil
+}
+
+func augmentDuplicatedStockOpnameCodes(stockOpnames []StockOpname) {
+	visitedID := make(map[string]bool, len(stockOpnames))
+
+	for i := range stockOpnames {
+		if visitedID[stockOpnames[i].ID] {
+			for x := 2; ; x++ {
+				id := fmt.Sprintf("%s-augmented-because-duplicate-%d", stockOpnames[i].ID, x)
+				if !visitedID[id] {
+					stockOpnames[i].ID = id
+					break
+				}
+			}
+		}
+
+		visitedID[stockOpnames[i].ID] = true
+	}
 }
