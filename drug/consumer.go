@@ -14,7 +14,7 @@ const (
 	ConsumerGroupID = "drug-consumer"
 )
 
-type Consumer struct {
+type UpdatedDrugConsumer struct {
 	brokers     []string
 	handler     *ConsumerHandler
 	readers     []*kafka.Reader
@@ -22,7 +22,7 @@ type Consumer struct {
 	concurrency int
 }
 
-func (c *Consumer) StartConsuming() {
+func (c *UpdatedDrugConsumer) StartConsuming() {
 	var wg sync.WaitGroup
 
 	wg.Add(1)
@@ -46,7 +46,7 @@ func (c *Consumer) StartConsuming() {
 	wg.Wait()
 }
 
-func (c *Consumer) StartConsumingDumpDrugDetailsByVmedisCode() error {
+func (c *UpdatedDrugConsumer) StartConsumingDumpDrugDetailsByVmedisCode() error {
 	reader := kafka.NewReader(kafka.ReaderConfig{
 		Brokers: c.brokers,
 		Topic:   VmedisCodeUpdatedTopic,
@@ -87,7 +87,7 @@ func (c *Consumer) StartConsumingDumpDrugDetailsByVmedisCode() error {
 	}
 }
 
-func (c *Consumer) processDumpDrugDetailsByVmedisCode(messages <-chan kafka.Message) {
+func (c *UpdatedDrugConsumer) processDumpDrugDetailsByVmedisCode(messages <-chan kafka.Message) {
 	for m := range messages {
 		if err := c.handler.DumpDrugDetailsByVmedisCode(context.Background(), m); err != nil {
 			log.Printf("failed to dump drug details by vmedis code: %s", err)
@@ -95,7 +95,7 @@ func (c *Consumer) processDumpDrugDetailsByVmedisCode(messages <-chan kafka.Mess
 	}
 }
 
-func (c *Consumer) StartConsumingDumpDrugDetailsByVmedisID() error {
+func (c *UpdatedDrugConsumer) StartConsumingDumpDrugDetailsByVmedisID() error {
 	reader := kafka.NewReader(kafka.ReaderConfig{
 		Brokers: c.brokers,
 		Topic:   VmedisIDUpdatedTopic,
@@ -136,7 +136,7 @@ func (c *Consumer) StartConsumingDumpDrugDetailsByVmedisID() error {
 	}
 }
 
-func (c *Consumer) processDumpDrugDetailsByVmedisID(messages <-chan kafka.Message) {
+func (c *UpdatedDrugConsumer) processDumpDrugDetailsByVmedisID(messages <-chan kafka.Message) {
 	for m := range messages {
 		if err := c.handler.DumpDrugDetailsByVmedisID(context.Background(), m); err != nil {
 			log.Printf("failed to dump drug details by vmedis id: %s", err)
@@ -144,7 +144,7 @@ func (c *Consumer) processDumpDrugDetailsByVmedisID(messages <-chan kafka.Messag
 	}
 }
 
-func (c *Consumer) Close() {
+func (c *UpdatedDrugConsumer) Close() {
 	for _, reader := range c.readers {
 		if err := reader.Close(); err != nil {
 			log.Printf("failed to close reader: %s", err)
@@ -152,8 +152,8 @@ func (c *Consumer) Close() {
 	}
 }
 
-func NewConsumer(config ConsumerConfig) *Consumer {
-	return &Consumer{
+func NewUpdatedDrugsConsumer(config ConsumerConfig) *UpdatedDrugConsumer {
+	return &UpdatedDrugConsumer{
 		brokers:     config.Brokers,
 		handler:     NewConsumerHandler(config.DB, config.RedisClient, config.VmedisClient, config.KafkaWriter),
 		concurrency: config.Concurrency,

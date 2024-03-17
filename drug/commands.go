@@ -27,8 +27,8 @@ func DumpDrugsFromVmedisToDB(
 	}
 }
 
-func RunConsumer(ctx context.Context, config ConsumerConfig) {
-	consumer := NewConsumer(config)
+func RunUpdatedDrugsConsumer(ctx context.Context, config ConsumerConfig) {
+	consumer := NewUpdatedDrugsConsumer(config)
 
 	var wg sync.WaitGroup
 	wg.Add(1)

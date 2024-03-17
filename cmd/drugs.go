@@ -30,10 +30,10 @@ var drugsCommands = []commandWithInit{
 
 	{
 		command: &cobra.Command{
-			Use:   "run-consumer",
-			Short: "Run drug consumer",
+			Use:   "run-updated-drugs-consumer",
+			Short: "Run updated drugs consumer",
 			Run: func(cmd *cobra.Command, args []string) {
-				drug.RunConsumer(
+				drug.RunUpdatedDrugsConsumer(
 					cmd.Context(),
 					drug.ConsumerConfig{
 						DB:           getDatabase(),
