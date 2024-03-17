@@ -7,11 +7,7 @@ import (
 	"log"
 	"sync"
 
-	"github.com/go-redis/redis/v8"
 	"github.com/segmentio/kafka-go"
-	"gorm.io/gorm"
-
-	"github.com/turfaa/vmedis-proxy-api/vmedis"
 )
 
 const (
@@ -156,16 +152,10 @@ func (c *Consumer) Close() {
 	}
 }
 
-func NewConsumer(
-	brokers []string,
-	db *gorm.DB,
-	redisClient *redis.Client,
-	vmedisClient *vmedis.Client,
-	kafkaWriter *kafka.Writer,
-) *Consumer {
+func NewConsumer(config ConsumerConfig) *Consumer {
 	return &Consumer{
-		brokers:     brokers,
-		handler:     NewConsumerHandler(db, redisClient, vmedisClient, kafkaWriter),
-		concurrency: 10,
+		brokers:     config.Brokers,
+		handler:     NewConsumerHandler(config.DB, config.RedisClient, config.VmedisClient, config.KafkaWriter),
+		concurrency: config.Concurrency,
 	}
 }

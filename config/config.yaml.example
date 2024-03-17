@@ -20,4 +20,6 @@ email:
     to: []
     cc: []
 
-stock-opname-start-date: "2024-03-07"
+stock_opname_start_date: "2024-03-07"
+
+consumer_concurrency: 10
