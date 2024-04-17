@@ -13,9 +13,7 @@ import (
 	"github.com/turfaa/vmedis-proxy-api/vmedis/token"
 )
 
-var (
-	rnd = rand.New(rand.NewSource(time.Now().UnixNano()))
-)
+var rnd = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 // Client is the main struct for the vmedis client.
 type Client struct {
@@ -66,7 +64,7 @@ func (c *Client) getWithSessionId(ctx context.Context, path, sessionId string) (
 		return nil, fmt.Errorf("error creating request: %w", err)
 	}
 
-	req.Header.Add("Cookie", "PHPSESSID="+sessionId)
+	req.Header.Add("Cookie", "vmedisApp="+sessionId)
 	req = req.WithContext(ctx)
 
 	res, err := c.httpClient.Do(req)
