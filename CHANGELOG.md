@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.18.6] - 2024-04-17
+### :bug: Bug Fixes
+- [`a9bbe58`](https://github.com/turfaa/vmedis-proxy-api/commit/a9bbe58e8cbf65f559bd58abf09d9ec2c44f2091) - use vmedisApp for session id *(commit by [@turfaa](https://github.com/turfaa))*
+
+
 ## [v0.18.5] - 2024-03-17
 ### :bug: Bug Fixes
 - [`828bbbb`](https://github.com/turfaa/vmedis-proxy-api/commit/828bbbb51e7b03f1cc473a68aacd64997a669845) - rename to 'updated-drugs-consumer' *(commit by [@turfaa](https://github.com/turfaa))*
@@ -417,3 +422,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v0.18.3]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.18.2...v0.18.3
 [v0.18.4]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.18.3...v0.18.4
 [v0.18.5]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.18.4...v0.18.5
+[v0.18.6]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.18.5...v0.18.6
