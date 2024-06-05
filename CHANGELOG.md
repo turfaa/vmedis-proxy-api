@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.19.0] - 2024-06-05
+### :sparkles: New Features
+- [`b2f03ad`](https://github.com/turfaa/vmedis-proxy-api/commit/b2f03ad814a7660b7106d05eb04fb31a395242d0) - support 'days' argument in procurements dumper *(commit by [@turfaa](https://github.com/turfaa))*
+
+
 ## [v0.18.6] - 2024-04-17
 ### :bug: Bug Fixes
 - [`a9bbe58`](https://github.com/turfaa/vmedis-proxy-api/commit/a9bbe58e8cbf65f559bd58abf09d9ec2c44f2091) - use vmedisApp for session id *(commit by [@turfaa](https://github.com/turfaa))*
@@ -423,3 +428,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v0.18.4]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.18.3...v0.18.4
 [v0.18.5]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.18.4...v0.18.5
 [v0.18.6]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.18.5...v0.18.6
+[v0.19.0]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.18.6...v0.19.0
