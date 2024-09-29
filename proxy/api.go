@@ -11,6 +11,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 
+	"github.com/turfaa/vmedis-proxy-api/auth"
 	"github.com/turfaa/vmedis-proxy-api/drug"
 	"github.com/turfaa/vmedis-proxy-api/procurement"
 	"github.com/turfaa/vmedis-proxy-api/sale"
@@ -21,7 +22,9 @@ import (
 type ApiServer struct {
 	db          *gorm.DB
 	redisClient *redis.Client
+	authService *auth.Service
 
+	authHandler        *auth.ApiHandler
 	drugHandler        *drug.ApiHandler
 	saleHandler        *sale.ApiHandler
 	procurementHandler *procurement.ApiHandler
@@ -34,6 +37,7 @@ func (s *ApiServer) GinEngine() *gin.Engine {
 
 	r.Use(gzip.Gzip(gzip.DefaultCompression))
 	r.Use(cors.Default())
+	r.Use(auth.GinMiddleware(s.authService))
 
 	s.SetupRoute(&r.RouterGroup)
 	return r
@@ -142,7 +146,15 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 		{
 			users.POST(
 				"/login",
-				s.HandleLogin,
+				s.authHandler.Login,
+			)
+		}
+
+		authGroup := v1.Group("/auth")
+		{
+			authGroup.POST(
+				"/login",
+				s.authHandler.Login,
 			)
 		}
 	}
@@ -152,7 +164,9 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 func NewApiServer(
 	db *gorm.DB,
 	redisClient *redis.Client,
+	authService *auth.Service,
 
+	authHandler *auth.ApiHandler,
 	drugHandler *drug.ApiHandler,
 	saleHandler *sale.ApiHandler,
 	procurementHandler *procurement.ApiHandler,
@@ -161,7 +175,9 @@ func NewApiServer(
 	return &ApiServer{
 		db:          db,
 		redisClient: redisClient,
+		authService: authService,
 
+		authHandler:        authHandler,
 		drugHandler:        drugHandler,
 		saleHandler:        saleHandler,
 		procurementHandler: procurementHandler,

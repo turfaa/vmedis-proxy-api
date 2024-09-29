@@ -12,6 +12,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 
+	"github.com/turfaa/vmedis-proxy-api/auth"
 	"github.com/turfaa/vmedis-proxy-api/drug"
 	"github.com/turfaa/vmedis-proxy-api/procurement"
 	"github.com/turfaa/vmedis-proxy-api/sale"
@@ -22,7 +23,9 @@ import (
 type Config struct {
 	DB          *gorm.DB
 	RedisClient *redis.Client
+	AuthService *auth.Service
 
+	AuthHandler        *auth.ApiHandler
 	DrugHandler        *drug.ApiHandler
 	SaleHandler        *sale.ApiHandler
 	ProcurementHandler *procurement.ApiHandler
@@ -36,6 +39,8 @@ func Run(config Config) {
 	apiServer := NewApiServer(
 		config.DB,
 		config.RedisClient,
+		config.AuthService,
+		config.AuthHandler,
 		config.DrugHandler,
 		config.SaleHandler,
 		config.ProcurementHandler,

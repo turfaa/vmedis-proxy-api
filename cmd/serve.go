@@ -27,6 +27,8 @@ var serveCmd = commandWithInit{
 				proxy.Config{
 					DB:                 getDatabase(),
 					RedisClient:        getRedisClient(),
+					AuthService:        getAuthService(),
+					AuthHandler:        getAuthHandler(),
 					DrugHandler:        getDrugHandler(stockOpnameStartDate),
 					SaleHandler:        getSaleHandler(),
 					ProcurementHandler: getProcurementHandler(),

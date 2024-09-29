@@ -14,6 +14,7 @@ import (
 	"golang.org/x/time/rate"
 	"gorm.io/gorm"
 
+	"github.com/turfaa/vmedis-proxy-api/auth"
 	"github.com/turfaa/vmedis-proxy-api/database"
 	"github.com/turfaa/vmedis-proxy-api/drug"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/email2"
@@ -43,6 +44,8 @@ var (
 	saleHandler        atomic.Pointer[sale.ApiHandler]
 	procurementHandler atomic.Pointer[procurement.ApiHandler]
 	stockOpnameHandler atomic.Pointer[stockopname.ApiHandler]
+	authService        atomic.Pointer[auth.Service]
+	authHandler        atomic.Pointer[auth.ApiHandler]
 )
 
 func getDatabase() *gorm.DB {
@@ -360,6 +363,34 @@ func getStockOpnameHandler() *stockopname.ApiHandler {
 
 	if !stockOpnameHandler.CompareAndSwap(nil, newHandler) {
 		return stockOpnameHandler.Load()
+	}
+
+	return newHandler
+}
+
+func getAuthService() *auth.Service {
+	if val := authService.Load(); val != nil {
+		return val
+	}
+
+	newService := auth.NewService(getDatabase())
+
+	if !authService.CompareAndSwap(nil, newService) {
+		return authService.Load()
+	}
+
+	return newService
+}
+
+func getAuthHandler() *auth.ApiHandler {
+	if val := authHandler.Load(); val != nil {
+		return val
+	}
+
+	newHandler := auth.NewApiHandler(getAuthService())
+
+	if !authHandler.CompareAndSwap(nil, newHandler) {
+		return authHandler.Load()
 	}
 
 	return newHandler
