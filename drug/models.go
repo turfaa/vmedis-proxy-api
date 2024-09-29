@@ -88,6 +88,15 @@ type Stock struct {
 	Quantity float64 `json:"quantity"`
 }
 
+func (s Stock) String() string {
+	b, err := s.MarshalText()
+	if err != nil {
+		return fmt.Sprintf("%0.0f %s", s.Quantity, s.Unit)
+	}
+
+	return string(b)
+}
+
 // MarshalText implements encoding.TextMarshaler.
 func (s Stock) MarshalText() ([]byte, error) {
 	q, err := json.Marshal(s.Quantity)

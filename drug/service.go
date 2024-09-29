@@ -8,6 +8,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/segmentio/kafka-go"
 	"gorm.io/gorm"
 
@@ -34,6 +35,7 @@ var (
 
 // Service provides business logic related to drugs.
 type Service struct {
+	cache    *Cache
 	db       *Database
 	vmedis   *vmedis.Client
 	producer *Producer
@@ -41,7 +43,27 @@ type Service struct {
 
 // GetDrugs returns all drugs.
 func (s *Service) GetDrugs(ctx context.Context) ([]Drug, error) {
-	return getDrugsFromDB(ctx, s.db.GetDrugsUpdatedAfter, 1000)
+	drugs, err := s.cache.GetDrugs(ctx)
+	if err != nil && !errors.Is(err, redis.Nil) {
+		log.Printf("Error getting drugs from cache: %s", err)
+	}
+
+	if err == nil && len(drugs) > 0 {
+		return drugs, nil
+	}
+
+	drugs, err = getDrugsFromDB(ctx, s.db.GetDrugsUpdatedAfter, 1000)
+	if err != nil {
+		return nil, fmt.Errorf("get drugs from DB: %w", err)
+	}
+
+	go func() {
+		if err := s.cache.SetDrugs(context.Background(), drugs, time.Minute); err != nil {
+			log.Printf("Error setting drugs to cache: %s", err)
+		}
+	}()
+
+	return drugs, nil
 }
 
 func (s *Service) GetDrugsByVmedisCodes(ctx context.Context, vmedisCodes []string) ([]Drug, error) {
@@ -258,8 +280,9 @@ func (s *Service) DumpDrugDetailsFromVmedisToDBByVmedisID(ctx context.Context, v
 }
 
 // NewService creates a new drug service.
-func NewService(db *gorm.DB, vmedisClient *vmedis.Client, kafkaWriter *kafka.Writer) *Service {
+func NewService(redisClient *redis.Client, db *gorm.DB, vmedisClient *vmedis.Client, kafkaWriter *kafka.Writer) *Service {
 	return &Service{
+		cache:    NewCache(redisClient),
 		db:       NewDatabase(db),
 		vmedis:   vmedisClient,
 		producer: NewProducer(kafkaWriter),

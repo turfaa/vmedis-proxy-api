@@ -20,6 +20,7 @@ import (
 
 // ApiHandler is the handler for drug-related APIs.
 type ApiHandler struct {
+	cache                      *Cache
 	service                    *Service
 	stockOpnameLookupStartTime time.Time
 }
@@ -123,6 +124,7 @@ func (h *ApiHandler) DumpDrugs(c *gin.Context) {
 func NewApiHandler(config ApiHandlerConfig) *ApiHandler {
 	startTime := time.Date(config.StockOpnameLookupStartDate.Year(), config.StockOpnameLookupStartDate.Month(), config.StockOpnameLookupStartDate.Day(), 0, 0, 0, 0, time.Local)
 	return &ApiHandler{
+		cache:                      NewCache(config.RedisClient),
 		service:                    config.Service,
 		stockOpnameLookupStartTime: startTime,
 	}
@@ -192,7 +194,7 @@ func (h *ConsumerHandler) DumpDrugDetailsByVmedisID(ctx context.Context, kafkaMe
 // NewConsumerHandler creates a new ConsumerHandler.
 func NewConsumerHandler(db *gorm.DB, redisClient *redis.Client, vmedisClient *vmedis.Client, kafkaWriter *kafka.Writer) *ConsumerHandler {
 	return &ConsumerHandler{
-		service: NewService(db, vmedisClient, kafkaWriter),
+		service: NewService(redisClient, db, vmedisClient, kafkaWriter),
 		cache:   NewCache(redisClient),
 	}
 }

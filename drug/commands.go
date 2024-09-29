@@ -8,6 +8,7 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/segmentio/kafka-go"
 	"gorm.io/gorm"
 
@@ -16,11 +17,12 @@ import (
 
 func DumpDrugsFromVmedisToDB(
 	ctx context.Context,
+	redisClient *redis.Client,
 	db *gorm.DB,
 	vmedisClient *vmedis.Client,
 	kafkaWriter *kafka.Writer,
 ) {
-	service := NewService(db, vmedisClient, kafkaWriter)
+	service := NewService(redisClient, db, vmedisClient, kafkaWriter)
 
 	if err := service.DumpDrugsFromVmedisToDB(ctx); err != nil {
 		log.Fatalf("DumpDrugsFromVmedisToDB: %s", err)

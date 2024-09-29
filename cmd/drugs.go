@@ -20,6 +20,7 @@ var drugsCommands = []commandWithInit{
 			Run: func(cmd *cobra.Command, args []string) {
 				drug.DumpDrugsFromVmedisToDB(
 					cmd.Context(),
+					getRedisClient(),
 					getDatabase(),
 					getVmedisClient(),
 					getKafkaWriter(),

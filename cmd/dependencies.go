@@ -195,6 +195,7 @@ func getDrugService() *drug.Service {
 	}
 
 	newService := drug.NewService(
+		getRedisClient(),
 		getDatabase(),
 		getVmedisClient(),
 		getKafkaWriter(),
@@ -314,6 +315,7 @@ func getDrugHandler(stockOpnameLookupStartDate time.Time) *drug.ApiHandler {
 
 	newHandler := drug.NewApiHandler(
 		drug.ApiHandlerConfig{
+			RedisClient:                getRedisClient(),
 			Service:                    getDrugService(),
 			StockOpnameLookupStartDate: stockOpnameLookupStartDate.Local(),
 		},

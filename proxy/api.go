@@ -158,6 +158,17 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 			)
 		}
 	}
+
+	v2 := router.Group("/api/v2")
+	{
+		drugs := v2.Group("/drugs")
+		{
+			drugs.GET(
+				"",
+				s.drugHandler.GetDrugsV2,
+			)
+		}
+	}
 }
 
 // NewApiServer creates a new api server.
