@@ -375,7 +375,7 @@ func getAuthService() *auth.Service {
 		return val
 	}
 
-	newService := auth.NewService(getDatabase())
+	newService := auth.NewService(getRedisClient(), getDatabase())
 
 	if !authService.CompareAndSwap(nil, newService) {
 		return authService.Load()
