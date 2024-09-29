@@ -32,7 +32,7 @@ func (s *Service) GetUserByEmail(ctx context.Context, email string) (User, error
 	}
 
 	go func() {
-		if err := s.cache.SetUser(ctx, user, time.Minute); err != nil {
+		if err := s.cache.SetUser(context.Background(), user, time.Minute); err != nil {
 			log.Printf("failed to set user to cache: %s", err)
 		}
 	}()
@@ -57,7 +57,7 @@ func (s *Service) GetOrCreateUser(ctx context.Context, email string) (User, erro
 	}
 
 	go func() {
-		if err := s.cache.SetUser(ctx, user, time.Minute); err != nil {
+		if err := s.cache.SetUser(context.Background(), user, time.Minute); err != nil {
 			log.Printf("failed to set user to cache: %s", err)
 		}
 	}()
