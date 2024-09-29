@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.20.1] - 2024-09-29
+### :bug: Bug Fixes
+- [`477581a`](https://github.com/turfaa/vmedis-proxy-api/commit/477581a807e87a1dae7f2599c9b72ef90b924275) - **auth**: use context background on cache *(commit by [@turfaa](https://github.com/turfaa))*
+- [`94960c5`](https://github.com/turfaa/vmedis-proxy-api/commit/94960c5a7fdb5dde010e156d4abb846dba6ca639) - **drug**: move drugs response v2 cache to route level *(commit by [@turfaa](https://github.com/turfaa))*
+
+
 ## [v0.20.0] - 2024-09-29
 ### :sparkles: New Features
 - [`58df74b`](https://github.com/turfaa/vmedis-proxy-api/commit/58df74b0221def59706117699b850491dd7aa015) - **drug**: add drugs v2 api *(commit by [@turfaa](https://github.com/turfaa))*
@@ -441,3 +447,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v0.18.6]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.18.5...v0.18.6
 [v0.19.0]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.18.6...v0.19.0
 [v0.20.0]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.19.0...v0.20.0
+[v0.20.1]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.20.0...v0.20.1
