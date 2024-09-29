@@ -11,7 +11,6 @@ import (
 )
 
 type ApiHandlerConfig struct {
-	RedisClient                *redis.Client
 	Service                    *Service
 	StockOpnameLookupStartDate time.Time
 }

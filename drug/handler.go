@@ -20,7 +20,6 @@ import (
 
 // ApiHandler is the handler for drug-related APIs.
 type ApiHandler struct {
-	cache                      *Cache
 	service                    *Service
 	stockOpnameLookupStartTime time.Time
 }
@@ -124,7 +123,6 @@ func (h *ApiHandler) DumpDrugs(c *gin.Context) {
 func NewApiHandler(config ApiHandlerConfig) *ApiHandler {
 	startTime := time.Date(config.StockOpnameLookupStartDate.Year(), config.StockOpnameLookupStartDate.Month(), config.StockOpnameLookupStartDate.Day(), 0, 0, 0, 0, time.Local)
 	return &ApiHandler{
-		cache:                      NewCache(config.RedisClient),
 		service:                    config.Service,
 		stockOpnameLookupStartTime: startTime,
 	}

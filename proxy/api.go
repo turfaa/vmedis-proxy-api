@@ -165,6 +165,11 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 		{
 			drugs.GET(
 				"",
+				cache.Cache(store, time.Minute, cache.WithCacheStrategyByRequest(func(c *gin.Context) (bool, cache.Strategy) {
+					return true, cache.Strategy{
+						CacheKey: c.Request.RequestURI + "$$" + string(auth.FromGinContext(c).Role),
+					}
+				})),
 				s.drugHandler.GetDrugsV2,
 			)
 		}

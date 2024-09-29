@@ -1,9 +1,7 @@
 package drug
 
 import (
-	"context"
 	"fmt"
-	"log"
 	"slices"
 	"strings"
 
@@ -21,12 +19,6 @@ var (
 func (h *ApiHandler) GetDrugsV2(c *gin.Context) {
 	user := auth.FromGinContext(c)
 
-	res, err := h.cache.GetDrugsResponseV2(c, string(user.Role))
-	if err == nil && len(res.Drugs) > 0 {
-		c.JSON(200, res)
-		return
-	}
-
 	drugs, err := h.service.GetDrugs(c)
 	if err != nil {
 		c.JSON(500, gin.H{
@@ -35,15 +27,9 @@ func (h *ApiHandler) GetDrugsV2(c *gin.Context) {
 		return
 	}
 
-	res = DrugsResponseV2{
+	res := DrugsResponseV2{
 		Drugs: h.transformToDrugsV2(user, drugs),
 	}
-
-	go func() {
-		if err := h.cache.SetDrugsResponseV2(context.Background(), string(user.Role), res, 0); err != nil {
-			log.Printf("failed to set drugs response v2 to cache: %s", err)
-		}
-	}()
 
 	c.JSON(200, res)
 }
