@@ -127,8 +127,17 @@ func (h *ApiHandler) transformToDrugV2(user auth.User, drug Drug) DrugsResponseV
 		},
 	)
 
+	addSection(
+		[]auth.Role{auth.RoleAdmin, auth.RoleStaff},
+		"Kode Obat Vmedis",
+		func() []string {
+			return []string{drug.VmedisCode}
+		},
+	)
+
 	return DrugsResponseV2_Drug{
-		Name:     drug.Name,
-		Sections: sections,
+		VmedisCode: drug.VmedisCode,
+		Name:       drug.Name,
+		Sections:   sections,
 	}
 }

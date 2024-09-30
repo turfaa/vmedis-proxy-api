@@ -5,8 +5,9 @@ type DrugsResponseV2 struct {
 }
 
 type DrugsResponseV2_Drug struct {
-	Name     string    `json:"name"`
-	Sections []Section `json:"sections"`
+	VmedisCode string    `json:"vmedisCode"`
+	Name       string    `json:"name"`
+	Sections   []Section `json:"sections"`
 }
 
 type Section struct {
