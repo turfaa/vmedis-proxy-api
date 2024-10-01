@@ -119,7 +119,7 @@ func (h *ApiHandler) transformToDrugV2(user auth.User, drug Drug) DrugsResponseV
 
 	addSection(
 		[]auth.Role{auth.RoleAdmin, auth.RoleStaff},
-		"Minimum Stok",
+		"Stok Minimum",
 		func() []string {
 			return []string{drug.MinimumStock.String()}
 		},
