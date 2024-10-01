@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.20.4] - 2024-10-01
+### :bug: Bug Fixes
+- [`187a9a7`](https://github.com/turfaa/vmedis-proxy-api/commit/187a9a79099435dd8ecf3be060d683ce469f98fb) - **drug**: fix transliation: 'Minimum Stok' -> 'Stok Minimum' *(commit by [@turfaa](https://github.com/turfaa))*
+
+
 ## [v0.20.3] - 2024-10-01
 ### :bug: Bug Fixes
 - [`2f56a6f`](https://github.com/turfaa/vmedis-proxy-api/commit/2f56a6f2317feebb0a35c84a42a1db55ccb90492) - **drug**: filter units *(commit by [@turfaa](https://github.com/turfaa))*
@@ -460,3 +465,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v0.20.1]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.20.0...v0.20.1
 [v0.20.2]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.20.1...v0.20.2
 [v0.20.3]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.20.2...v0.20.3
+[v0.20.4]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.20.3...v0.20.4
