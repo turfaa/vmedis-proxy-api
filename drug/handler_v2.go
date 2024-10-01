@@ -54,18 +54,16 @@ func (h *ApiHandler) transformToDrugV2(user auth.User, drug Drug) DrugsResponseV
 		}
 	}
 
-	slices.SortFunc(drug.Units, func(a, b Unit) int {
-		return a.UnitOrder - b.UnitOrder
-	})
+	units := filterUnits(drug.Units)
 
 	addSection(
 		[]auth.Role{auth.RoleAdmin, auth.RoleStaff, auth.RoleReseller, auth.RoleGuest},
 		"Harga Normal",
 		func() []string {
-			rows := make([]string, len(drug.Units))
-			for i, unit := range drug.Units {
+			rows := make([]string, len(units))
+			for i, unit := range units {
 				rows[i] = fmt.Sprintf("%s / %s", rupiah.FormatMoney(unit.PriceOne), unit.Unit)
-				if i > 0 {
+				if unit.ConversionToParentUnit > 0 {
 					rows[i] += fmt.Sprintf(" (%0.0f %s)", unit.ConversionToParentUnit, unit.ParentUnit)
 				}
 			}
@@ -78,10 +76,10 @@ func (h *ApiHandler) transformToDrugV2(user auth.User, drug Drug) DrugsResponseV
 		[]auth.Role{auth.RoleAdmin, auth.RoleStaff, auth.RoleReseller},
 		"Harga Diskon",
 		func() []string {
-			rows := make([]string, len(drug.Units))
-			for i, unit := range drug.Units {
+			rows := make([]string, len(units))
+			for i, unit := range units {
 				rows[i] = fmt.Sprintf("%s / %s", rupiah.FormatMoney(unit.PriceTwo), unit.Unit)
-				if i > 0 {
+				if unit.ConversionToParentUnit > 0 {
 					rows[i] += fmt.Sprintf(" (%0.0f %s)", unit.ConversionToParentUnit, unit.ParentUnit)
 				}
 			}
@@ -94,10 +92,10 @@ func (h *ApiHandler) transformToDrugV2(user auth.User, drug Drug) DrugsResponseV
 		[]auth.Role{auth.RoleAdmin, auth.RoleStaff},
 		"Harga Resep",
 		func() []string {
-			rows := make([]string, len(drug.Units))
-			for i, unit := range drug.Units {
+			rows := make([]string, len(units))
+			for i, unit := range units {
 				rows[i] = fmt.Sprintf("%s / %s", rupiah.FormatMoney(unit.PriceThree), unit.Unit)
-				if i > 0 {
+				if unit.ConversionToParentUnit > 0 {
 					rows[i] += fmt.Sprintf(" (%0.0f %s)", unit.ConversionToParentUnit, unit.ParentUnit)
 				}
 			}
