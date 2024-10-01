@@ -108,6 +108,10 @@ func (h *ApiHandler) transformToDrugV2(user auth.User, drug Drug) DrugsResponseV
 		[]auth.Role{auth.RoleAdmin, auth.RoleStaff, auth.RoleReseller, auth.RoleGuest},
 		"Sisa Stok",
 		func() []string {
+			if len(drug.Stocks) == 0 {
+				return []string{"Stok habis"}
+			}
+
 			unitStrings := make([]string, len(drug.Stocks))
 			for i, stock := range drug.Stocks {
 				unitStrings[i] = stock.String()
