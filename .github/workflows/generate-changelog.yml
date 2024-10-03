@@ -14,17 +14,17 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@latest
+        uses: actions/checkout@v4
 
       - name: Update CHANGELOG
         id: changelog
-        uses: requarks/changelog-action@latest
+        uses: requarks/changelog-action@v1
         with:
           token: ${{ github.token }}
           tag: ${{ github.ref_name }}
 
       - name: Create Release
-        uses: ncipollo/release-action@latest
+        uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
           draft: false
@@ -34,7 +34,7 @@ jobs:
           token: ${{ github.token }}
 
       - name: Commit CHANGELOG.md
-        uses: stefanzweifel/git-auto-commit-action@latest
+        uses: stefanzweifel/git-auto-commit-action@v5
         with:
           branch: main
           commit_message: 'docs: update CHANGELOG.md for ${{ github.ref_name }} [skip ci]'
