@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.21.1] - 2024-10-03
+### :bug: Bug Fixes
+- [`652e618`](https://github.com/turfaa/vmedis-proxy-api/commit/652e618c636501787435a829350df5a4df313b1e) - Try to use latest version for all github workflows *(commit by [@turfaa](https://github.com/turfaa))*
+- [`b336006`](https://github.com/turfaa/vmedis-proxy-api/commit/b33600657980594e71610b2fe87a27e3fad3a7d0) - fix github action versions *(commit by [@turfaa](https://github.com/turfaa))*
+
+
 ## [v0.21.0] - 2024-10-03
 ### :sparkles: New Features
 - [`075b2d1`](https://github.com/turfaa/vmedis-proxy-api/commit/075b2d15032cce74ee13be6d30f082e67a3837aa) - **procurement**: Add get last drug procurements API *(commit by [@turfaa](https://github.com/turfaa))*
@@ -478,3 +484,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v0.20.4]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.20.3...v0.20.4
 [v0.20.5]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.20.4...v0.20.5
 [v0.21.0]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.20.5...v0.21.0
+[v0.21.1]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.21.0...v0.21.1
