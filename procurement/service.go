@@ -192,6 +192,15 @@ func (s *Service) GetInvoiceCalculators(ctx context.Context) ([]InvoiceCalculato
 	return calculators, nil
 }
 
+func (s *Service) GetLastDrugProcurements(ctx context.Context, drugCode string, limit int) ([]DrugProcurement, error) {
+	procurements, err := s.db.GetLastDrugProcurements(ctx, drugCode, limit)
+	if err != nil {
+		return nil, fmt.Errorf("get last drug procurements from DB: %w", err)
+	}
+
+	return procurements, nil
+}
+
 func NewService(
 	db *gorm.DB,
 	redisClient *redis.Client,

@@ -28,8 +28,8 @@ type Procurement struct {
 }
 
 type ProcurementUnit struct {
-	ID        uint `gorm:"primarykey"`
-	CreatedAt time.Time
+	ID        uint      `gorm:"primarykey"`
+	CreatedAt time.Time `gorm:"index"`
 	UpdatedAt time.Time
 
 	InvoiceNumber           string `gorm:"index;uniqueIndex:idx_procurement_unit_invoice_number_id_in_procurement"`

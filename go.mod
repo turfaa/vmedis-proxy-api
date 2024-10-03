@@ -1,8 +1,6 @@
 module github.com/turfaa/vmedis-proxy-api
 
-go 1.23
-
-toolchain go1.23.0
+go 1.23.1
 
 require (
 	github.com/PuerkitoBio/goquery v1.10.0

@@ -6,13 +6,9 @@ import (
 	"strings"
 
 	"github.com/turfaa/vmedis-proxy-api/auth"
+	"github.com/turfaa/vmedis-proxy-api/money"
 
 	"github.com/gin-gonic/gin"
-	"github.com/leekchan/accounting"
-)
-
-var (
-	rupiah = accounting.Accounting{Symbol: "Rp", Format: "%s %v", FormatZero: "%s 0", Thousand: ".", Decimal: ","}
 )
 
 // GetDrugsV2 handles row-based get drugs request.
@@ -62,7 +58,7 @@ func (h *ApiHandler) transformToDrugV2(user auth.User, drug Drug) DrugsResponseV
 		func() []string {
 			rows := make([]string, len(units))
 			for i, unit := range units {
-				rows[i] = fmt.Sprintf("%s / %s", rupiah.FormatMoney(unit.PriceOne), unit.Unit)
+				rows[i] = fmt.Sprintf("%s / %s", money.FormatRupiah(unit.PriceOne), unit.Unit)
 				if unit.ConversionToParentUnit > 0 {
 					rows[i] += fmt.Sprintf(" (%0.0f %s)", unit.ConversionToParentUnit, unit.ParentUnit)
 				}
@@ -78,7 +74,7 @@ func (h *ApiHandler) transformToDrugV2(user auth.User, drug Drug) DrugsResponseV
 		func() []string {
 			rows := make([]string, len(units))
 			for i, unit := range units {
-				rows[i] = fmt.Sprintf("%s / %s", rupiah.FormatMoney(unit.PriceTwo), unit.Unit)
+				rows[i] = fmt.Sprintf("%s / %s", money.FormatRupiah(unit.PriceTwo), unit.Unit)
 				if unit.ConversionToParentUnit > 0 {
 					rows[i] += fmt.Sprintf(" (%0.0f %s)", unit.ConversionToParentUnit, unit.ParentUnit)
 				}
@@ -94,7 +90,7 @@ func (h *ApiHandler) transformToDrugV2(user auth.User, drug Drug) DrugsResponseV
 		func() []string {
 			rows := make([]string, len(units))
 			for i, unit := range units {
-				rows[i] = fmt.Sprintf("%s / %s", rupiah.FormatMoney(unit.PriceThree), unit.Unit)
+				rows[i] = fmt.Sprintf("%s / %s", money.FormatRupiah(unit.PriceThree), unit.Unit)
 				if unit.ConversionToParentUnit > 0 {
 					rows[i] += fmt.Sprintf(" (%0.0f %s)", unit.ConversionToParentUnit, unit.ParentUnit)
 				}

@@ -88,3 +88,21 @@ type AggregatedProcurement struct {
 	Quantity float64 `json:"quantity"`
 	Unit     string  `json:"unit"`
 }
+
+type LastDrugProcurementsRequest struct {
+	DrugCode string `json:"drugCode" uri:"drug_code"`
+	Limit    int    `json:"limit" form:"limit"`
+}
+
+type DrugProcurement struct {
+	CreatedAt      time.Time `json:"createdAt"`
+	DrugCode       string    `json:"drugCode"`
+	DrugName       string    `json:"drugName"`
+	Amount         float64   `json:"amount"`
+	Unit           string    `json:"unit"`
+	TotalUnitPrice float64   `json:"totalUnitPrice"`
+
+	InvoiceNumber string    `json:"invoiceNumber"`
+	InvoiceDate   time.Time `json:"invoiceDate"`
+	Supplier      string    `json:"supplier"`
+}

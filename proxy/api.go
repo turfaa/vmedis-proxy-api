@@ -159,6 +159,9 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 		}
 	}
 
+	// v2 is the new api version where:
+	// 	- Response is already generated on the server side.
+	// 	- Authentication might affect the response.
 	v2 := router.Group("/api/v2")
 	{
 		drugs := v2.Group("/drugs")
@@ -171,6 +174,15 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 					}
 				})),
 				s.drugHandler.GetDrugsV2,
+			)
+		}
+
+		procurements := v2.Group("/procurements")
+		{
+			procurements.GET(
+				"/drugs/:drug_code/last",
+				cache.CacheByRequestURI(store, time.Minute),
+				s.procurementHandler.GetLastDrugProcurements,
 			)
 		}
 	}

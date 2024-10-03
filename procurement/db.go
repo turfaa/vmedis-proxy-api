@@ -141,6 +141,40 @@ func (d *Database) GetInvoiceCalculators(ctx context.Context) ([]InvoiceCalculat
 	return slices2.Map(invoiceCalculators, FromDBInvoiceCalculator), nil
 }
 
+func (d *Database) GetLastDrugProcurements(ctx context.Context, drugCode string, limit int) ([]DrugProcurement, error) {
+	limit = min(limit, 20)
+
+	var procurements []DrugProcurement
+	if err := d.dbCtx(ctx).
+		Raw(
+			`
+SELECT 
+	procurement_units.created_at,
+	procurement_units.drug_code,
+	procurement_units.drug_name,
+	procurement_units.amount,
+	procurement_units.unit,
+	procurement_units.total_unit_price,
+	procurement_units.invoice_number,
+	procurements.invoice_date,
+	procurements.supplier
+FROM procurement_units
+JOIN procurements ON procurement_units.invoice_number = procurements.invoice_number
+WHERE procurement_units.drug_code = ?
+ORDER BY procurement_units.created_at DESC
+LIMIT ?
+			`,
+			drugCode,
+			limit,
+		).
+		Find(&procurements).
+		Error; err != nil {
+		return nil, fmt.Errorf("execute SQL query: %w", err)
+	}
+
+	return procurements, nil
+}
+
 func (d *Database) dbCtx(ctx context.Context) *gorm.DB {
 	return d.db.WithContext(ctx)
 }
