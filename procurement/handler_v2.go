@@ -50,7 +50,6 @@ func (h *ApiHandler) transformLastDrugProcurementsToTable(procurements []DrugPro
 		"Tanggal Diinput",
 		"Nomor Faktur",
 		"Tanggal Faktur",
-		"Nama Obat",
 		"Jumlah",
 		"Harga Satuan",
 		"Supplier",
@@ -64,7 +63,6 @@ func (h *ApiHandler) transformLastDrugProcurementsToTable(procurements []DrugPro
 				procurement.CreatedAt.Format("2006-01-02"),
 				procurement.InvoiceNumber,
 				procurement.InvoiceDate.Format("2006-01-02"),
-				procurement.DrugName,
 				drug.Stock{
 					Quantity: procurement.Amount,
 					Unit:     procurement.Unit,
