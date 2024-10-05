@@ -181,6 +181,7 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 		{
 			procurements.GET(
 				"/drugs/:drug_code/last",
+				auth.AllowedRoles(auth.RoleAdmin, auth.RoleStaff),
 				cache.CacheByRequestURI(store, time.Minute),
 				s.procurementHandler.GetLastDrugProcurements,
 			)

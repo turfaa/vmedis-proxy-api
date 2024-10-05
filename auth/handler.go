@@ -29,3 +29,20 @@ func (h *ApiHandler) Login(c *gin.Context) {
 func NewApiHandler(service *Service) *ApiHandler {
 	return &ApiHandler{service: service}
 }
+
+func AllowedRoles(roles ...Role) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		user := FromGinContext(c)
+		for _, role := range roles {
+			if user.Role == role {
+				c.Next()
+				return
+			}
+		}
+
+		c.JSON(403, gin.H{
+			"error": "unauthorized",
+		})
+		c.Abort()
+	}
+}
