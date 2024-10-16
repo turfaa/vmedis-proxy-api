@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.21.4] - 2024-10-16
+### :bug: Bug Fixes
+- [`6f9e1ac`](https://github.com/turfaa/vmedis-proxy-api/commit/6f9e1ac26bbd107548a4e8e4073379c07a36f7ae) - setup auto deployment *(commit by [@turfaa](https://github.com/turfaa))*
+
+
 ## [v0.21.3] - 2024-10-05
 ### :bug: Bug Fixes
 - [`99ad496`](https://github.com/turfaa/vmedis-proxy-api/commit/99ad496950d6c9f5c1cf4c10cd395a1e7f61d7ad) - **procurement**: Remove Nama Obat from Last Drug Procurements API *(commit by [@turfaa](https://github.com/turfaa))*
@@ -497,3 +502,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v0.21.1]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.21.0...v0.21.1
 [v0.21.2]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.21.1...v0.21.2
 [v0.21.3]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.21.2...v0.21.3
+[v0.21.4]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.21.3...v0.21.4
