@@ -55,3 +55,15 @@ jobs:
                   push: true
                   tags: ${{ steps.meta.outputs.tags }}
                   labels: ${{ steps.meta.outputs.labels }}
+            
+            - name: Save tag
+              env:
+                TAG: ${{ github.ref_name }}
+              run: |
+                echo $TAG > ./tag
+                  
+            - name: Upload tag artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: tag
+                  path: ./tag

@@ -1,0 +1,32 @@
+name: Trigger deployment
+
+on:
+    workflow_run:
+        workflows: ["Create and publish a Docker image"]
+        types: [completed]
+
+jobs:
+    trigger-deployment:
+        if: ${{ github.event.workflow_run.conclusion == 'success' }}
+        runs-on: ubuntu-latest
+        steps:
+            - name: Download artifact
+              uses: actions/download-artifact@v4
+              with:
+                github-token: ${{ secrets.PAT }}
+                run-id: ${{ github.event.workflow_run.id }}
+                name: tag
+                    
+            - name: Read tag
+              id: read_tag
+              run: |
+                TAG=$(cat ./tag)
+                BACKEND_VERSION=${TAG#v}
+                echo "backend_version=$BACKEND_VERSION" >> $GITHUB_OUTPUT
+
+            - name: Trigger deployment
+              run: |
+                curl -X POST https://api.github.com/repos/turfaa/deployments/dispatches \
+                -H 'Accept: application/vnd.github.everest-preview+json' \
+                -u ${{ secrets.PAT }} \
+                --data '{"event_type": "deploy-apotek", "client_payload": { "backend_version": "${{ steps.read_tag.outputs.backend_version }}" }}'
