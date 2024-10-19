@@ -7,8 +7,8 @@ type Shift struct {
 	CreatedAt time.Time `gorm:"index"`
 	UpdatedAt time.Time
 
-	VmedisID            int
-	Code                string    `gorm:"unique"`
+	VmedisID            int       `gorm:"unique"`
+	Code                string    `gorm:"index"`
 	Cashier             string    `gorm:"index"`
 	StartedAt           time.Time `gorm:"index:idx_shift_started_at_ended_at"`
 	EndedAt             time.Time `gorm:"index:idx_shift_started_at_ended_at"`
