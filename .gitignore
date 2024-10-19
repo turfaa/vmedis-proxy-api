@@ -141,7 +141,6 @@ fabric.properties
 
 config/config.yaml
 .idea
-.vscode
 
 data
 x_test.go
