@@ -8,7 +8,8 @@ import (
 )
 
 var (
-	dateFormat = "02 Jan 2006"
+	dateFormat           = "02 Jan 2006"
+	dateTimeMinuteFormat = "02 Jan 2006 15:04"
 )
 
 // Date is a wrapper around time.Time that implements the Unmarshaler interface
@@ -19,7 +20,9 @@ type Date struct {
 
 // UnmarshalDataColumn implements DataColumnUnmarshaler.
 func (d *Date) UnmarshalDataColumn(selection *goquery.Selection) error {
-	dateString := strings.TrimSpace(selection.Text())
+	dateBytes := []byte(selection.Text())
+	dateBytes = compactSpaces(dateBytes)
+	dateString := strings.TrimSpace(string(dateBytes))
 
 	t, err := time.ParseInLocation(dateFormat, dateString, time.Local)
 	if err != nil {

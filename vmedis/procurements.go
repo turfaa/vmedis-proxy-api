@@ -30,9 +30,9 @@ func (c *Client) GetAllProcurementsBetweenDates(
 
 	// Get the number of pages
 	log.Printf("Getting number of pages of procurements between %s and %s\n", startDate.Format(dateFormat), endDate.Format(dateFormat))
-	res, err := c.GetProcurements(ctx, GetProcurementsParameters{
-		StartDate: startDate,
-		EndDate:   endDate,
+	res, err := c.GetProcurements(ctx, SearchByTimeParameters[ParameterTypeProcurements]{
+		StartTime: startDate,
+		EndTime:   endDate,
 		Page:      9999999,
 	})
 	if err != nil {
@@ -65,9 +65,9 @@ func (c *Client) GetAllProcurementsBetweenDates(
 			for page := range pages {
 				log.Printf("Getting procurements at page %d\n", page)
 
-				res, err := c.GetProcurements(ctx, GetProcurementsParameters{
-					StartDate: startDate,
-					EndDate:   endDate,
+				res, err := c.GetProcurements(ctx, SearchByTimeParameters[ParameterTypeProcurements]{
+					StartTime: startDate,
+					EndTime:   endDate,
 					Page:      page,
 				})
 				if err != nil {
@@ -89,8 +89,8 @@ func (c *Client) GetAllProcurementsBetweenDates(
 	return procurements, nil
 }
 
-func (c *Client) GetProcurements(ctx context.Context, params GetProcurementsParameters) (ProcurementsResponse, error) {
-	res, err := c.get(ctx, fmt.Sprintf("/laporan-transaksi-pembelian-obat-batch/index?%s", params.ToQuery()))
+func (c *Client) GetProcurements(ctx context.Context, params SearchByTimeParameters[ParameterTypeProcurements]) (ProcurementsResponse, error) {
+	res, err := c.get(ctx, fmt.Sprintf("/laporan-transaksi-pembelian-obat-batch/index?%s", params.ToQuery(dateFormat)))
 	if err != nil {
 		return ProcurementsResponse{}, fmt.Errorf("get procurements with params %+v: %w", params, err)
 	}

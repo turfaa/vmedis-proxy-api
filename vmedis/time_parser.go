@@ -2,6 +2,8 @@ package vmedis
 
 import (
 	"fmt"
+	"slices"
+	"strings"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
@@ -18,7 +20,9 @@ type Time struct {
 
 // UnmarshalDataColumn implements DataColumnUnmarshaler.
 func (t *Time) UnmarshalDataColumn(selection *goquery.Selection) error {
-	timeString := selection.Text()
+	timeBytes := []byte(selection.Text())
+	timeBytes = compactSpaces(timeBytes)
+	timeString := strings.TrimSpace(string(timeBytes))
 
 	tt, err := time.ParseInLocation(timeFormat, timeString, time.Local)
 	if err != nil {
@@ -27,4 +31,22 @@ func (t *Time) UnmarshalDataColumn(selection *goquery.Selection) error {
 
 	t.Time = tt
 	return nil
+}
+
+func compactSpaces(bytes []byte) []byte {
+	bytes = slices.CompactFunc(bytes, func(x, y byte) bool {
+		return isSpace(x) && isSpace(y)
+	})
+
+	for i := 0; i < len(bytes); i++ {
+		if isSpace(bytes[i]) {
+			bytes[i] = ' '
+		}
+	}
+
+	return bytes
+}
+
+func isSpace(x byte) bool {
+	return x == ' ' || x == '\n' || x == '\t' || x == '\r' || x == '\v' || x == '\f' || x == '\u00a0'
 }

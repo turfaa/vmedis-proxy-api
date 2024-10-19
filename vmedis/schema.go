@@ -255,3 +255,17 @@ type ProcurementUnit struct {
 	BatchNumber             string     `procurement-index:"13"`
 	Total                   float64    `procurement-index:"14"`
 }
+
+type Shift struct {
+	ID                  int
+	Code                string  `shift-index:"2"`
+	Cashier             string  `shift-index:"3"`
+	StartedAt           Time    `shift-index:"4"`
+	EndedAt             Time    `shift-index:"5"`
+	InitialCash         float64 `shift-index:"6"`
+	ExpectedFinalCash   float64 `shift-index:"7"`
+	ActualFinalCash     float64 `shift-index:"8"`
+	FinalCashDifference float64 `shift-index:"9"`
+	Supervisor          string  `shift-index:"10"`
+	Notes               string  `shift-index:"11"`
+}

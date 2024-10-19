@@ -9,8 +9,6 @@ import (
 	"time"
 
 	"golang.org/x/time/rate"
-
-	"github.com/turfaa/vmedis-proxy-api/vmedis/token"
 )
 
 var rnd = rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -23,7 +21,7 @@ type Client struct {
 	concurrency int
 	limiter     *rate.Limiter
 
-	tokenProvider *token.Provider
+	tokenProvider tokenProvider
 }
 
 // New creates a new client.
@@ -31,7 +29,7 @@ func New(
 	baseUrl string,
 	concurrency int,
 	limiter *rate.Limiter,
-	tokenProvider *token.Provider,
+	tokenProvider tokenProvider,
 ) *Client {
 	return &Client{
 		BaseUrl:       baseUrl,
