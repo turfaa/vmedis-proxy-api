@@ -3,6 +3,7 @@ package shift
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/turfaa/vmedis-proxy-api/pkg2/slices2"
@@ -53,9 +54,11 @@ func (s *Service) DumpShiftsFromVmedisToDB(ctx context.Context, from time.Time, 
 		return nil, fmt.Errorf("get all shifts from vmedis between %s and %s: %w", from, to, err)
 	}
 
+	log.Printf("Dumping %d shifts from vmedis to db", len(vmedisShifts))
 	if err := s.db.UpsertVmedisShifts(ctx, vmedisShifts); err != nil {
 		return nil, fmt.Errorf("upsert vmedis shifts to db: %w", err)
 	}
+	log.Printf("Dumped %d shifts from vmedis to db", len(vmedisShifts))
 
 	return slices2.Map(vmedisShifts, ShiftFromVmedis), nil
 }
