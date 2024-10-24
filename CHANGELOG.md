@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.22.0] - 2024-10-24
+### :sparkles: New Features
+- [`5f94cfa`](https://github.com/turfaa/vmedis-proxy-api/commit/5f94cfa0f3ed478746afde1fdb9b6926a30d185f) - **vmedis**: Add shifts getter *(commit by [@turfaa](https://github.com/turfaa))*
+- [`8b6b5a5`](https://github.com/turfaa/vmedis-proxy-api/commit/8b6b5a5954b88084b722827d69c2c5ab7748842e) - **database**: Add shift model *(commit by [@turfaa](https://github.com/turfaa))*
+- [`992c664`](https://github.com/turfaa/vmedis-proxy-api/commit/992c664d695ab06cb0ac33d35eb8395960cd1660) - **shift**: Create shifts dumper *(commit by [@turfaa](https://github.com/turfaa))*
+- [`0379813`](https://github.com/turfaa/vmedis-proxy-api/commit/0379813696b53f1c482fe928c082fc9a90c1e7f8) - **shift**: Add shift API endpoints *(commit by [@turfaa](https://github.com/turfaa))*
+
+### :wrench: Chores
+- [`c11ec99`](https://github.com/turfaa/vmedis-proxy-api/commit/c11ec996db75bc643c55d3ff1ed7f706a8db4c92) - Don't ignore .vscode *(commit by [@turfaa](https://github.com/turfaa))*
+
+
 ## [v0.21.4] - 2024-10-16
 ### :bug: Bug Fixes
 - [`6f9e1ac`](https://github.com/turfaa/vmedis-proxy-api/commit/6f9e1ac26bbd107548a4e8e4073379c07a36f7ae) - setup auto deployment *(commit by [@turfaa](https://github.com/turfaa))*
@@ -503,3 +514,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v0.21.2]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.21.1...v0.21.2
 [v0.21.3]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.21.2...v0.21.3
 [v0.21.4]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.21.3...v0.21.4
+[v0.22.0]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.21.4...v0.22.0
