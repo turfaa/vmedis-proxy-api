@@ -15,6 +15,7 @@ import (
 	"github.com/turfaa/vmedis-proxy-api/drug"
 	"github.com/turfaa/vmedis-proxy-api/procurement"
 	"github.com/turfaa/vmedis-proxy-api/sale"
+	"github.com/turfaa/vmedis-proxy-api/shift"
 	"github.com/turfaa/vmedis-proxy-api/stockopname"
 )
 
@@ -29,6 +30,7 @@ type ApiServer struct {
 	saleHandler        *sale.ApiHandler
 	procurementHandler *procurement.ApiHandler
 	stockOpnameHandler *stockopname.ApiHandler
+	shiftHandler       *shift.ApiHandler
 }
 
 // GinEngine returns the gin engine of the proxy api server.
@@ -186,6 +188,27 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 				s.procurementHandler.GetLastDrugProcurements,
 			)
 		}
+
+		shifts := v2.Group("/shifts")
+		{
+			shifts.GET(
+				"",
+				auth.AllowedRoles(auth.RoleAdmin, auth.RoleStaff),
+				s.shiftHandler.GetShifts,
+			)
+
+			shifts.POST(
+				"/dump",
+				auth.AllowedRoles(auth.RoleAdmin, auth.RoleStaff),
+				s.shiftHandler.DumpShiftsFromVmedisToDB,
+			)
+
+			shifts.GET(
+				"/:vmedis_id",
+				auth.AllowedRoles(auth.RoleAdmin, auth.RoleStaff),
+				s.shiftHandler.GetShiftByVmedisID,
+			)
+		}
 	}
 }
 
@@ -200,6 +223,7 @@ func NewApiServer(
 	saleHandler *sale.ApiHandler,
 	procurementHandler *procurement.ApiHandler,
 	stockOpnameHandler *stockopname.ApiHandler,
+	shiftHandler *shift.ApiHandler,
 ) *ApiServer {
 	return &ApiServer{
 		db:          db,
@@ -211,5 +235,6 @@ func NewApiServer(
 		saleHandler:        saleHandler,
 		procurementHandler: procurementHandler,
 		stockOpnameHandler: stockOpnameHandler,
+		shiftHandler:       shiftHandler,
 	}
 }

@@ -23,8 +23,18 @@ func NewDatabase(db *gorm.DB) *Database {
 func (d *Database) GetShiftByCode(ctx context.Context, code string) (models.Shift, error) {
 	var shift models.Shift
 
-	if err := d.dbCtx(ctx).Where("code = ?", code).First(&shift).Error; err != nil {
+	if err := d.dbCtx(ctx).Where("code = ?", code).Order("started_at DESC").First(&shift).Error; err != nil {
 		return models.Shift{}, fmt.Errorf("failed to get shift by code %s: %w", code, err)
+	}
+
+	return shift, nil
+}
+
+func (d *Database) GetShiftByVmedisID(ctx context.Context, vmedisID int) (models.Shift, error) {
+	var shift models.Shift
+
+	if err := d.dbCtx(ctx).Where("vmedis_id = ?", vmedisID).First(&shift).Error; err != nil {
+		return models.Shift{}, fmt.Errorf("failed to get shift by vmedis id %d: %w", vmedisID, err)
 	}
 
 	return shift, nil

@@ -7,6 +7,7 @@ import (
 
 	"github.com/turfaa/vmedis-proxy-api/pkg2/slices2"
 	"github.com/turfaa/vmedis-proxy-api/vmedis"
+	"gorm.io/gorm"
 )
 
 type Service struct {
@@ -14,14 +15,23 @@ type Service struct {
 	vmedisClient *vmedis.Client
 }
 
-func NewService(db *Database, vmedisClient *vmedis.Client) *Service {
-	return &Service{db: db, vmedisClient: vmedisClient}
+func NewService(db *gorm.DB, vmedisClient *vmedis.Client) *Service {
+	return &Service{db: NewDatabase(db), vmedisClient: vmedisClient}
 }
 
 func (s *Service) GetShiftByCode(ctx context.Context, code string) (Shift, error) {
 	dbShift, err := s.db.GetShiftByCode(ctx, code)
 	if err != nil {
 		return Shift{}, fmt.Errorf("get shift from db by code %s: %w", code, err)
+	}
+
+	return ShiftFromDB(dbShift), nil
+}
+
+func (s *Service) GetShiftByVmedisID(ctx context.Context, vmedisID int) (Shift, error) {
+	dbShift, err := s.db.GetShiftByVmedisID(ctx, vmedisID)
+	if err != nil {
+		return Shift{}, fmt.Errorf("get shift from db by vmedis id %d: %w", vmedisID, err)
 	}
 
 	return ShiftFromDB(dbShift), nil

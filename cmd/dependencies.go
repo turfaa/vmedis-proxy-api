@@ -20,6 +20,7 @@ import (
 	"github.com/turfaa/vmedis-proxy-api/pkg2/email2"
 	"github.com/turfaa/vmedis-proxy-api/procurement"
 	"github.com/turfaa/vmedis-proxy-api/sale"
+	"github.com/turfaa/vmedis-proxy-api/shift"
 	"github.com/turfaa/vmedis-proxy-api/stockopname"
 	"github.com/turfaa/vmedis-proxy-api/vmedis"
 	"github.com/turfaa/vmedis-proxy-api/vmedis/token"
@@ -46,6 +47,8 @@ var (
 	stockOpnameHandler atomic.Pointer[stockopname.ApiHandler]
 	authService        atomic.Pointer[auth.Service]
 	authHandler        atomic.Pointer[auth.ApiHandler]
+	shiftService       atomic.Pointer[shift.Service]
+	shiftHandler       atomic.Pointer[shift.ApiHandler]
 )
 
 func getDatabase() *gorm.DB {
@@ -392,6 +395,34 @@ func getAuthHandler() *auth.ApiHandler {
 
 	if !authHandler.CompareAndSwap(nil, newHandler) {
 		return authHandler.Load()
+	}
+
+	return newHandler
+}
+
+func getShiftService() *shift.Service {
+	if val := shiftService.Load(); val != nil {
+		return val
+	}
+
+	newService := shift.NewService(getDatabase(), getVmedisClient())
+
+	if !shiftService.CompareAndSwap(nil, newService) {
+		return shiftService.Load()
+	}
+
+	return newService
+}
+
+func getShiftHandler() *shift.ApiHandler {
+	if val := shiftHandler.Load(); val != nil {
+		return val
+	}
+
+	newHandler := shift.NewApiHandler(getShiftService())
+
+	if !shiftHandler.CompareAndSwap(nil, newHandler) {
+		return shiftHandler.Load()
 	}
 
 	return newHandler

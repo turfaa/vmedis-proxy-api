@@ -16,7 +16,7 @@ func DumpShiftsFromVmedisToDB(
 	db *gorm.DB,
 	vmedisClient *vmedis.Client,
 ) {
-	service := NewService(NewDatabase(db), vmedisClient)
+	service := NewService(db, vmedisClient)
 
 	if _, err := service.DumpShiftsFromVmedisToDB(ctx, from, to); err != nil {
 		log.Fatalf("DumpShiftsBetweenTimesFromVmedisToDB: %s", err)

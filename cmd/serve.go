@@ -33,6 +33,7 @@ var serveCmd = commandWithInit{
 					SaleHandler:        getSaleHandler(),
 					ProcurementHandler: getProcurementHandler(),
 					StockOpnameHandler: getStockOpnameHandler(),
+					ShiftHandler:       getShiftHandler(),
 				},
 			)
 		},

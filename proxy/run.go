@@ -16,6 +16,7 @@ import (
 	"github.com/turfaa/vmedis-proxy-api/drug"
 	"github.com/turfaa/vmedis-proxy-api/procurement"
 	"github.com/turfaa/vmedis-proxy-api/sale"
+	"github.com/turfaa/vmedis-proxy-api/shift"
 	"github.com/turfaa/vmedis-proxy-api/stockopname"
 )
 
@@ -30,6 +31,7 @@ type Config struct {
 	SaleHandler        *sale.ApiHandler
 	ProcurementHandler *procurement.ApiHandler
 	StockOpnameHandler *stockopname.ApiHandler
+	ShiftHandler       *shift.ApiHandler
 }
 
 // Run runs the proxy server.
@@ -45,6 +47,7 @@ func Run(config Config) {
 		config.SaleHandler,
 		config.ProcurementHandler,
 		config.StockOpnameHandler,
+		config.ShiftHandler,
 	)
 
 	engine := apiServer.GinEngine()

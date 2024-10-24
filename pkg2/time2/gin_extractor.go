@@ -11,5 +11,9 @@ func GetOneDayFromQuery(c *gin.Context) (from time.Time, until time.Time, err er
 }
 
 func GetTimeRangeFromQuery(c *gin.Context) (from time.Time, until time.Time, err error) {
-	return ParseTimeRange(c.Query("date"), c.Query("from"), c.Query("until"))
+	untilQuery := c.Query("until")
+	if untilQuery == "" {
+		untilQuery = c.Query("to")
+	}
+	return ParseTimeRange(c.Query("date"), c.Query("from"), untilQuery)
 }
