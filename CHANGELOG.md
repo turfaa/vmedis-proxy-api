@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.23.0] - 2024-11-13
+### :sparkles: New Features
+- [`44808c7`](https://github.com/turfaa/vmedis-proxy-api/commit/44808c7be58b58c492d2e0e64ad253b0a59dde50) - **shift**: Add show shift page *(commit by [@turfaa](https://github.com/turfaa))*
+
+
 ## [v0.22.1] - 2024-10-24
 ### :bug: Bug Fixes
 - [`de2225b`](https://github.com/turfaa/vmedis-proxy-api/commit/de2225b69a37966b0d3df98586f6990b75219d5d) - **shift**: Add more logs when dumping shifts *(commit by [@turfaa](https://github.com/turfaa))*
@@ -521,3 +526,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v0.21.4]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.21.3...v0.21.4
 [v0.22.0]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.21.4...v0.22.0
 [v0.22.1]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.22.0...v0.22.1
+[v0.23.0]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.22.1...v0.23.0
