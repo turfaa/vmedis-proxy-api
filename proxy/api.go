@@ -208,6 +208,12 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 				auth.AllowedRoles(auth.RoleAdmin, auth.RoleStaff),
 				s.shiftHandler.GetShiftByVmedisID,
 			)
+
+			shifts.GET(
+				"/:vmedis_id/show",
+				auth.AllowedRoles(auth.RoleAdmin, auth.RoleStaff),
+				s.shiftHandler.ShowShift,
+			)
 		}
 	}
 }

@@ -6,12 +6,14 @@ import (
 	"io"
 	"strconv"
 
-	"github.com/turfaa/vmedis-proxy-api/money"
-
-	"github.com/gin-gonic/gin"
 	"github.com/turfaa/vmedis-proxy-api/cui"
+	"github.com/turfaa/vmedis-proxy-api/money"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/slices2"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/time2"
+	"github.com/turfaa/vmedis-proxy-api/shift/templates"
+
+	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/render"
 )
 
 type ApiHandler struct {
@@ -146,6 +148,27 @@ func (h *ApiHandler) DumpShiftsFromVmedisToDB(c *gin.Context) {
 	}
 
 	c.JSON(200, h.transformShiftsToTable(shifts))
+}
+
+func (h *ApiHandler) ShowShift(c *gin.Context) {
+	vmedisID, err := strconv.Atoi(c.Param("vmedis_id"))
+	if err != nil {
+		c.JSON(400, gin.H{"error": fmt.Sprintf("invalid vmedis id: %s", err)})
+		return
+	}
+
+	shift, err := h.service.GetShiftByVmedisID(c, vmedisID)
+	if err != nil {
+		c.JSON(500, gin.H{"error": fmt.Sprintf("failed to get shift by vmedis id %d: %s", vmedisID, err)})
+		return
+	}
+
+	htmlRender := render.HTML{
+		Template: templates.Shift,
+		Name:     "shift.html",
+		Data:     shift,
+	}
+	c.Render(200, htmlRender)
 }
 
 func (h *ApiHandler) transformShiftsToTable(shifts []Shift) cui.Table {
