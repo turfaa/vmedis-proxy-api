@@ -166,7 +166,7 @@ func (h *ApiHandler) ShowShift(c *gin.Context) {
 	htmlRender := render.HTML{
 		Template: templates.Shift,
 		Name:     "shift.html",
-		Data:     shift,
+		Data:     shift.ToTemplateData(),
 	}
 	c.Render(200, htmlRender)
 }

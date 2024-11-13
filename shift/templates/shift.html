@@ -55,34 +55,34 @@
 
     <div class="row">
         <span>Waktu Mulai:</span>
-        <span>{{.StartedAt.Format "02/01/2006 15:04"}}</span>
+        <span>{{.StartedAt}}</span>
     </div>
 
     <div class="row">
         <span>Waktu Selesai:</span>
-        <span>{{.EndedAt.Format "02/01/2006 15:04"}}</span>
+        <span>{{.EndedAt}}</span>
     </div>
 
     <div class="divider" />
 
     <div class="row">
         <span>Modal Awal:</span>
-        <span>Rp {{printf "%.2f" .InitialCash}}</span>
+        <span>{{.InitialCash}}</span>
     </div>
 
     <div class="row">
         <span>Kas Akhir Sistem:</span>
-        <span>Rp {{printf "%.2f" .ExpectedFinalCash}}</span>
+        <span>{{.ExpectedFinalCash}}</span>
     </div>
 
     <div class="row">
         <span>Kas Akhir Kasir:</span>
-        <span>Rp {{printf "%.2f" .ActualFinalCash}}</span>
+        <span>{{.ActualFinalCash}}</span>
     </div>
 
     <div class="row">
         <span>Selisih Kas:</span>
-        <span>Rp {{printf "%.2f" .FinalCashDifference}}</span>
+        <span>{{.FinalCashDifference}}</span>
     </div>
 
     <div class="divider" />

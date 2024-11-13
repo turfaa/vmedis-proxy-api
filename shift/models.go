@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"github.com/turfaa/vmedis-proxy-api/database/models"
+	"github.com/turfaa/vmedis-proxy-api/money"
+	"github.com/turfaa/vmedis-proxy-api/shift/templates"
 	"github.com/turfaa/vmedis-proxy-api/vmedis"
 )
 
@@ -19,6 +21,21 @@ type Shift struct {
 	FinalCashDifference float64   `json:"final_cash_difference"`
 	Supervisor          string    `json:"supervisor"`
 	Notes               string    `json:"notes"`
+}
+
+func (s Shift) ToTemplateData() templates.ShiftData {
+	return templates.ShiftData{
+		Code:                s.Code,
+		Cashier:             s.Cashier,
+		StartedAt:           s.StartedAt.Format("02/01/2006 15:04"),
+		EndedAt:             s.EndedAt.Format("02/01/2006 15:04"),
+		InitialCash:         money.FormatRupiah(s.InitialCash),
+		ExpectedFinalCash:   money.FormatRupiah(s.ExpectedFinalCash),
+		ActualFinalCash:     money.FormatRupiah(s.ActualFinalCash),
+		FinalCashDifference: money.FormatRupiah(s.FinalCashDifference),
+		Supervisor:          s.Supervisor,
+		Notes:               s.Notes,
+	}
 }
 
 func ShiftFromDB(dbShift models.Shift) Shift {
