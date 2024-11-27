@@ -51,6 +51,10 @@ func (d *Database) GetDrugsByExcludedVmedisCodesUpdatedAfter(
 		ctx,
 		minimumUpdatedTime,
 		func(db *gorm.DB) *gorm.DB {
+			if len(excludedVmedisCodes) == 0 {
+				return db
+			}
+
 			return db.Where("vmedis_code NOT IN ?", excludedVmedisCodes)
 		},
 	)
