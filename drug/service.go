@@ -96,9 +96,14 @@ func (s *Service) GetDrugsToStockOpname(ctx context.Context, startTime time.Time
 
 // GetSalesBasedDrugsToStockOpname returns the drugs to stock opname based on sales.
 func (s *Service) GetSalesBasedDrugsToStockOpname(ctx context.Context, startTime time.Time, endTime time.Time) ([]Drug, error) {
-	drugSaleStatistics, err := s.db.GetDrugSaleStatisticsBetweenTimes(ctx, startTime, endTime)
+	saleStatisticsLookupStartTime := startTime
+	if saleStatisticsLookupStartTime.After(endTime) {
+		saleStatisticsLookupStartTime = time.Date(endTime.Year(), endTime.Month(), endTime.Day(), 0, 0, 0, 0, time.Local)
+	}
+
+	drugSaleStatistics, err := s.db.GetDrugSaleStatisticsBetweenTimes(ctx, saleStatisticsLookupStartTime, endTime)
 	if err != nil {
-		return nil, fmt.Errorf("get drug sale statistics between %s and %s from DB: %w", startTime, endTime, err)
+		return nil, fmt.Errorf("get drug sale statistics between %s and %s from DB: %w", saleStatisticsLookupStartTime, endTime, err)
 	}
 
 	alreadyStockOpnamedDrugCodes, err := s.db.GetDrugCodesAlreadyStockOpnamedBetweenTimes(ctx, startTime, endTime)
@@ -130,10 +135,10 @@ func (s *Service) GetSalesBasedDrugsToStockOpname(ctx context.Context, startTime
 		0,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("get drugs by vmedis codes updated after %s from DB: %w", startTime, err)
+		return nil, fmt.Errorf("get drugs by vmedis codes from DB: %w", err)
 	}
 
-	sortDrugsByNumberOfSales(drugs, saleStatisticsByDrugCode)
+	sortDrugsBySalesAmount(drugs, saleStatisticsByDrugCode)
 	return drugs, nil
 }
 
@@ -158,16 +163,16 @@ func getDrugsFromDB(ctx context.Context, getter dbDrugsGetter, minimumDrugsSize 
 	return drugs, nil
 }
 
-func sortDrugsByNumberOfSales(drugs []Drug, saleStatisticsByDrugCode map[string]SaleStatistics) {
+func sortDrugsBySalesAmount(drugs []Drug, saleStatisticsByDrugCode map[string]SaleStatistics) {
 	slices.SortFunc(drugs, func(i, j Drug) int {
 		iSaleStats := saleStatisticsByDrugCode[i.VmedisCode]
 		jSaleStats := saleStatisticsByDrugCode[j.VmedisCode]
 
-		if iSaleStats.NumberOfSales == jSaleStats.NumberOfSales {
-			return int(jSaleStats.TotalAmount*100 - iSaleStats.TotalAmount*100)
+		if iSaleStats.TotalAmount == jSaleStats.TotalAmount {
+			return jSaleStats.NumberOfSales - iSaleStats.NumberOfSales
 		}
 
-		return jSaleStats.NumberOfSales - iSaleStats.NumberOfSales
+		return int(jSaleStats.TotalAmount*100 - iSaleStats.TotalAmount*100)
 	})
 }
 
