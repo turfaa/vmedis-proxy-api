@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math"
+	"sort"
 	"time"
 
 	"gorm.io/gorm"
@@ -100,6 +102,10 @@ func (s *Service) GetStockOpnameSummariesBetweenTime(ctx context.Context, from, 
 	for _, summary := range summaryMap {
 		summaries = append(summaries, summary)
 	}
+
+	sort.Slice(summaries, func(i, j int) bool {
+		return math.Abs(summaries[i].SalePriceDifference) < math.Abs(summaries[j].SalePriceDifference)
+	})
 
 	return summaries, nil
 }
