@@ -104,7 +104,7 @@ func (s *Service) GetStockOpnameSummariesBetweenTime(ctx context.Context, from, 
 	}
 
 	sort.Slice(summaries, func(i, j int) bool {
-		return math.Abs(summaries[i].SalePriceDifference) < math.Abs(summaries[j].SalePriceDifference)
+		return math.Abs(summaries[i].SalePriceDifference) > math.Abs(summaries[j].SalePriceDifference)
 	})
 
 	return summaries, nil
