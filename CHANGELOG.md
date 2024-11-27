@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.23.4] - 2024-11-27
+### :bug: Bug Fixes
+- [`712fa00`](https://github.com/turfaa/vmedis-proxy-api/commit/712fa00cd75f2ca12063972c8c150e3f0ce60241) - **drug**: sort drugs to stock opname by sales amount *(commit by [@turfaa](https://github.com/turfaa))*
+- [`712fa00`](https://github.com/turfaa/vmedis-proxy-api/commit/712fa00db4b2a5bc64712c0ad0490a3454f6c568) - **so**: sort stock opname summary desc *(commit by [@turfaa](https://github.com/turfaa))*
+
+
 ## [v0.23.3] - 2024-11-27
 ### :bug: Bug Fixes
 - [`712fa00`](https://github.com/turfaa/vmedis-proxy-api/commit/712fa00759aca299fd81c78ded88dab97644a6ba) - **drug**: fix VmedisCodeNotIn if the list is empty *(commit by [@turfaa](https://github.com/turfaa))*
@@ -546,3 +552,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v0.23.1]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.23.0...v0.23.1
 [v0.23.2]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.23.1...v0.23.2
 [v0.23.3]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.23.2...v0.23.3
+[v0.23.4]: https://github.com/turfaa/vmedis-proxy-api/compare/v0.23.3...v0.23.4
