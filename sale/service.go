@@ -114,6 +114,8 @@ func (s *Service) DumpTodaySalesFromVmedisToDB(ctx context.Context) error {
 
 	log.Printf("Got %d sales from Vmedis, dumping to DB", len(vmedisSales))
 
+	vmedisSales = s.makeSalesInvoiceNumbersUnique(vmedisSales)
+
 	if err := s.db.UpsertVmedisSales(ctx, vmedisSales); err != nil {
 		return fmt.Errorf("upsert sales to DB: %w", err)
 	}
@@ -137,6 +139,32 @@ func (s *Service) DumpTodaySalesFromVmedisToDB(ctx context.Context) error {
 	log.Printf("Produced updated drug messages, finished dumping today's sales from Vmedis to DB")
 
 	return nil
+}
+
+func (s *Service) makeSalesInvoiceNumbersUnique(sales []vmedis.Sale) []vmedis.Sale {
+	sort.Slice(sales, func(i, j int) bool {
+		return sales[i].ID < sales[j].ID
+	})
+
+	invoiceNumbers := make(map[string]struct{}, len(sales))
+	for i := range sales {
+		if _, ok := invoiceNumbers[sales[i].InvoiceNumber]; ok {
+			baseInvoiceNumber := sales[i].InvoiceNumber
+			j := 2
+
+			newInvoiceNumber := fmt.Sprintf("%s-%d", baseInvoiceNumber, j)
+			for _, ok := invoiceNumbers[newInvoiceNumber]; ok; {
+				j++
+				newInvoiceNumber = fmt.Sprintf("%s-%d", baseInvoiceNumber, j)
+			}
+
+			sales[i].InvoiceNumber = newInvoiceNumber
+		}
+
+		invoiceNumbers[sales[i].InvoiceNumber] = struct{}{}
+	}
+
+	return sales
 }
 
 func (s *Service) DumpTodaySalesStatisticsFromVmedisToDB(ctx context.Context) error {
