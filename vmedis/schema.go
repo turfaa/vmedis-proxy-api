@@ -228,14 +228,15 @@ type Procurement struct {
 	Supplier               string     `procurement-column:"4"`
 	Warehouse              string     `procurement-column:"9"`
 	PaymentType            string     `procurement-column:"10"`
-	Operator               string     `procurement-column:"11"`
-	CashDiscountPercentage Percentage `procurement-column:"12"`
-	DiscountPercentage     Percentage `procurement-column:"13"`
-	DiscountAmount         float64    `procurement-column:"14"`
-	TaxPercentage          Percentage `procurement-column:"15"`
-	TaxAmount              float64    `procurement-column:"16"`
-	MiscellaneousCost      float64    `procurement-column:"17"`
-	Total                  float64    `procurement-column:"18"`
+	PaymentAccount         string     `procurement-column:"11"`
+	Operator               string     `procurement-column:"12"`
+	CashDiscountPercentage Percentage `procurement-column:"13"`
+	DiscountPercentage     Percentage `procurement-column:"14"`
+	DiscountAmount         float64    `procurement-column:"15"`
+	TaxPercentage          Percentage `procurement-column:"16"`
+	TaxAmount              float64    `procurement-column:"17"`
+	MiscellaneousCost      float64    `procurement-column:"18"`
+	Total                  float64    `procurement-column:"19"`
 	ProcurementUnits       []ProcurementUnit
 }
 

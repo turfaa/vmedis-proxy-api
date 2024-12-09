@@ -15,6 +15,7 @@ func vmedisProcurementToDBProcurement(p vmedis.Procurement) models.Procurement {
 		Supplier:               p.Supplier,
 		Warehouse:              p.Warehouse,
 		PaymentType:            p.PaymentType,
+		PaymentAccount:         p.PaymentAccount,
 		Operator:               p.Operator,
 		CashDiscountPercentage: p.CashDiscountPercentage.Value,
 		DiscountPercentage:     p.DiscountPercentage.Value,

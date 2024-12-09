@@ -16,6 +16,7 @@ type Procurement struct {
 	Supplier               string         `gorm:"index"`
 	Warehouse              string
 	PaymentType            string `gorm:"index"`
+	PaymentAccount         string
 	Operator               string
 	CashDiscountPercentage float64
 	DiscountPercentage     float64
