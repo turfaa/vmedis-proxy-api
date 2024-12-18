@@ -14,7 +14,7 @@ COPY . ./
 
 RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} CGO_ENABLED=0 go build -o /vmedis-proxy
 
-FROM --platform=${BUILDPLATFORM:-linux/amd64} gcr.io/distroless/static-debian11 AS release
+FROM --platform=${BUILDPLATFORM:-linux/amd64} gcr.io/distroless/static-debian12 AS release
 
 WORKDIR /
 
