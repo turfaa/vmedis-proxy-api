@@ -28,10 +28,10 @@ func FromVmedisDrugStock(ds vmedis.DrugStock) WithStock {
 
 // Drug is a drug in the inventory.
 type Drug struct {
-	VmedisCode   string  `json:"vmedisCode,omitempty"`
-	Name         string  `json:"name,omitempty"`
-	Manufacturer string  `json:"manufacturer,omitempty"`
-	Supplier     string  `json:"supplier,omitempty"`
+	VmedisCode   string  `json:"vmedisCode"`
+	Name         string  `json:"name"`
+	Manufacturer string  `json:"manufacturer"`
+	Supplier     string  `json:"supplier"`
 	MinimumStock Stock   `json:"minimumStock"`
 	Units        []Unit  `json:"units"`
 	Stocks       []Stock `json:"stocks"`
