@@ -139,9 +139,7 @@ func (s *Service) GenerateRecommendations(ctx context.Context) (RecommendationsR
 
 func calculateRecommendation(stock vmedis.DrugStock, drugUnits []drug.Unit) (chosen drug.Stock, alternatives []drug.Stock) {
 	smallestQ := stock.Drug.MinimumStock.Quantity*2 - stock.Stock.Quantity
-	if smallestQ < 2 {
-		smallestQ = 2
-	}
+	smallestQ = max(smallestQ, 1)
 
 	fallback := drug.Stock{
 		Unit:     stock.Stock.Unit,
