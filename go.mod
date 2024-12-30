@@ -3,13 +3,13 @@ module github.com/turfaa/vmedis-proxy-api
 go 1.23.1
 
 require (
-	github.com/PuerkitoBio/goquery v1.10.0
+	github.com/PuerkitoBio/goquery v1.10.1
 	github.com/chenyahui/gin-cache v1.9.0
-	github.com/gin-contrib/cors v1.7.2
-	github.com/gin-contrib/gzip v1.0.1
+	github.com/gin-contrib/cors v1.7.3
+	github.com/gin-contrib/gzip v1.1.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/glebarez/sqlite v1.11.0
-	github.com/go-json-experiment/json v0.0.0-20241224190944-b42dde110e6c
+	github.com/go-json-experiment/json v0.0.0-20241230001524-0240acd0e023
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/jordan-wright/email v4.0.1-0.20210109023952-943e75fe5223+incompatible
 	github.com/klauspost/compress v1.17.11
@@ -98,7 +98,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/mysql v1.5.7 // indirect
 	modernc.org/libc v1.61.5 // indirect
-	modernc.org/mathutil v1.7.0 // indirect
+	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.8.0 // indirect
 	modernc.org/sqlite v1.34.4 // indirect
 )

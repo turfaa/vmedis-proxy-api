@@ -8,11 +8,11 @@ import (
 
 type VmedisToken struct {
 	ID        uint      `gorm:"primarykey"`
-	CreatedAt time.Time `gorm:"not null"`
-	UpdatedAt time.Time `gorm:"not null"`
+	CreatedAt time.Time `gorm:"not null;default:CURRENT_TIMESTAMP"`
+	UpdatedAt time.Time `gorm:"not null;default:CURRENT_TIMESTAMP"`
 
 	Token string     `gorm:"unique;not null"`
-	State TokenState `gorm:"type:token_state;not null"`
+	State TokenState `gorm:"type:token_state;not null;default:UNCHECKED"`
 }
 
 type TokenState string

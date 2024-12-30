@@ -24,6 +24,14 @@
             "mode": "auto",
             "program": "${workspaceFolder}",
             "args": ["sales", "dump"],
+        },
+        {
+            "name": "Refresh tokens",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "args": ["tokens", "refresh"],
         }
     ]
 }
