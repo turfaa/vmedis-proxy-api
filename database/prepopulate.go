@@ -248,6 +248,17 @@ func PrepopulateInvoiceCalculators(db *gorm.DB) error {
 				},
 			},
 		},
+		{
+			Supplier:    "Coronet Crown",
+			ShouldRound: true,
+			Components: []models.InvoiceComponent{
+				{
+					Supplier:   "Coronet Crown",
+					Name:       "Jumlah",
+					Multiplier: 0.95,
+				},
+			},
+		},
 	}
 
 	if err := db.Clauses(clause.OnConflict{
