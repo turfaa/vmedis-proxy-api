@@ -92,7 +92,6 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 
 			group.GET(
 				"/invoice-calculators",
-				cache.CacheByRequestURI(store, time.Hour),
 				s.procurementHandler.GetInvoiceCalculators,
 			)
 
