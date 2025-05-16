@@ -6,9 +6,9 @@ import (
 	cache "github.com/chenyahui/gin-cache"
 	"github.com/chenyahui/gin-cache/persist"
 	"github.com/gin-contrib/cors"
-	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
+	gzip "github.com/turfaa/gin-gzip"
 	"gorm.io/gorm"
 
 	"github.com/turfaa/vmedis-proxy-api/auth"

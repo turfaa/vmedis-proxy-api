@@ -8,7 +8,6 @@ require (
 	github.com/PuerkitoBio/goquery v1.10.3
 	github.com/chenyahui/gin-cache v1.9.0
 	github.com/gin-contrib/cors v1.7.5
-	github.com/gin-contrib/gzip v1.2.3
 	github.com/gin-gonic/gin v1.10.0
 	github.com/glebarez/sqlite v1.11.0
 	github.com/go-json-experiment/json v0.0.0-20250417205406-170dfdcf87d1
@@ -20,6 +19,7 @@ require (
 	github.com/segmentio/kafka-go v0.4.48
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
+	github.com/turfaa/gin-gzip v0.0.0-20250516013928-75cc47d20772
 	github.com/vmihailenco/msgpack/v5 v5.4.1
 	github.com/xuri/excelize/v2 v2.9.1
 	golang.org/x/sync v0.14.0
