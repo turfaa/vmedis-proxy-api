@@ -7,9 +7,11 @@ import (
 	"sort"
 	"time"
 
+	"golang.org/x/sync/errgroup"
 	"gorm.io/gorm"
 
 	"github.com/turfaa/vmedis-proxy-api/kafkapb"
+	"github.com/turfaa/vmedis-proxy-api/pkg2/time2"
 	"github.com/turfaa/vmedis-proxy-api/vmedis"
 )
 
@@ -75,6 +77,60 @@ func (s *Service) GetSoldDrugsBetweenTime(ctx context.Context, from time.Time, t
 	})
 
 	return soldDrugsSlice, nil
+}
+
+func (s *Service) GetSalesStatisticsSensors(ctx context.Context) (StatisticsSensors, error) {
+	var (
+		todaySensor     StatisticsSensor
+		yesterdaySensor StatisticsSensor
+	)
+
+	eg, gCtx := errgroup.WithContext(ctx)
+	eg.Go(func() error {
+		var err error
+		todaySensor, err = s.getSalesStatisticsSensorAtDate(gCtx, time2.BeginningOfToday())
+		return err
+	})
+
+	eg.Go(func() error {
+		var err error
+		yesterdaySensor, err = s.getSalesStatisticsSensorAtDate(gCtx, time2.BeginningOfToday().AddDate(0, 0, -1))
+		return err
+	})
+
+	if err := eg.Wait(); err != nil {
+		return StatisticsSensors{}, fmt.Errorf("get sales statistics sensors: %w", err)
+	}
+
+	return StatisticsSensors{
+		Today:     todaySensor,
+		Yesterday: yesterdaySensor,
+	}, nil
+}
+
+func (s *Service) getSalesStatisticsSensorAtDate(ctx context.Context, date time.Time) (StatisticsSensor, error) {
+	beginningOfDate := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, time.Local)
+	endOfDate := time.Date(date.Year(), date.Month(), date.Day(), 23, 59, 59, 999999999, time.Local)
+
+	stats, err := s.GetSalesStatisticsBetweenTime(ctx, beginningOfDate, endOfDate)
+	if err != nil {
+		return StatisticsSensor{}, fmt.Errorf("get sales statistics between %s - %s: %w", beginningOfDate, endOfDate, err)
+	}
+
+	if len(stats) == 0 {
+		stats = []Statistics{
+			{
+				PulledAt:      beginningOfDate,
+				TotalSales:    0,
+				NumberOfSales: 0,
+			},
+		}
+	}
+
+	return StatisticsSensor{
+		DateString: time2.FormatDate(beginningOfDate),
+		TotalSales: stats[len(stats)-1].TotalSales,
+	}, nil
 }
 
 func (s *Service) GetSalesStatisticsBetweenTime(ctx context.Context, from time.Time, to time.Time) ([]Statistics, error) {

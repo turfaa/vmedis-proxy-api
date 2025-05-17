@@ -6,6 +6,7 @@ import (
 
 	"github.com/turfaa/vmedis-proxy-api/database/models"
 	"github.com/turfaa/vmedis-proxy-api/drug"
+	"github.com/turfaa/vmedis-proxy-api/money"
 	"github.com/turfaa/vmedis-proxy-api/vmedis"
 )
 
@@ -128,5 +129,43 @@ func FromDBSaleStatistics(saleStatistics models.SaleStatistics) Statistics {
 		PulledAt:      saleStatistics.PulledAt,
 		TotalSales:    saleStatistics.TotalSales,
 		NumberOfSales: saleStatistics.NumberOfSales,
+	}
+}
+
+// StatisticsSensorsResponse is the response for the special API
+// for creating Home Assistant sensors based on sale statistics.
+type StatisticsSensorsResponse struct {
+	Today     StatisticsSensorResponse `json:"today"`
+	Yesterday StatisticsSensorResponse `json:"yesterday"`
+}
+
+type StatisticsSensorResponse struct {
+	DateString string `json:"dateString"`
+	TotalSales string `json:"totalSales"`
+}
+
+// StatisticsSensors represents all Home Assistant sensors for sale statistics.
+type StatisticsSensors struct {
+	Today     StatisticsSensor
+	Yesterday StatisticsSensor
+}
+
+func (s StatisticsSensors) ToStatisticsSensorsResponse() StatisticsSensorsResponse {
+	return StatisticsSensorsResponse{
+		Today:     s.Today.ToStatisticsSensorResponse(),
+		Yesterday: s.Yesterday.ToStatisticsSensorResponse(),
+	}
+}
+
+// StatisticsSensor represents a single sensor for sale statistics.
+type StatisticsSensor struct {
+	DateString string
+	TotalSales float64
+}
+
+func (s StatisticsSensor) ToStatisticsSensorResponse() StatisticsSensorResponse {
+	return StatisticsSensorResponse{
+		DateString: s.DateString,
+		TotalSales: money.FormatRupiah(s.TotalSales),
 	}
 }

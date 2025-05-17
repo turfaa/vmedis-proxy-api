@@ -79,6 +79,17 @@ func (s *ApiHandler) GetSalesStatistics(c *gin.Context) {
 	)
 }
 
+func (s *ApiHandler) GetSalesStatisticsSensors(c *gin.Context) {
+	sensors, err := s.service.GetSalesStatisticsSensors(c)
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": err.Error(),
+		})
+	}
+
+	c.JSON(200, sensors.ToStatisticsSensorsResponse())
+}
+
 func (s *ApiHandler) DumpTodaySales(c *gin.Context) {
 	go func() {
 		if err := s.service.DumpTodaySalesStatisticsFromVmedisToDB(context.Background()); err != nil {

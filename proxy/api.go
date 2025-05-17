@@ -64,6 +64,12 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 			)
 
 			sales.GET(
+				"/statistics/sensors",
+				cache.CacheByRequestURI(store, time.Minute),
+				s.saleHandler.GetSalesStatisticsSensors,
+			)
+
+			sales.GET(
 				"/statistics",
 				cache.CacheByRequestURI(store, time.Minute),
 				s.saleHandler.GetSalesStatistics,
