@@ -140,8 +140,9 @@ type StatisticsSensorsResponse struct {
 }
 
 type StatisticsSensorResponse struct {
-	DateString string `json:"dateString"`
-	TotalSales string `json:"totalSales"`
+	DateString string    `json:"dateString"`
+	TotalSales string    `json:"totalSales"`
+	UpdatedAt  time.Time `json:"updatedAt"`
 }
 
 // StatisticsSensors represents all Home Assistant sensors for sale statistics.
@@ -159,12 +160,14 @@ func (s StatisticsSensors) ToStatisticsSensorsResponse() StatisticsSensorsRespon
 
 // StatisticsSensor represents a single sensor for sale statistics.
 type StatisticsSensor struct {
+	UpdatedAt  time.Time
 	DateString string
 	TotalSales float64
 }
 
 func (s StatisticsSensor) ToStatisticsSensorResponse() StatisticsSensorResponse {
 	return StatisticsSensorResponse{
+		UpdatedAt:  s.UpdatedAt,
 		DateString: s.DateString,
 		TotalSales: money.FormatRupiah(s.TotalSales),
 	}

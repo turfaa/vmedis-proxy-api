@@ -120,7 +120,7 @@ func (s *Service) getSalesStatisticsSensorAtDate(ctx context.Context, date time.
 	if len(stats) == 0 {
 		stats = []Statistics{
 			{
-				PulledAt:      beginningOfDate,
+				PulledAt:      endOfDate,
 				TotalSales:    0,
 				NumberOfSales: 0,
 			},
@@ -128,6 +128,7 @@ func (s *Service) getSalesStatisticsSensorAtDate(ctx context.Context, date time.
 	}
 
 	return StatisticsSensor{
+		UpdatedAt:  stats[len(stats)-1].PulledAt,
 		DateString: time2.FormatDate(beginningOfDate),
 		TotalSales: stats[len(stats)-1].TotalSales,
 	}, nil
