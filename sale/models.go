@@ -7,6 +7,7 @@ import (
 	"github.com/turfaa/vmedis-proxy-api/database/models"
 	"github.com/turfaa/vmedis-proxy-api/drug"
 	"github.com/turfaa/vmedis-proxy-api/money"
+	"github.com/turfaa/vmedis-proxy-api/pkg2/time2"
 	"github.com/turfaa/vmedis-proxy-api/vmedis"
 )
 
@@ -140,9 +141,9 @@ type StatisticsSensorsResponse struct {
 }
 
 type StatisticsSensorResponse struct {
-	DateString string    `json:"dateString"`
-	TotalSales string    `json:"totalSales"`
-	UpdatedAt  time.Time `json:"updatedAt"`
+	DateString string `json:"dateString"`
+	TotalSales string `json:"totalSales"`
+	UpdatedAt  string `json:"updatedAt"`
 }
 
 // StatisticsSensors represents all Home Assistant sensors for sale statistics.
@@ -167,7 +168,7 @@ type StatisticsSensor struct {
 
 func (s StatisticsSensor) ToStatisticsSensorResponse() StatisticsSensorResponse {
 	return StatisticsSensorResponse{
-		UpdatedAt:  s.UpdatedAt,
+		UpdatedAt:  time2.FormatDateTime(s.UpdatedAt),
 		DateString: s.DateString,
 		TotalSales: money.FormatRupiah(s.TotalSales),
 	}
