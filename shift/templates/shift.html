@@ -7,7 +7,7 @@
             font-family: monospace;
             width: 76mm;
             margin: 0;
-            padding: 10px;
+            padding: 0;
         }
         .header {
             text-align: center;
@@ -24,7 +24,10 @@
         }
         @media print {
             @page {
-                margin: 2mm;
+                padding-left: 5mm;
+                padding-right: 5mm;
+                padding-top: 0mm;
+                padding-bottom: 7mm;
                 size: 76mm auto;
             }
         }
