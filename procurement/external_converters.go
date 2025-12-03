@@ -12,6 +12,7 @@ func vmedisProcurementToDBProcurement(p vmedis.Procurement) models.Procurement {
 	return models.Procurement{
 		InvoiceNumber:          p.InvoiceNumber,
 		InvoiceDate:            datatypes.Date(p.Date.Time),
+		InputDate:              p.InputTime.Time,
 		Supplier:               p.Supplier,
 		Warehouse:              p.Warehouse,
 		PaymentType:            p.PaymentType,

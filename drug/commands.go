@@ -40,7 +40,7 @@ func RunUpdatedDrugsConsumer(ctx context.Context, config ConsumerConfig) {
 	}()
 
 	done := make(chan os.Signal, 1)
-	signal.Notify(done, os.Interrupt, syscall.SIGTERM, syscall.SIGINT, syscall.SIGKILL)
+	signal.Notify(done, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 
 	go func() {
 		sig := <-done

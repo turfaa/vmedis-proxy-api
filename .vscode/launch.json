@@ -7,7 +7,10 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}",
-            "args": ["shifts", "dump"],
+            "args": [
+                "shifts",
+                "dump"
+            ],
         },
         {
             "name": "Run server",
@@ -15,7 +18,9 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}",
-            "args": ["serve"],
+            "args": [
+                "serve"
+            ],
         },
         {
             "name": "Run sales dumper",
@@ -23,7 +28,10 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}",
-            "args": ["sales", "dump"],
+            "args": [
+                "sales",
+                "dump"
+            ],
         },
         {
             "name": "Refresh tokens",
@@ -31,7 +39,32 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}",
-            "args": ["tokens", "refresh"],
+            "args": [
+                "tokens",
+                "refresh"
+            ],
+        },
+        {
+            "name": "Send iqvia report",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "args": [
+                "reports",
+                "send-to-iqvia"
+            ],
+        },
+        {
+            "name": "Run procurements dumper",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "args": [
+                "procurements",
+                "dump"
+            ],
         }
     ]
 }

@@ -39,6 +39,7 @@ func (d *Database) UpsertVmedisProcurements(ctx context.Context, procurements []
 				DoUpdates: clause.AssignmentColumns([]string{
 					"updated_at",
 					"invoice_date",
+					"input_date",
 					"supplier",
 					"warehouse",
 					"payment_type",

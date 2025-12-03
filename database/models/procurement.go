@@ -13,7 +13,8 @@ type Procurement struct {
 
 	InvoiceNumber          string         `gorm:"unique"`
 	InvoiceDate            datatypes.Date `gorm:"index"`
-	Supplier               string         `gorm:"index"`
+	InputDate              time.Time
+	Supplier               string `gorm:"index"`
 	Warehouse              string
 	PaymentType            string `gorm:"index"`
 	PaymentAccount         string

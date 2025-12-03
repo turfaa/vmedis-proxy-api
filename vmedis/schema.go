@@ -223,20 +223,21 @@ type StockOpname struct {
 }
 
 type Procurement struct {
-	Date                   Date       `procurement-column:"1"`
-	InvoiceNumber          string     `procurement-column:"3"`
-	Supplier               string     `procurement-column:"4"`
-	Warehouse              string     `procurement-column:"9"`
-	PaymentType            string     `procurement-column:"10"`
-	PaymentAccount         string     `procurement-column:"11"`
-	Operator               string     `procurement-column:"12"`
-	CashDiscountPercentage Percentage `procurement-column:"13"`
-	DiscountPercentage     Percentage `procurement-column:"14"`
-	DiscountAmount         float64    `procurement-column:"15"`
-	TaxPercentage          Percentage `procurement-column:"16"`
-	TaxAmount              float64    `procurement-column:"17"`
-	MiscellaneousCost      float64    `procurement-column:"18"`
-	Total                  float64    `procurement-column:"19"`
+	Date                   Date       `procurement-column:"2"`
+	InputTime              Time       `procurement-column:"3"`
+	InvoiceNumber          string     `procurement-column:"7"`
+	Supplier               string     `procurement-column:"8"`
+	Warehouse              string     `procurement-column:"13"`
+	PaymentType            string     `procurement-column:"14"`
+	PaymentAccount         string     `procurement-column:"15"`
+	Operator               string     `procurement-column:"16"`
+	CashDiscountPercentage Percentage `procurement-column:"17"`
+	DiscountPercentage     Percentage `procurement-column:"18"`
+	DiscountAmount         float64    `procurement-column:"19"`
+	TaxPercentage          Percentage `procurement-column:"20"`
+	TaxAmount              float64    `procurement-column:"21"`
+	MiscellaneousCost      float64    `procurement-column:"22"`
+	Total                  float64    `procurement-column:"23"`
 	ProcurementUnits       []ProcurementUnit
 }
 

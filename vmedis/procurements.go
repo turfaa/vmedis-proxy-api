@@ -110,7 +110,7 @@ func ParseProcurements(r io.Reader) (ProcurementsResponse, error) {
 		return ProcurementsResponse{}, fmt.Errorf("new document from reader: %w", err)
 	}
 
-	procurementsSelections := doc.Find("div#w3-container > table > tbody > tr[data-key]")
+	procurementsSelections := doc.Find("div#w5-container > table > tbody > tr[data-key]")
 
 	var procurements []Procurement
 	procurementsSelections.Each(func(i int, s *goquery.Selection) {
