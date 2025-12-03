@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"slices"
+	"sort"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -13,6 +15,10 @@ import (
 	"github.com/turfaa/vmedis-proxy-api/drug"
 	"github.com/turfaa/vmedis-proxy-api/kafkapb"
 	"github.com/turfaa/vmedis-proxy-api/vmedis"
+)
+
+const (
+	upsertToDBBatchSize = 100
 )
 
 type Service struct {
@@ -50,8 +56,18 @@ func (s *Service) DumpProcurementsBetweenDatesFromVmedisToDB(
 
 	log.Printf("Got %d procurements from vmedis", len(procurements))
 
-	if err := s.db.UpsertVmedisProcurements(ctx, procurements); err != nil {
-		return fmt.Errorf("upsert vmedis procurements: %w", err)
+	procurements = deduplicateProcurementsPickGreatestTotal(procurements)
+
+	log.Printf("Got %d procurements after deduplication", len(procurements))
+
+	chunkNum := 1
+	for chunk := range slices.Chunk(procurements, upsertToDBBatchSize) {
+		if err := s.db.UpsertVmedisProcurements(ctx, chunk); err != nil {
+			return fmt.Errorf("upsert vmedis procurements batch %d: %w", chunkNum, err)
+		}
+
+		log.Printf("Upserted %d procurements from vmedis to DB batch %d", len(chunk), chunkNum)
+		chunkNum++
 	}
 
 	log.Printf("Dumped %d procurements from vmedis to DB", len(procurements))
@@ -73,6 +89,38 @@ func (s *Service) DumpProcurementsBetweenDatesFromVmedisToDB(
 	log.Printf("Produced %d updated drugs by vmedis code", len(updatedDrugs))
 
 	return nil
+}
+
+func deduplicateProcurementsPickGreatestTotal(procurements []vmedis.Procurement) []vmedis.Procurement {
+	mp := make(map[string]vmedis.Procurement, len(procurements))
+	for _, p := range procurements {
+		existing, ok := mp[p.InvoiceNumber]
+		if !ok {
+			mp[p.InvoiceNumber] = p
+			continue
+		}
+
+		log.Printf("Duplicated procurement %s: %#v vs %#v", p.InvoiceNumber, p, existing)
+
+		if p.Total > existing.Total {
+			mp[p.InvoiceNumber] = p
+		}
+	}
+
+	deduplicated := make([]vmedis.Procurement, 0, len(mp))
+	for _, p := range mp {
+		deduplicated = append(deduplicated, p)
+	}
+
+	sort.Slice(deduplicated, func(i, j int) bool {
+		if deduplicated[i].Date.Time.Equal(deduplicated[j].Date.Time) {
+			return deduplicated[i].InputTime.Time.Before(deduplicated[j].InputTime.Time)
+		}
+
+		return deduplicated[i].Date.Time.Before(deduplicated[j].Date.Time)
+	})
+
+	return deduplicated
 }
 
 func (s *Service) DumpRecommendationsFromVmedisToRedis(ctx context.Context) error {
