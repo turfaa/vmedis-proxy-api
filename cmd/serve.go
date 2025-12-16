@@ -34,6 +34,7 @@ var serveCmd = commandWithInit{
 					ProcurementHandler: getProcurementHandler(),
 					StockOpnameHandler: getStockOpnameHandler(),
 					ShiftHandler:       getShiftHandler(),
+					TokenHandler:       getTokenHandler(),
 				},
 			)
 		},

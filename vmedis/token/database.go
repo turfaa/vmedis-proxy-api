@@ -33,6 +33,15 @@ func (d *Database) Transaction(ctx context.Context, f func(d *Database) error) e
 	return nil
 }
 
+func (d *Database) GetAllTokens(ctx context.Context) ([]models.VmedisToken, error) {
+	var tokens []models.VmedisToken
+	if err := d.withContext(ctx).Order("id ASC").Find(&tokens).Error; err != nil {
+		return nil, fmt.Errorf("get all tokens from DB: %w", err)
+	}
+
+	return tokens, nil
+}
+
 func (d *Database) GetNonExpiredTokens(ctx context.Context) ([]models.VmedisToken, error) {
 	var tokens []models.VmedisToken
 	if err := d.withContext(ctx).Where("state != 'EXPIRED'").Find(&tokens).Error; err != nil {
@@ -73,6 +82,22 @@ func (d *Database) UpsertTokensState(ctx context.Context, tokens []models.Vmedis
 		Create(&tokens).
 		Error; err != nil {
 		return fmt.Errorf("upsert tokens state: %w", err)
+	}
+
+	return nil
+}
+
+func (d *Database) InsertToken(ctx context.Context, token string) error {
+	if err := d.withContext(ctx).Create(&models.VmedisToken{Token: token}).Error; err != nil {
+		return fmt.Errorf("insert token: %w", err)
+	}
+
+	return nil
+}
+
+func (d *Database) DeleteToken(ctx context.Context, id uint) error {
+	if err := d.withContext(ctx).Delete(&models.VmedisToken{}, "id = ?", id).Error; err != nil {
+		return fmt.Errorf("delete token: %w", err)
 	}
 
 	return nil

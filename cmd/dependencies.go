@@ -49,6 +49,8 @@ var (
 	authHandler        atomic.Pointer[auth.ApiHandler]
 	shiftService       atomic.Pointer[shift.Service]
 	shiftHandler       atomic.Pointer[shift.ApiHandler]
+	tokenService       atomic.Pointer[token.Service]
+	tokenHandler       atomic.Pointer[token.Handler]
 )
 
 func getDatabase() *gorm.DB {
@@ -423,6 +425,34 @@ func getShiftHandler() *shift.ApiHandler {
 
 	if !shiftHandler.CompareAndSwap(nil, newHandler) {
 		return shiftHandler.Load()
+	}
+
+	return newHandler
+}
+
+func getTokenService() *token.Service {
+	if val := tokenService.Load(); val != nil {
+		return val
+	}
+
+	newService := token.NewService(getDatabase())
+
+	if !tokenService.CompareAndSwap(nil, newService) {
+		return tokenService.Load()
+	}
+
+	return newService
+}
+
+func getTokenHandler() *token.Handler {
+	if val := tokenHandler.Load(); val != nil {
+		return val
+	}
+
+	newHandler := token.NewHandler(getTokenService())
+
+	if !tokenHandler.CompareAndSwap(nil, newHandler) {
+		return tokenHandler.Load()
 	}
 
 	return newHandler

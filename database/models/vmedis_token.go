@@ -39,3 +39,7 @@ func (s *TokenState) Scan(src any) error {
 func (s TokenState) Value() (driver.Value, error) {
 	return string(s), nil
 }
+
+func (s TokenState) String() string {
+	return string(s)
+}
