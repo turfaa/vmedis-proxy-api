@@ -18,8 +18,9 @@ type DrugStock struct {
 type Drug struct {
 	VmedisID     int64
 	VmedisCode   string `oos-column:"4" drugs-index:"3" form-name:"Obat[obatkode]"`
-	Name         string `oos-column:"5" drugs-index:"4" form-name:"Obat[obatnama]"`
-	Manufacturer string `oos-column:"12" drugs-index:"5" form-name:"Obat[pabid]"`
+	KFACode      string `drugs-index:"4" form-name:"Obat[kodekfa]"` // Kode KFA SatuSehat
+	Name         string `oos-column:"5" drugs-index:"5" form-name:"Obat[obatnama]"`
+	Manufacturer string `oos-column:"12" drugs-index:"6" form-name:"Obat[pabid]"`
 	Supplier     string `oos-column:"13"`
 	MinimumStock Stock  `oos-column:"6" form-name:"Obat[obatminstok]"`
 	Units        []Unit `form-name:"Obat[soid%d]"`

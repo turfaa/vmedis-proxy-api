@@ -12,6 +12,7 @@ type Drug struct {
 
 	VmedisID     int64  `gorm:"unique"`
 	VmedisCode   string `gorm:"unique"`
+	KFACode      string `gorm:"index"` // Kode KFA SatuSehat
 	Name         string `gorm:"index"`
 	Manufacturer string `gorm:"index"`
 	MinimumStock Stock  `gorm:"embedded;embeddedPrefix:minimum_stock_"`

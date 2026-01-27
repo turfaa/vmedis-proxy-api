@@ -179,6 +179,7 @@ func (d *Database) UpsertVmedisDrugs(ctx context.Context, drugs []vmedis.Drug, k
 		return models.Drug{
 			VmedisID:     drug.VmedisID,
 			VmedisCode:   drug.VmedisCode,
+			KFACode:      drug.KFACode,
 			Name:         drug.Name,
 			Manufacturer: drug.Manufacturer,
 			MinimumStock: models.Stock{

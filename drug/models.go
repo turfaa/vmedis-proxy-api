@@ -28,6 +28,7 @@ func FromVmedisDrugStock(ds vmedis.DrugStock) WithStock {
 
 // Drug is a drug in the inventory.
 type Drug struct {
+	KFACode      string  `json:"kfaCode"`
 	VmedisCode   string  `json:"vmedisCode"`
 	Name         string  `json:"name"`
 	Manufacturer string  `json:"manufacturer"`
@@ -74,6 +75,7 @@ func FromDBDrug(drug models.Drug) Drug {
 
 	return Drug{
 		VmedisCode:   drug.VmedisCode,
+		KFACode:      drug.KFACode,
 		Name:         drug.Name,
 		Manufacturer: drug.Manufacturer,
 		MinimumStock: FromDBStock(drug.MinimumStock),
