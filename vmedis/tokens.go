@@ -40,7 +40,7 @@ func (c *Client) RefreshTokens(ctx context.Context, tokens []string) (map[string
 				return nil
 			}
 
-			if !strings.Contains(body, "Vmedis - Beranda") {
+			if !strings.Contains(body, "Aktifkan Menu V2") {
 				return fmt.Errorf("unknown response body: %s", body)
 			}
 
