@@ -2,10 +2,10 @@ package shift
 
 import (
 	"github.com/turfaa/vmedis-proxy-api/database/models"
-	"github.com/turfaa/vmedis-proxy-api/vmedis"
+	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
 )
 
-func vmedisShiftToDBShift(shift vmedis.Shift) models.Shift {
+func vmedisShiftToDBShift(shift vmedisv1.Shift) models.Shift {
 	return models.Shift{
 		VmedisID:            shift.ID,
 		Code:                shift.Code,

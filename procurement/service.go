@@ -14,7 +14,7 @@ import (
 
 	"github.com/turfaa/vmedis-proxy-api/drug"
 	"github.com/turfaa/vmedis-proxy-api/kafkapb"
-	"github.com/turfaa/vmedis-proxy-api/vmedis"
+	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
 )
 
 const (
@@ -24,7 +24,7 @@ const (
 type Service struct {
 	db              *Database
 	redisDB         *RedisDatabase
-	vmedis          *vmedis.Client
+	vmedis          *vmedisv1.Client
 	drugProducer    UpdatedDrugProducer
 	drugUnitsGetter DrugUnitsGetter
 }
@@ -91,8 +91,8 @@ func (s *Service) DumpProcurementsBetweenDatesFromVmedisToDB(
 	return nil
 }
 
-func deduplicateProcurementsPickGreatestTotal(procurements []vmedis.Procurement) []vmedis.Procurement {
-	mp := make(map[string]vmedis.Procurement, len(procurements))
+func deduplicateProcurementsPickGreatestTotal(procurements []vmedisv1.Procurement) []vmedisv1.Procurement {
+	mp := make(map[string]vmedisv1.Procurement, len(procurements))
 	for _, p := range procurements {
 		existing, ok := mp[p.InvoiceNumber]
 		if !ok {
@@ -107,7 +107,7 @@ func deduplicateProcurementsPickGreatestTotal(procurements []vmedis.Procurement)
 		}
 	}
 
-	deduplicated := make([]vmedis.Procurement, 0, len(mp))
+	deduplicated := make([]vmedisv1.Procurement, 0, len(mp))
 	for _, p := range mp {
 		deduplicated = append(deduplicated, p)
 	}
@@ -185,7 +185,7 @@ func (s *Service) GenerateRecommendations(ctx context.Context) (RecommendationsR
 	}, nil
 }
 
-func calculateRecommendation(stock vmedis.DrugStock, drugUnits []drug.Unit) (chosen drug.Stock, alternatives []drug.Stock) {
+func calculateRecommendation(stock vmedisv1.DrugStock, drugUnits []drug.Unit) (chosen drug.Stock, alternatives []drug.Stock) {
 	smallestQ := stock.Drug.MinimumStock.Quantity*2 - stock.Stock.Quantity
 	smallestQ = max(smallestQ, 1)
 
@@ -250,7 +250,7 @@ func (s *Service) GetLastDrugProcurements(ctx context.Context, drugCode string, 
 func NewService(
 	db *gorm.DB,
 	redisClient *redis.Client,
-	vmedisClient *vmedis.Client,
+	vmedisClient *vmedisv1.Client,
 	drugProducer UpdatedDrugProducer,
 	drugUnitsGetter DrugUnitsGetter,
 ) *Service {

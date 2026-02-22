@@ -15,7 +15,7 @@ import (
 
 	"github.com/turfaa/vmedis-proxy-api/kafkapb"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/time2"
-	"github.com/turfaa/vmedis-proxy-api/vmedis"
+	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
 )
 
 // ApiHandler is the handler for drug-related APIs.
@@ -190,7 +190,7 @@ func (h *ConsumerHandler) DumpDrugDetailsByVmedisID(ctx context.Context, kafkaMe
 }
 
 // NewConsumerHandler creates a new ConsumerHandler.
-func NewConsumerHandler(db *gorm.DB, redisClient *redis.Client, vmedisClient *vmedis.Client, kafkaWriter *kafka.Writer) *ConsumerHandler {
+func NewConsumerHandler(db *gorm.DB, redisClient *redis.Client, vmedisClient *vmedisv1.Client, kafkaWriter *kafka.Writer) *ConsumerHandler {
 	return &ConsumerHandler{
 		service: NewService(redisClient, db, vmedisClient, kafkaWriter),
 		cache:   NewCache(redisClient),

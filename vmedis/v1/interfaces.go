@@ -1,4 +1,4 @@
-package vmedis
+package vmedisv1
 
 type tokenProvider interface {
 	GetActiveToken() (string, error)

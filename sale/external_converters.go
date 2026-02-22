@@ -3,10 +3,10 @@ package sale
 import (
 	"github.com/turfaa/vmedis-proxy-api/database/models"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/slices2"
-	"github.com/turfaa/vmedis-proxy-api/vmedis"
+	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
 )
 
-func VmedisSaleToDBSale(sale vmedis.Sale) models.Sale {
+func VmedisSaleToDBSale(sale vmedisv1.Sale) models.Sale {
 	return models.Sale{
 		VmedisID:      sale.ID,
 		SoldAt:        sale.Date.Time,
@@ -15,7 +15,7 @@ func VmedisSaleToDBSale(sale vmedis.Sale) models.Sale {
 		Doctor:        sale.Doctor,
 		Payment:       sale.Payment,
 		Total:         sale.Total,
-		SaleUnits: slices2.Map(sale.SaleUnits, func(saleUnit vmedis.SaleUnit) models.SaleUnit {
+		SaleUnits: slices2.Map(sale.SaleUnits, func(saleUnit vmedisv1.SaleUnit) models.SaleUnit {
 			su := VmedisSaleUnitToDBSaleUnit(saleUnit)
 			su.InvoiceNumber = sale.InvoiceNumber
 			return su
@@ -23,7 +23,7 @@ func VmedisSaleToDBSale(sale vmedis.Sale) models.Sale {
 	}
 }
 
-func VmedisSaleUnitToDBSaleUnit(saleUnit vmedis.SaleUnit) models.SaleUnit {
+func VmedisSaleUnitToDBSaleUnit(saleUnit vmedisv1.SaleUnit) models.SaleUnit {
 	return models.SaleUnit{
 		IDInSale:      saleUnit.IDInSale,
 		DrugCode:      saleUnit.DrugCode,

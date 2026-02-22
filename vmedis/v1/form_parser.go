@@ -1,4 +1,4 @@
-package vmedis
+package vmedisv1
 
 import (
 	"fmt"

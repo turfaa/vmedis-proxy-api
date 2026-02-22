@@ -5,10 +5,10 @@ import (
 
 	"github.com/turfaa/vmedis-proxy-api/database/models"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/slices2"
-	"github.com/turfaa/vmedis-proxy-api/vmedis"
+	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
 )
 
-func vmedisProcurementToDBProcurement(p vmedis.Procurement) models.Procurement {
+func vmedisProcurementToDBProcurement(p vmedisv1.Procurement) models.Procurement {
 	return models.Procurement{
 		InvoiceNumber:          p.InvoiceNumber,
 		InvoiceDate:            datatypes.Date(p.Date.Time),
@@ -25,7 +25,7 @@ func vmedisProcurementToDBProcurement(p vmedis.Procurement) models.Procurement {
 		TaxAmount:              p.TaxAmount,
 		MiscellaneousCost:      p.MiscellaneousCost,
 		Total:                  p.Total,
-		ProcurementUnits: slices2.Map(p.ProcurementUnits, func(u vmedis.ProcurementUnit) models.ProcurementUnit {
+		ProcurementUnits: slices2.Map(p.ProcurementUnits, func(u vmedisv1.ProcurementUnit) models.ProcurementUnit {
 			unit := vmedisProcurementUnitToDBProcurementUnit(u)
 			unit.InvoiceNumber = p.InvoiceNumber
 			return unit
@@ -33,7 +33,7 @@ func vmedisProcurementToDBProcurement(p vmedis.Procurement) models.Procurement {
 	}
 }
 
-func vmedisProcurementUnitToDBProcurementUnit(u vmedis.ProcurementUnit) models.ProcurementUnit {
+func vmedisProcurementUnitToDBProcurementUnit(u vmedisv1.ProcurementUnit) models.ProcurementUnit {
 	return models.ProcurementUnit{
 		IDInProcurement:         u.IDInProcurement,
 		DrugCode:                u.DrugCode,

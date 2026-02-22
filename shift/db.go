@@ -7,7 +7,8 @@ import (
 
 	"github.com/turfaa/vmedis-proxy-api/database/models"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/slices2"
-	"github.com/turfaa/vmedis-proxy-api/vmedis"
+	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -50,7 +51,7 @@ func (d *Database) GetShiftsBetween(ctx context.Context, from time.Time, to time
 	return shifts, nil
 }
 
-func (d *Database) UpsertVmedisShifts(ctx context.Context, shifts []vmedis.Shift) error {
+func (d *Database) UpsertVmedisShifts(ctx context.Context, shifts []vmedisv1.Shift) error {
 	if len(shifts) == 0 {
 		return nil
 	}

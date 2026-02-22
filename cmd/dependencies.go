@@ -22,19 +22,19 @@ import (
 	"github.com/turfaa/vmedis-proxy-api/sale"
 	"github.com/turfaa/vmedis-proxy-api/shift"
 	"github.com/turfaa/vmedis-proxy-api/stockopname"
-	"github.com/turfaa/vmedis-proxy-api/vmedis"
-	"github.com/turfaa/vmedis-proxy-api/vmedis/token"
+	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+	token2 "github.com/turfaa/vmedis-proxy-api/vmedis/v1/token"
 )
 
 var (
 	db                 atomic.Pointer[gorm.DB]
-	vmedisClient       atomic.Pointer[vmedis.Client]
+	vmedisClient       atomic.Pointer[vmedisv1.Client]
 	redisClient        atomic.Pointer[redis.Client]
 	drugProducer       atomic.Pointer[drug.Producer]
 	kafkaWriter        atomic.Pointer[kafka.Writer]
-	tokenProvider      atomic.Pointer[token.Provider]
+	tokenProvider      atomic.Pointer[token2.Provider]
 	vmedisRateLimiter  atomic.Pointer[rate.Limiter]
-	tokenRefresher     atomic.Pointer[token.Refresher]
+	tokenRefresher     atomic.Pointer[token2.Refresher]
 	drugService        atomic.Pointer[drug.Service]
 	drugDatabase       atomic.Pointer[drug.Database]
 	procurementService atomic.Pointer[procurement.Service]
@@ -49,8 +49,8 @@ var (
 	authHandler        atomic.Pointer[auth.ApiHandler]
 	shiftService       atomic.Pointer[shift.Service]
 	shiftHandler       atomic.Pointer[shift.ApiHandler]
-	tokenService       atomic.Pointer[token.Service]
-	tokenHandler       atomic.Pointer[token.Handler]
+	tokenService       atomic.Pointer[token2.Service]
+	tokenHandler       atomic.Pointer[token2.Handler]
 )
 
 func getDatabase() *gorm.DB {
@@ -80,12 +80,12 @@ func getDatabase() *gorm.DB {
 	return newDB
 }
 
-func getVmedisClient() *vmedis.Client {
+func getVmedisClient() *vmedisv1.Client {
 	if val := vmedisClient.Load(); val != nil {
 		return val
 	}
 
-	newClient := vmedis.New(
+	newClient := vmedisv1.New(
 		viper.GetString("base_url"),
 		viper.GetInt("concurrency"),
 		getVmedisRateLimiter(),
@@ -150,12 +150,12 @@ func getKafkaWriter() *kafka.Writer {
 	return newWriter
 }
 
-func getTokenProvider() *token.Provider {
+func getTokenProvider() *token2.Provider {
 	if val := tokenProvider.Load(); val != nil {
 		return val
 	}
 
-	newProvider, err := token.NewProvider(getDatabase(), viper.GetDuration("refresh_interval"))
+	newProvider, err := token2.NewProvider(getDatabase(), viper.GetDuration("refresh_interval"))
 	if err != nil {
 		log.Fatalf("Error creating token provider: %s", err)
 	}
@@ -167,12 +167,12 @@ func getTokenProvider() *token.Provider {
 	return newProvider
 }
 
-func getTokenRefresher() *token.Refresher {
+func getTokenRefresher() *token2.Refresher {
 	if val := tokenRefresher.Load(); val != nil {
 		return val
 	}
 
-	newRefresher := token.NewRefresher(getDatabase(), getVmedisClient())
+	newRefresher := token2.NewRefresher(getDatabase(), getVmedisClient())
 
 	if !tokenRefresher.CompareAndSwap(nil, newRefresher) {
 		return tokenRefresher.Load()
@@ -430,12 +430,12 @@ func getShiftHandler() *shift.ApiHandler {
 	return newHandler
 }
 
-func getTokenService() *token.Service {
+func getTokenService() *token2.Service {
 	if val := tokenService.Load(); val != nil {
 		return val
 	}
 
-	newService := token.NewService(getDatabase())
+	newService := token2.NewService(getDatabase())
 
 	if !tokenService.CompareAndSwap(nil, newService) {
 		return tokenService.Load()
@@ -444,12 +444,12 @@ func getTokenService() *token.Service {
 	return newService
 }
 
-func getTokenHandler() *token.Handler {
+func getTokenHandler() *token2.Handler {
 	if val := tokenHandler.Load(); val != nil {
 		return val
 	}
 
-	newHandler := token.NewHandler(getTokenService())
+	newHandler := token2.NewHandler(getTokenService())
 
 	if !tokenHandler.CompareAndSwap(nil, newHandler) {
 		return tokenHandler.Load()

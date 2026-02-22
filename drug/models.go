@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/turfaa/vmedis-proxy-api/database/models"
-	"github.com/turfaa/vmedis-proxy-api/vmedis"
+	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
 )
 
 // DrugsResponse is the response for the drugs endpoints.
@@ -19,7 +19,7 @@ type WithStock struct {
 	Stock Stock `json:"stock"`
 }
 
-func FromVmedisDrugStock(ds vmedis.DrugStock) WithStock {
+func FromVmedisDrugStock(ds vmedisv1.DrugStock) WithStock {
 	return WithStock{
 		Drug:  FromVmedisDrug(ds.Drug),
 		Stock: FromVmedisStock(ds.Stock),
@@ -39,7 +39,7 @@ type Drug struct {
 }
 
 // FromVmedisDrug creates Drug from its vmedis schema.
-func FromVmedisDrug(cd vmedis.Drug) Drug {
+func FromVmedisDrug(cd vmedisv1.Drug) Drug {
 	units := make([]Unit, 0, len(cd.Units))
 	for _, cu := range cd.Units {
 		units = append(units, FromVmedisUnit(cu))
@@ -134,7 +134,7 @@ func (s *Stock) UnmarshalText(text []byte) error {
 }
 
 // FromVmedisStock creates Stock from its vmedis schema.
-func FromVmedisStock(cs vmedis.Stock) Stock {
+func FromVmedisStock(cs vmedisv1.Stock) Stock {
 	return Stock{
 		Unit:     cs.Unit,
 		Quantity: cs.Quantity,
@@ -174,7 +174,7 @@ type Unit struct {
 }
 
 // FromVmedisUnit creates Unit from its vmedis schema.
-func FromVmedisUnit(cu vmedis.Unit) Unit {
+func FromVmedisUnit(cu vmedisv1.Unit) Unit {
 	return Unit{
 		Unit:                   cu.Unit,
 		ParentUnit:             cu.ParentUnit,

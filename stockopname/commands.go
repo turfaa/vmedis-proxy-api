@@ -6,13 +6,13 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/turfaa/vmedis-proxy-api/vmedis"
+	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
 )
 
 func DumpTodayStockOpnames(
 	ctx context.Context,
 	db *gorm.DB,
-	vmedisClient *vmedis.Client,
+	vmedisClient *vmedisv1.Client,
 	drugProducer UpdatedDrugProducer,
 ) {
 	service := NewService(db, vmedisClient, drugProducer)

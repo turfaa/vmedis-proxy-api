@@ -12,12 +12,12 @@ import (
 
 	"github.com/turfaa/vmedis-proxy-api/kafkapb"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/time2"
-	"github.com/turfaa/vmedis-proxy-api/vmedis"
+	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
 )
 
 type Service struct {
 	db           *Database
-	vmedis       *vmedis.Client
+	vmedis       *vmedisv1.Client
 	drugsGetter  DrugsGetter
 	drugProducer UpdatedDrugProducer
 }
@@ -198,7 +198,7 @@ func (s *Service) DumpTodaySalesFromVmedisToDB(ctx context.Context) error {
 	return nil
 }
 
-func (s *Service) makeSalesInvoiceNumbersUnique(sales []vmedis.Sale) []vmedis.Sale {
+func (s *Service) makeSalesInvoiceNumbersUnique(sales []vmedisv1.Sale) []vmedisv1.Sale {
 	sort.Slice(sales, func(i, j int) bool {
 		return sales[i].ID < sales[j].ID
 	})
@@ -247,7 +247,7 @@ func (s *Service) DumpTodaySalesStatisticsFromVmedisToDB(ctx context.Context) er
 
 func NewService(
 	db *gorm.DB,
-	vmedisClient *vmedis.Client,
+	vmedisClient *vmedisv1.Client,
 	drugsGetter DrugsGetter,
 	drugProducer UpdatedDrugProducer,
 ) *Service {

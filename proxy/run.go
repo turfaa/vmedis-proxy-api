@@ -18,7 +18,7 @@ import (
 	"github.com/turfaa/vmedis-proxy-api/sale"
 	"github.com/turfaa/vmedis-proxy-api/shift"
 	"github.com/turfaa/vmedis-proxy-api/stockopname"
-	"github.com/turfaa/vmedis-proxy-api/vmedis/token"
+	"github.com/turfaa/vmedis-proxy-api/vmedis/v1/token"
 )
 
 // Config is the proxy server configuration.

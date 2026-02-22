@@ -6,13 +6,13 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/turfaa/vmedis-proxy-api/vmedis"
+	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
 )
 
 func DumpTodaySalesFromVmedisToDB(
 	ctx context.Context,
 	db *gorm.DB,
-	vmedisClient *vmedis.Client,
+	vmedisClient *vmedisv1.Client,
 	drugsGetter DrugsGetter,
 	drugProducer UpdatedDrugProducer,
 ) {
@@ -26,7 +26,7 @@ func DumpTodaySalesFromVmedisToDB(
 func DumpTodaySalesStatisticsFromVmedisToDB(
 	ctx context.Context,
 	db *gorm.DB,
-	vmedisClient *vmedis.Client,
+	vmedisClient *vmedisv1.Client,
 	drugsGetter DrugsGetter,
 	drugProducer UpdatedDrugProducer,
 ) {

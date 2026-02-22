@@ -8,7 +8,7 @@ import (
 	"github.com/turfaa/vmedis-proxy-api/drug"
 	"github.com/turfaa/vmedis-proxy-api/money"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/time2"
-	"github.com/turfaa/vmedis-proxy-api/vmedis"
+	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
 )
 
 type SalesResponse struct {
@@ -112,7 +112,7 @@ func (s Statistics) ToDBSaleStatistics() models.SaleStatistics {
 	}
 }
 
-func FromVmedisSalesStatistics(pulledAt time.Time, salesStatistics vmedis.SalesStatistics) (Statistics, error) {
+func FromVmedisSalesStatistics(pulledAt time.Time, salesStatistics vmedisv1.SalesStatistics) (Statistics, error) {
 	totalSales, err := salesStatistics.TotalSalesFloat64()
 	if err != nil {
 		return Statistics{}, fmt.Errorf("total sales float64: %w", err)

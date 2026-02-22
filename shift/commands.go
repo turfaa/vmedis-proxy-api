@@ -5,7 +5,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/turfaa/vmedis-proxy-api/vmedis"
+	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+
 	"gorm.io/gorm"
 )
 
@@ -14,7 +15,7 @@ func DumpShiftsFromVmedisToDB(
 	from time.Time,
 	to time.Time,
 	db *gorm.DB,
-	vmedisClient *vmedis.Client,
+	vmedisClient *vmedisv1.Client,
 ) {
 	service := NewService(db, vmedisClient)
 

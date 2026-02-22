@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm/clause"
 
 	"github.com/turfaa/vmedis-proxy-api/database/models"
-	"github.com/turfaa/vmedis-proxy-api/vmedis"
+	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
 )
 
 type Database struct {
@@ -35,7 +35,7 @@ func (d *Database) GetStockOpnamesBetweenTime(ctx context.Context, from, to time
 	return sos, nil
 }
 
-func (d *Database) UpsertVmedisStockOpnames(ctx context.Context, stockOpnames []vmedis.StockOpname) error {
+func (d *Database) UpsertVmedisStockOpnames(ctx context.Context, stockOpnames []vmedisv1.StockOpname) error {
 	soModels := make([]models.StockOpname, len(stockOpnames))
 	for i, so := range stockOpnames {
 		id := so.ID

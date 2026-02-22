@@ -12,14 +12,14 @@ import (
 	"github.com/segmentio/kafka-go"
 	"gorm.io/gorm"
 
-	"github.com/turfaa/vmedis-proxy-api/vmedis"
+	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
 )
 
 func DumpDrugsFromVmedisToDB(
 	ctx context.Context,
 	redisClient *redis.Client,
 	db *gorm.DB,
-	vmedisClient *vmedis.Client,
+	vmedisClient *vmedisv1.Client,
 	kafkaWriter *kafka.Writer,
 ) {
 	service := NewService(redisClient, db, vmedisClient, kafkaWriter)

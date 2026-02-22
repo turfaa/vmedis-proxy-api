@@ -7,16 +7,17 @@ import (
 	"time"
 
 	"github.com/turfaa/vmedis-proxy-api/pkg2/slices2"
-	"github.com/turfaa/vmedis-proxy-api/vmedis"
+	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+
 	"gorm.io/gorm"
 )
 
 type Service struct {
 	db           *Database
-	vmedisClient *vmedis.Client
+	vmedisClient *vmedisv1.Client
 }
 
-func NewService(db *gorm.DB, vmedisClient *vmedis.Client) *Service {
+func NewService(db *gorm.DB, vmedisClient *vmedisv1.Client) *Service {
 	return &Service{db: NewDatabase(db), vmedisClient: vmedisClient}
 }
 

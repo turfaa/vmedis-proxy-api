@@ -11,12 +11,12 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/turfaa/vmedis-proxy-api/kafkapb"
-	"github.com/turfaa/vmedis-proxy-api/vmedis"
+	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
 )
 
 type Service struct {
 	db           *Database
-	vmedis       *vmedis.Client
+	vmedis       *vmedisv1.Client
 	drugProducer UpdatedDrugProducer
 }
 
@@ -166,7 +166,7 @@ func (s *Service) DumpTodayStockOpnamesFromVmedisToDB(ctx context.Context) error
 	return nil
 }
 
-func NewService(db *gorm.DB, vmedisClient *vmedis.Client, drugProducer UpdatedDrugProducer) *Service {
+func NewService(db *gorm.DB, vmedisClient *vmedisv1.Client, drugProducer UpdatedDrugProducer) *Service {
 	return &Service{
 		db:           NewDatabase(db),
 		vmedis:       vmedisClient,
