@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"slices"
 	"sort"
 	"time"
 
@@ -12,7 +13,7 @@ import (
 
 	"github.com/turfaa/vmedis-proxy-api/kafkapb"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/time2"
-	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+	vmedisv1 "github.com/turfaa/vmedis-proxy-api/vmedis/v1"
 )
 
 type Service struct {
@@ -173,8 +174,16 @@ func (s *Service) DumpTodaySalesFromVmedisToDB(ctx context.Context) error {
 
 	vmedisSales = s.makeSalesInvoiceNumbersUnique(vmedisSales)
 
-	if err := s.db.UpsertVmedisSales(ctx, vmedisSales); err != nil {
-		return fmt.Errorf("upsert sales to DB: %w", err)
+	batchNum := 1
+	totalBatches := (len(vmedisSales)-1)/1000 + 1
+	for batch := range slices.Chunk(vmedisSales, 1000) {
+		log.Printf("[%d/%d] Upserting %d sales to DB", batchNum, totalBatches, len(batch))
+
+		if err := s.db.UpsertVmedisSales(ctx, batch); err != nil {
+			return fmt.Errorf("upsert sales to DB: %w", err)
+		}
+
+		batchNum++
 	}
 
 	log.Printf("Dumped today's sales from Vmedis to DB, producing updated drug messages")
