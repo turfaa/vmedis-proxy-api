@@ -11,7 +11,7 @@ import (
 
 	"github.com/turfaa/vmedis-proxy-api/database/models"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/slices2"
-	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+	vmedisv1 "github.com/turfaa/vmedis-proxy-api/vmedis/v1"
 )
 
 type Database struct {
@@ -99,8 +99,10 @@ func (d *Database) UpsertVmedisSales(ctx context.Context, vmedisSales []vmedisv1
 					"updated_at",
 					"vmedis_id",
 					"sold_at",
+					"cashier",
 					"patient_name",
 					"doctor",
+					"salesman",
 					"payment",
 					"total",
 				}),

@@ -183,9 +183,11 @@ func (u *Unit) extractFloatFromInput(selection *goquery.Selection, name string) 
 type Sale struct {
 	ID            int
 	Date          Time    `sales-column:"2"`
+	Cashier       string  `sales-column:"5"`
 	InvoiceNumber string  `sales-column:"6"`
 	PatientName   string  `sales-column:"11"`
 	Doctor        string  `sales-column:"12"`
+	Salesman      string  `sales-column:"13"`
 	Payment       string  `sales-column:"14"`
 	Total         float64 `sales-column:"25"`
 	SaleUnits     []SaleUnit

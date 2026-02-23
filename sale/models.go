@@ -8,7 +8,7 @@ import (
 	"github.com/turfaa/vmedis-proxy-api/drug"
 	"github.com/turfaa/vmedis-proxy-api/money"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/time2"
-	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+	vmedisv1 "github.com/turfaa/vmedis-proxy-api/vmedis/v1"
 )
 
 type SalesResponse struct {
@@ -21,6 +21,7 @@ type Sale struct {
 	InvoiceNumber string    `json:"invoiceNumber"`
 	PatientName   string    `json:"patientName,omitempty"`
 	Doctor        string    `json:"doctor,omitempty"`
+	Salesman      string    `json:"salesman,omitempty"`
 	Payment       string    `json:"payment"`
 	Total         float64   `json:"total"`
 	SaleUnits     []Unit    `json:"saleUnits"`
@@ -38,6 +39,7 @@ func FromDBSale(sale models.Sale) Sale {
 		InvoiceNumber: sale.InvoiceNumber,
 		PatientName:   sale.PatientName,
 		Doctor:        sale.Doctor,
+		Salesman:      sale.Salesman,
 		Payment:       sale.Payment,
 		Total:         sale.Total,
 		SaleUnits:     sus,

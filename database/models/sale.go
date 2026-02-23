@@ -11,9 +11,11 @@ type Sale struct {
 	// VmedisID is the ID of the sale in Vmedis.
 	VmedisID      int       `gorm:"index"`
 	SoldAt        time.Time `gorm:"index"`
+	Cashier       string    `gorm:"index"`
 	InvoiceNumber string    `gorm:"unique"`
 	PatientName   string    `gorm:"index"`
 	Doctor        string    `gorm:"index"`
+	Salesman      string    `gorm:"index"`
 	Payment       string    `gorm:"index"`
 	Total         float64
 	SaleUnits     []SaleUnit `gorm:"foreignKey:InvoiceNumber;references:InvoiceNumber"`
