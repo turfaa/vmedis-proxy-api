@@ -219,7 +219,7 @@ func (s *Service) makeSalesInvoiceNumbersUnique(sales []vmedisv1.Sale) []vmedisv
 			j := 2
 
 			newInvoiceNumber := fmt.Sprintf("%s-%d", baseInvoiceNumber, j)
-			for _, ok := invoiceNumbers[newInvoiceNumber]; ok; {
+			for _, ok := invoiceNumbers[newInvoiceNumber]; ok; _, ok = invoiceNumbers[newInvoiceNumber] {
 				j++
 				newInvoiceNumber = fmt.Sprintf("%s-%d", baseInvoiceNumber, j)
 			}
