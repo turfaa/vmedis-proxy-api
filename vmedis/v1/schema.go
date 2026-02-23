@@ -187,7 +187,7 @@ type Sale struct {
 	PatientName   string  `sales-column:"11"`
 	Doctor        string  `sales-column:"12"`
 	Payment       string  `sales-column:"14"`
-	Total         float64 `sales-column:"24"`
+	Total         float64 `sales-column:"25"`
 	SaleUnits     []SaleUnit
 }
 
