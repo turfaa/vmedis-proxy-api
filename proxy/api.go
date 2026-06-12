@@ -14,6 +14,7 @@ import (
 	"github.com/turfaa/vmedis-proxy-api/auth"
 	"github.com/turfaa/vmedis-proxy-api/drug"
 	"github.com/turfaa/vmedis-proxy-api/procurement"
+	"github.com/turfaa/vmedis-proxy-api/rejecteddrug"
 	"github.com/turfaa/vmedis-proxy-api/sale"
 	"github.com/turfaa/vmedis-proxy-api/shift"
 	"github.com/turfaa/vmedis-proxy-api/stockopname"
@@ -26,13 +27,14 @@ type ApiServer struct {
 	redisClient *redis.Client
 	authService *auth.Service
 
-	authHandler        *auth.ApiHandler
-	drugHandler        *drug.ApiHandler
-	saleHandler        *sale.ApiHandler
-	procurementHandler *procurement.ApiHandler
-	stockOpnameHandler *stockopname.ApiHandler
-	shiftHandler       *shift.ApiHandler
-	tokenHandler       *token.Handler
+	authHandler         *auth.ApiHandler
+	drugHandler         *drug.ApiHandler
+	saleHandler         *sale.ApiHandler
+	procurementHandler  *procurement.ApiHandler
+	stockOpnameHandler  *stockopname.ApiHandler
+	shiftHandler        *shift.ApiHandler
+	tokenHandler        *token.Handler
+	rejectedDrugHandler *rejecteddrug.ApiHandler
 }
 
 // GinEngine returns the gin engine of the proxy api server.
@@ -223,6 +225,45 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 			)
 		}
 
+		rejectedDrugs := v2.Group("/rejected-drugs")
+		{
+			rejectedDrugs.GET(
+				"",
+				auth.AllowedRoles(auth.RoleAdmin, auth.RoleStaff),
+				s.rejectedDrugHandler.GetRejectedDrugs,
+			)
+
+			rejectedDrugs.POST(
+				"",
+				auth.AllowedRoles(auth.RoleAdmin, auth.RoleStaff),
+				s.rejectedDrugHandler.CreateRejectedDrug,
+			)
+
+			rejectedDrugs.GET(
+				"/resolutions",
+				auth.AllowedRoles(auth.RoleAdmin, auth.RoleStaff),
+				s.rejectedDrugHandler.GetResolutions,
+			)
+
+			rejectedDrugs.GET(
+				"/:id",
+				auth.AllowedRoles(auth.RoleAdmin, auth.RoleStaff),
+				s.rejectedDrugHandler.GetRejectedDrug,
+			)
+
+			rejectedDrugs.PATCH(
+				"/:id",
+				auth.AllowedRoles(auth.RoleAdmin, auth.RoleStaff),
+				s.rejectedDrugHandler.UpdateRejectedDrug,
+			)
+
+			rejectedDrugs.DELETE(
+				"/:id",
+				auth.AllowedRoles(auth.RoleAdmin, auth.RoleStaff),
+				s.rejectedDrugHandler.DeleteRejectedDrug,
+			)
+		}
+
 		vm := v2.Group("/vmedis")
 		{
 			tokens := vm.Group("/tokens")
@@ -262,18 +303,20 @@ func NewApiServer(
 	stockOpnameHandler *stockopname.ApiHandler,
 	shiftHandler *shift.ApiHandler,
 	tokenHandler *token.Handler,
+	rejectedDrugHandler *rejecteddrug.ApiHandler,
 ) *ApiServer {
 	return &ApiServer{
 		db:          db,
 		redisClient: redisClient,
 		authService: authService,
 
-		authHandler:        authHandler,
-		drugHandler:        drugHandler,
-		saleHandler:        saleHandler,
-		procurementHandler: procurementHandler,
-		stockOpnameHandler: stockOpnameHandler,
-		shiftHandler:       shiftHandler,
-		tokenHandler:       tokenHandler,
+		authHandler:         authHandler,
+		drugHandler:         drugHandler,
+		saleHandler:         saleHandler,
+		procurementHandler:  procurementHandler,
+		stockOpnameHandler:  stockOpnameHandler,
+		shiftHandler:        shiftHandler,
+		tokenHandler:        tokenHandler,
+		rejectedDrugHandler: rejectedDrugHandler,
 	}
 }
