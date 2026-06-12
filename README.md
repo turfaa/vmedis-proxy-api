@@ -8,6 +8,7 @@ A proxy service in front of [Vmedis](https://vmedis.com), a pharmacy management 
 - **Data dumpers** that scrape or fetch data from Vmedis and persist it to Postgres/SQLite.
 - **Vmedis session management** — session tokens are stored in the database and kept alive by a refresher job.
 - **Kafka pipeline** — drug updates are published as protobuf messages and a consumer re-fetches full drug details from Vmedis.
+- **Backend-driven UI** — `/api/v2` endpoints return display-ready UI components (tables, forms, option lists) built with the [`cui`](cui) (common UI) package, so frontends can render them generically without domain logic.
 - **Role-based responses** — users are identified by an `X-Email` header and mapped to `admin`, `staff`, `reseller`, or `guest` roles; `/api/v2` endpoints tailor their output to the caller's role.
 - **Reports** — e.g. monthly sales/procurement reports emailed to IQVIA as Excel attachments.
 
