@@ -19,6 +19,7 @@ import (
 	"github.com/turfaa/vmedis-proxy-api/drug"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/email2"
 	"github.com/turfaa/vmedis-proxy-api/procurement"
+	"github.com/turfaa/vmedis-proxy-api/rejecteddrug"
 	"github.com/turfaa/vmedis-proxy-api/sale"
 	"github.com/turfaa/vmedis-proxy-api/shift"
 	"github.com/turfaa/vmedis-proxy-api/stockopname"
@@ -51,6 +52,9 @@ var (
 	shiftHandler       atomic.Pointer[shift.ApiHandler]
 	tokenService       atomic.Pointer[token2.Service]
 	tokenHandler       atomic.Pointer[token2.Handler]
+
+	rejectedDrugService atomic.Pointer[rejecteddrug.Service]
+	rejectedDrugHandler atomic.Pointer[rejecteddrug.ApiHandler]
 )
 
 func getDatabase() *gorm.DB {
@@ -453,6 +457,34 @@ func getTokenHandler() *token2.Handler {
 
 	if !tokenHandler.CompareAndSwap(nil, newHandler) {
 		return tokenHandler.Load()
+	}
+
+	return newHandler
+}
+
+func getRejectedDrugService() *rejecteddrug.Service {
+	if val := rejectedDrugService.Load(); val != nil {
+		return val
+	}
+
+	newService := rejecteddrug.NewService(getDatabase())
+
+	if !rejectedDrugService.CompareAndSwap(nil, newService) {
+		return rejectedDrugService.Load()
+	}
+
+	return newService
+}
+
+func getRejectedDrugHandler() *rejecteddrug.ApiHandler {
+	if val := rejectedDrugHandler.Load(); val != nil {
+		return val
+	}
+
+	newHandler := rejecteddrug.NewApiHandler(getRejectedDrugService())
+
+	if !rejectedDrugHandler.CompareAndSwap(nil, newHandler) {
+		return rejectedDrugHandler.Load()
 	}
 
 	return newHandler

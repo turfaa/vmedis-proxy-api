@@ -15,6 +15,7 @@ import (
 	"github.com/turfaa/vmedis-proxy-api/auth"
 	"github.com/turfaa/vmedis-proxy-api/drug"
 	"github.com/turfaa/vmedis-proxy-api/procurement"
+	"github.com/turfaa/vmedis-proxy-api/rejecteddrug"
 	"github.com/turfaa/vmedis-proxy-api/sale"
 	"github.com/turfaa/vmedis-proxy-api/shift"
 	"github.com/turfaa/vmedis-proxy-api/stockopname"
@@ -27,13 +28,14 @@ type Config struct {
 	RedisClient *redis.Client
 	AuthService *auth.Service
 
-	AuthHandler        *auth.ApiHandler
-	DrugHandler        *drug.ApiHandler
-	SaleHandler        *sale.ApiHandler
-	ProcurementHandler *procurement.ApiHandler
-	StockOpnameHandler *stockopname.ApiHandler
-	ShiftHandler       *shift.ApiHandler
-	TokenHandler       *token.Handler
+	AuthHandler         *auth.ApiHandler
+	DrugHandler         *drug.ApiHandler
+	SaleHandler         *sale.ApiHandler
+	ProcurementHandler  *procurement.ApiHandler
+	StockOpnameHandler  *stockopname.ApiHandler
+	ShiftHandler        *shift.ApiHandler
+	TokenHandler        *token.Handler
+	RejectedDrugHandler *rejecteddrug.ApiHandler
 }
 
 // Run runs the proxy server.
@@ -51,6 +53,7 @@ func Run(config Config) {
 		config.StockOpnameHandler,
 		config.ShiftHandler,
 		config.TokenHandler,
+		config.RejectedDrugHandler,
 	)
 
 	engine := apiServer.GinEngine()

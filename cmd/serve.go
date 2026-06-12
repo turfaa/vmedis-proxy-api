@@ -25,16 +25,17 @@ var serveCmd = commandWithInit{
 
 			proxy.Run(
 				proxy.Config{
-					DB:                 getDatabase(),
-					RedisClient:        getRedisClient(),
-					AuthService:        getAuthService(),
-					AuthHandler:        getAuthHandler(),
-					DrugHandler:        getDrugHandler(stockOpnameStartDate),
-					SaleHandler:        getSaleHandler(),
-					ProcurementHandler: getProcurementHandler(),
-					StockOpnameHandler: getStockOpnameHandler(),
-					ShiftHandler:       getShiftHandler(),
-					TokenHandler:       getTokenHandler(),
+					DB:                  getDatabase(),
+					RedisClient:         getRedisClient(),
+					AuthService:         getAuthService(),
+					AuthHandler:         getAuthHandler(),
+					DrugHandler:         getDrugHandler(stockOpnameStartDate),
+					SaleHandler:         getSaleHandler(),
+					ProcurementHandler:  getProcurementHandler(),
+					StockOpnameHandler:  getStockOpnameHandler(),
+					ShiftHandler:        getShiftHandler(),
+					TokenHandler:        getTokenHandler(),
+					RejectedDrugHandler: getRejectedDrugHandler(),
 				},
 			)
 		},
