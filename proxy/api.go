@@ -246,9 +246,21 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 			)
 
 			rejectedDrugs.GET(
+				"/form",
+				auth.AllowedRoles(auth.RoleAdmin, auth.RoleStaff),
+				s.rejectedDrugHandler.GetCreateRejectedDrugForm,
+			)
+
+			rejectedDrugs.GET(
 				"/:id",
 				auth.AllowedRoles(auth.RoleAdmin, auth.RoleStaff),
 				s.rejectedDrugHandler.GetRejectedDrug,
+			)
+
+			rejectedDrugs.GET(
+				"/:id/form",
+				auth.AllowedRoles(auth.RoleAdmin, auth.RoleStaff),
+				s.rejectedDrugHandler.GetUpdateRejectedDrugForm,
 			)
 
 			rejectedDrugs.PATCH(

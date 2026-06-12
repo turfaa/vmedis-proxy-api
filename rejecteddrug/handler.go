@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/turfaa/vmedis-proxy-api/auth"
+	"github.com/turfaa/vmedis-proxy-api/cui"
 	"github.com/turfaa/vmedis-proxy-api/database/models"
+	"github.com/turfaa/vmedis-proxy-api/pkg2/slices2"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/time2"
 
 	"github.com/gin-gonic/gin"
@@ -22,7 +25,10 @@ func NewApiHandler(service *Service) *ApiHandler {
 	return &ApiHandler{service: service}
 }
 
-// GetRejectedDrugs returns rejected drugs filtered by query parameters.
+// GetRejectedDrugs returns rejected drugs as a display-ready table.
+// The row IDs are the rejected drug IDs.
+//
+// The rejected drugs are filtered by query parameters.
 // All filters are optional and can be combined:
 //   - query: fuzzy-matches drug name and resolution notes
 //   - drug_name, resolution_notes: fuzzy-match their respective fields
@@ -43,9 +49,11 @@ func (h *ApiHandler) GetRejectedDrugs(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, RejectedDrugsResponse{RejectedDrugs: rejectedDrugs})
+	c.JSON(200, h.transformRejectedDrugsToTable(rejectedDrugs))
 }
 
+// GetRejectedDrug returns a rejected drug as a display-ready
+// key-value table.
 func (h *ApiHandler) GetRejectedDrug(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
@@ -64,7 +72,7 @@ func (h *ApiHandler) GetRejectedDrug(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, RejectedDrugResponse{RejectedDrug: rejectedDrug})
+	c.JSON(200, h.transformRejectedDrugToTable(rejectedDrug))
 }
 
 func (h *ApiHandler) CreateRejectedDrug(c *gin.Context) {
@@ -125,8 +133,204 @@ func (h *ApiHandler) DeleteRejectedDrug(c *gin.Context) {
 	c.JSON(200, gin.H{"message": "Rejected drug deleted successfully"})
 }
 
+// GetResolutions returns all known resolutions as labeled options,
+// e.g. for the resolution filter dropdown.
 func (h *ApiHandler) GetResolutions(c *gin.Context) {
-	c.JSON(200, ResolutionsResponse{Resolutions: h.service.GetResolutions()})
+	c.JSON(200, cui.Options{Options: h.resolutionOptions()})
+}
+
+// GetCreateRejectedDrugForm returns an empty form for recording a new
+// rejected drug. The filled form can be submitted to `POST /rejected-drugs`.
+func (h *ApiHandler) GetCreateRejectedDrugForm(c *gin.Context) {
+	c.JSON(200, cui.Form{
+		Title: "Catat Obat Ditolak",
+		Fields: []cui.Field{
+			{
+				ID:       "drugName",
+				Label:    "Nama Obat",
+				Type:     cui.FieldTypeText,
+				Required: true,
+			},
+		},
+	})
+}
+
+// GetUpdateRejectedDrugForm returns a form prefilled with the current raw
+// values of the rejected drug. The filled form can be submitted to
+// `PATCH /rejected-drugs/:id`.
+func (h *ApiHandler) GetUpdateRejectedDrugForm(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		c.JSON(400, gin.H{"error": fmt.Sprintf("invalid id: %s", err)})
+		return
+	}
+
+	rejectedDrug, err := h.service.GetRejectedDrugByID(c, uint(id))
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(404, gin.H{"error": fmt.Sprintf("rejected drug %d not found", id)})
+			return
+		}
+
+		c.JSON(500, gin.H{"error": fmt.Sprintf("failed to get rejected drug %d: %s", id, err)})
+		return
+	}
+
+	c.JSON(200, cui.Form{
+		Title: "Perbarui Obat Ditolak",
+		Fields: []cui.Field{
+			{
+				ID:       "drugName",
+				Label:    "Nama Obat",
+				Type:     cui.FieldTypeText,
+				Value:    rejectedDrug.DrugName,
+				Required: true,
+			},
+			{
+				ID:      "resolution",
+				Label:   "Status",
+				Type:    cui.FieldTypeSelect,
+				Value:   rejectedDrug.Resolution.String(),
+				Options: h.resolutionOptions(),
+			},
+			{
+				ID:    "resolutionNotes",
+				Label: "Catatan",
+				Type:  cui.FieldTypeTextArea,
+				Value: rejectedDrug.ResolutionNotes,
+			},
+		},
+	})
+}
+
+func (h *ApiHandler) transformRejectedDrugsToTable(rejectedDrugs []RejectedDrug) cui.Table {
+	header := []string{
+		"Nama Obat",
+		"Status",
+		"Catatan",
+		"Dicatat Oleh",
+		"Waktu Dicatat",
+		"Diselesaikan Oleh",
+		"Waktu Diselesaikan",
+	}
+
+	rows := slices2.Map(rejectedDrugs, func(rejectedDrug RejectedDrug) cui.Row {
+		return cui.Row{
+			ID: strconv.FormatUint(uint64(rejectedDrug.ID), 10),
+			Columns: []string{
+				rejectedDrug.DrugName,
+				resolutionLabel(rejectedDrug.Resolution),
+				rejectedDrug.ResolutionNotes,
+				rejectedDrug.CreatedBy,
+				time2.FormatDateTime(rejectedDrug.CreatedAt),
+				orDash(rejectedDrug.ResolvedBy),
+				formatNullableDateTime(rejectedDrug.ResolvedAt),
+			},
+		}
+	})
+
+	return cui.Table{
+		Header: header,
+		Rows:   rows,
+	}
+}
+
+func (h *ApiHandler) transformRejectedDrugToTable(rejectedDrug RejectedDrug) cui.Table {
+	return cui.Table{
+		Rows: []cui.Row{
+			{
+				ID: "nama_obat",
+				Columns: []string{
+					"Nama Obat",
+					rejectedDrug.DrugName,
+				},
+			},
+			{
+				ID: "status",
+				Columns: []string{
+					"Status",
+					resolutionLabel(rejectedDrug.Resolution),
+				},
+			},
+			{
+				ID: "catatan",
+				Columns: []string{
+					"Catatan",
+					rejectedDrug.ResolutionNotes,
+				},
+			},
+			{
+				ID: "dicatat_oleh",
+				Columns: []string{
+					"Dicatat Oleh",
+					rejectedDrug.CreatedBy,
+				},
+			},
+			{
+				ID: "waktu_dicatat",
+				Columns: []string{
+					"Waktu Dicatat",
+					time2.FormatDateTime(rejectedDrug.CreatedAt),
+				},
+			},
+			{
+				ID: "diselesaikan_oleh",
+				Columns: []string{
+					"Diselesaikan Oleh",
+					orDash(rejectedDrug.ResolvedBy),
+				},
+			},
+			{
+				ID: "waktu_diselesaikan",
+				Columns: []string{
+					"Waktu Diselesaikan",
+					formatNullableDateTime(rejectedDrug.ResolvedAt),
+				},
+			},
+		},
+	}
+}
+
+func (h *ApiHandler) resolutionOptions() []cui.Option {
+	return slices2.Map(h.service.GetResolutions(), func(resolution models.RejectedDrugResolution) cui.Option {
+		return cui.Option{
+			Value: resolution.String(),
+			Label: resolutionLabel(resolution),
+		}
+	})
+}
+
+func resolutionLabel(resolution models.RejectedDrugResolution) string {
+	switch resolution {
+	case models.RejectedDrugResolutionUnresolved:
+		return "Belum Diselesaikan"
+	case models.RejectedDrugResolutionOrdered:
+		return "Sudah Dipesan"
+	case models.RejectedDrugResolutionStocked:
+		return "Sudah Distok"
+	case models.RejectedDrugResolutionSubstituted:
+		return "Diganti Obat Lain"
+	case models.RejectedDrugResolutionWillNotStock:
+		return "Tidak Akan Distok"
+	default:
+		return resolution.String()
+	}
+}
+
+func orDash(value string) string {
+	if value == "" {
+		return "-"
+	}
+
+	return value
+}
+
+func formatNullableDateTime(t *time.Time) string {
+	if t == nil {
+		return "-"
+	}
+
+	return time2.FormatDateTime(*t)
 }
 
 func extractListFilters(c *gin.Context) (ListFilters, error) {
