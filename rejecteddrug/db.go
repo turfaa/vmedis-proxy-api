@@ -69,17 +69,13 @@ func applyFilters(query *gorm.DB, filters ListFilters) *gorm.DB {
 	if filters.Query != "" {
 		pattern := likePattern(filters.Query)
 		query = query.Where(
-			"LOWER(drug_name) LIKE ? OR LOWER(reason) LIKE ? OR LOWER(resolution_notes) LIKE ?",
-			pattern, pattern, pattern,
+			"LOWER(drug_name) LIKE ? OR LOWER(resolution_notes) LIKE ?",
+			pattern, pattern,
 		)
 	}
 
 	if filters.DrugName != "" {
 		query = query.Where("LOWER(drug_name) LIKE ?", likePattern(filters.DrugName))
-	}
-
-	if filters.Reason != "" {
-		query = query.Where("LOWER(reason) LIKE ?", likePattern(filters.Reason))
 	}
 
 	if filters.ResolutionNotes != "" {

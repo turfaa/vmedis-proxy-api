@@ -24,8 +24,8 @@ func NewApiHandler(service *Service) *ApiHandler {
 
 // GetRejectedDrugs returns rejected drugs filtered by query parameters.
 // All filters are optional and can be combined:
-//   - query: fuzzy-matches drug name, reason, and resolution notes
-//   - drug_name, reason, resolution_notes: fuzzy-match their respective fields
+//   - query: fuzzy-matches drug name and resolution notes
+//   - drug_name, resolution_notes: fuzzy-match their respective fields
 //   - resolutions: comma-separated list of resolutions (can also be repeated)
 //   - created_by, resolved_by: exact match on user email
 //   - date | from + until/to: created-at date range
@@ -133,7 +133,6 @@ func extractListFilters(c *gin.Context) (ListFilters, error) {
 	filters := ListFilters{
 		Query:           c.Query("query"),
 		DrugName:        c.Query("drug_name"),
-		Reason:          c.Query("reason"),
 		ResolutionNotes: c.Query("resolution_notes"),
 		CreatedBy:       c.Query("created_by"),
 		ResolvedBy:      c.Query("resolved_by"),

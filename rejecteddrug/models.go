@@ -11,9 +11,6 @@ type RejectedDrug struct {
 	CreatedAt       time.Time                     `json:"createdAt"`
 	UpdatedAt       time.Time                     `json:"updatedAt"`
 	DrugName        string                        `json:"drugName"`
-	Quantity        float64                       `json:"quantity"`
-	Unit            string                        `json:"unit"`
-	Reason          string                        `json:"reason"`
 	Resolution      models.RejectedDrugResolution `json:"resolution"`
 	ResolutionNotes string                        `json:"resolutionNotes"`
 	ResolvedAt      *time.Time                    `json:"resolvedAt,omitempty"`
@@ -27,9 +24,6 @@ func FromDBRejectedDrug(rejectedDrug models.RejectedDrug) RejectedDrug {
 		CreatedAt:       rejectedDrug.CreatedAt,
 		UpdatedAt:       rejectedDrug.UpdatedAt,
 		DrugName:        rejectedDrug.DrugName,
-		Quantity:        rejectedDrug.Quantity,
-		Unit:            rejectedDrug.Unit,
-		Reason:          rejectedDrug.Reason,
 		Resolution:      rejectedDrug.Resolution,
 		ResolutionNotes: rejectedDrug.ResolutionNotes,
 		ResolvedAt:      rejectedDrug.ResolvedAt,
@@ -41,10 +35,9 @@ func FromDBRejectedDrug(rejectedDrug models.RejectedDrug) RejectedDrug {
 // ListFilters are the filters that can be applied when listing rejected drugs.
 // Zero-valued fields are ignored, so any combination of filters can be used.
 type ListFilters struct {
-	// Query fuzzy-matches drug name, reason, and resolution notes.
+	// Query fuzzy-matches drug name and resolution notes.
 	Query           string
 	DrugName        string
-	Reason          string
 	ResolutionNotes string
 	Resolutions     []models.RejectedDrugResolution
 	CreatedBy       string

@@ -40,9 +40,6 @@ func (s *Service) GetRejectedDrugByID(ctx context.Context, id uint) (RejectedDru
 func (s *Service) CreateRejectedDrug(ctx context.Context, request CreateRejectedDrugRequest, createdBy string) (RejectedDrug, error) {
 	rejectedDrug, err := s.db.CreateRejectedDrug(ctx, models.RejectedDrug{
 		DrugName:   request.DrugName,
-		Quantity:   request.Quantity,
-		Unit:       request.Unit,
-		Reason:     request.Reason,
 		Resolution: models.RejectedDrugResolutionUnresolved,
 		CreatedBy:  createdBy,
 	})
@@ -61,18 +58,6 @@ func (s *Service) UpdateRejectedDrug(ctx context.Context, id uint, request Updat
 
 	if request.DrugName != nil {
 		rejectedDrug.DrugName = *request.DrugName
-	}
-
-	if request.Quantity != nil {
-		rejectedDrug.Quantity = *request.Quantity
-	}
-
-	if request.Unit != nil {
-		rejectedDrug.Unit = *request.Unit
-	}
-
-	if request.Reason != nil {
-		rejectedDrug.Reason = *request.Reason
 	}
 
 	if request.ResolutionNotes != nil {

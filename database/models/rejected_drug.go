@@ -12,10 +12,7 @@ type RejectedDrug struct {
 	CreatedAt time.Time `gorm:"index;not null;default:CURRENT_TIMESTAMP"`
 	UpdatedAt time.Time `gorm:"not null;default:CURRENT_TIMESTAMP"`
 
-	DrugName        string `gorm:"index;not null"`
-	Quantity        float64
-	Unit            string
-	Reason          string
+	DrugName        string                 `gorm:"index;not null"`
 	Resolution      RejectedDrugResolution `gorm:"index;not null;default:UNRESOLVED"`
 	ResolutionNotes string
 	ResolvedAt      *time.Time `gorm:"index"`
