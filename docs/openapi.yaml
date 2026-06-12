@@ -1,0 +1,1595 @@
+openapi: 3.0.3
+
+info:
+  title: Vmedis Proxy API
+  description: |
+    Proxy API for Vmedis, providing pharmacy-related APIs such as sales, drugs,
+    procurements, stock opnames, shifts, rejected drugs, and Vmedis token management.
+
+    ## Authentication
+    Authentication is done by sending the user's email address in the `X-Email` header.
+    Requests without the header are treated as the `guest` user. Some endpoints
+    require the `admin` or `staff` role and respond with `403` otherwise.
+
+    ## API versions
+    - `/api/v1`: raw data endpoints.
+    - `/api/v2`: endpoints where the response is generated on the server side and
+      authentication might affect the response.
+
+    ## Time range query parameters
+    Endpoints that accept a time range use the following query parameters
+    (all dates use the `YYYY-MM-DD` format):
+    - `date`: a single day.
+    - `from` + `until` (alias `to`): an inclusive day range. When only `from` is
+      given, the range ends at the end of today.
+    - When no parameter is given, the range defaults to today.
+  version: 1.0.0
+
+servers:
+  - url: /
+    description: This server.
+
+tags:
+  - name: Auth
+    description: User authentication.
+  - name: Sales
+    description: Sales and sale statistics.
+  - name: Drugs
+    description: Drug inventory.
+  - name: Procurements
+    description: Drug procurements, recommendations, and invoice calculators.
+  - name: Stock Opnames
+    description: Stock opnames (physical stock counts).
+  - name: Shifts
+    description: Cashier shifts.
+  - name: Rejected Drugs
+    description: Drugs asked by customers but not sold (yet).
+  - name: Vmedis Tokens
+    description: Vmedis session token management.
+
+security:
+  - {}
+  - EmailAuth: []
+
+paths:
+  /api/v1/sales:
+    get:
+      operationId: getSales
+      tags: [Sales]
+      summary: Get sales
+      description: Returns the sales in the given time range (defaults to today).
+      parameters:
+        - $ref: '#/components/parameters/DateQuery'
+        - $ref: '#/components/parameters/FromQuery'
+        - $ref: '#/components/parameters/UntilQuery'
+        - $ref: '#/components/parameters/ToQuery'
+      responses:
+        '200':
+          description: Sales in the given time range.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/sales/drugs:
+    get:
+      operationId: getSoldDrugs
+      tags: [Sales]
+      summary: Get sold drugs
+      description: Returns the drugs sold in the given time range (defaults to today), aggregated per drug.
+      parameters:
+        - $ref: '#/components/parameters/DateQuery'
+        - $ref: '#/components/parameters/FromQuery'
+        - $ref: '#/components/parameters/UntilQuery'
+        - $ref: '#/components/parameters/ToQuery'
+      responses:
+        '200':
+          description: Sold drugs in the given time range.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SoldDrugsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/sales/statistics:
+    get:
+      operationId: getSalesStatistics
+      tags: [Sales]
+      summary: Get sales statistics
+      description: |
+        Returns the history of sales statistics pulled in the given time range
+        (defaults to today), together with a daily aggregation.
+        Responses are cached for one minute.
+      parameters:
+        - $ref: '#/components/parameters/DateQuery'
+        - $ref: '#/components/parameters/FromQuery'
+        - $ref: '#/components/parameters/UntilQuery'
+        - $ref: '#/components/parameters/ToQuery'
+      responses:
+        '200':
+          description: Sales statistics history.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatisticsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/sales/statistics/sensors:
+    get:
+      operationId: getSalesStatisticsSensors
+      tags: [Sales]
+      summary: Get sales statistics sensors
+      description: |
+        Special endpoint for creating Home Assistant sensors based on sale statistics.
+        Returns today's and yesterday's statistics as formatted strings.
+        Responses are cached for one minute.
+      responses:
+        '200':
+          description: Sales statistics sensors.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatisticsSensorsResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/sales/dump:
+    post:
+      operationId: dumpTodaySales
+      tags: [Sales]
+      summary: Dump today's sales
+      description: Asynchronously dumps today's sales and sales statistics from Vmedis to the database.
+      responses:
+        '200':
+          $ref: '#/components/responses/Message'
+
+  /api/v1/drugs:
+    get:
+      operationId: getDrugs
+      tags: [Drugs]
+      summary: Get all drugs
+      description: Returns all drugs in the inventory. Responses are cached for one minute.
+      responses:
+        '200':
+          description: All drugs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DrugsResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/drugs/to-stock-opname:
+    get:
+      operationId: getDrugsToStockOpname
+      tags: [Drugs]
+      summary: Get drugs to stock opname
+      description: |
+        Returns the drugs that should be stock-opnamed, i.e. drugs that have not
+        been stock-opnamed since the lookup start date until yesterday
+        (relative to the given `date`, which defaults to today).
+      parameters:
+        - name: mode
+          in: query
+          description: |
+            Selection mode:
+            - `sales-based`: based on drugs sold in the last month.
+            - `conservative`: based on all drugs.
+          schema:
+            type: string
+            enum: [sales-based, conservative]
+            default: sales-based
+        - $ref: '#/components/parameters/DateQuery'
+      responses:
+        '200':
+          description: Drugs to stock opname.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DrugsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/drugs/dump:
+    post:
+      operationId: dumpDrugs
+      tags: [Drugs]
+      summary: Dump drugs
+      description: Asynchronously dumps all drugs from Vmedis to the database.
+      responses:
+        '200':
+          $ref: '#/components/responses/Message'
+
+  /api/v1/procurements/recommendations:
+    get:
+      operationId: getProcurementRecommendations
+      tags: [Procurements]
+      summary: Get procurement recommendations
+      description: Returns the latest procurement recommendations computed and stored in Redis.
+      responses:
+        '200':
+          description: Procurement recommendations.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecommendationsResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/procurements/recommendations/dump:
+    post:
+      operationId: dumpProcurementRecommendations
+      tags: [Procurements]
+      summary: Dump procurement recommendations
+      description: Asynchronously recomputes the procurement recommendations from Vmedis and stores them in Redis.
+      responses:
+        '200':
+          $ref: '#/components/responses/Message'
+
+  /api/v1/procurements/invoice-calculators:
+    get:
+      operationId: getInvoiceCalculators
+      tags: [Procurements]
+      summary: Get invoice calculators
+      description: Returns the invoice calculators of all suppliers.
+      responses:
+        '200':
+          description: Invoice calculators.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceCalculatorsResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/procurements/dump:
+    post:
+      operationId: dumpProcurements
+      tags: [Procurements]
+      summary: Dump procurements
+      description: |
+        Asynchronously dumps procurements between the given dates from Vmedis to the database.
+        When the body is empty or dates are missing, the range defaults to the last 14 days.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DumpProcurementsRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/Message'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/v1/procurement/recommendations:
+    get:
+      operationId: getProcurementRecommendationsLegacy
+      tags: [Procurements]
+      summary: Get procurement recommendations (legacy path)
+      description: Deprecated alias of `/api/v1/procurements/recommendations`.
+      deprecated: true
+      responses:
+        '200':
+          description: Procurement recommendations.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecommendationsResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/procurement/recommendations/dump:
+    post:
+      operationId: dumpProcurementRecommendationsLegacy
+      tags: [Procurements]
+      summary: Dump procurement recommendations (legacy path)
+      description: Deprecated alias of `/api/v1/procurements/recommendations/dump`.
+      deprecated: true
+      responses:
+        '200':
+          $ref: '#/components/responses/Message'
+
+  /api/v1/procurement/invoice-calculators:
+    get:
+      operationId: getInvoiceCalculatorsLegacy
+      tags: [Procurements]
+      summary: Get invoice calculators (legacy path)
+      description: Deprecated alias of `/api/v1/procurements/invoice-calculators`.
+      deprecated: true
+      responses:
+        '200':
+          description: Invoice calculators.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceCalculatorsResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/procurement/dump:
+    post:
+      operationId: dumpProcurementsLegacy
+      tags: [Procurements]
+      summary: Dump procurements (legacy path)
+      description: Deprecated alias of `/api/v1/procurements/dump`.
+      deprecated: true
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DumpProcurementsRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/Message'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/v1/stock-opnames:
+    get:
+      operationId: getStockOpnames
+      tags: [Stock Opnames]
+      summary: Get stock opnames
+      description: Returns the stock opnames in the given time range (defaults to today).
+      parameters:
+        - $ref: '#/components/parameters/DateQuery'
+        - $ref: '#/components/parameters/FromQuery'
+        - $ref: '#/components/parameters/UntilQuery'
+        - $ref: '#/components/parameters/ToQuery'
+      responses:
+        '200':
+          description: Stock opnames in the given time range.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockOpnamesResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/stock-opnames/compacted:
+    get:
+      operationId: getCompactedStockOpnames
+      tags: [Stock Opnames]
+      summary: Get compacted stock opnames
+      description: |
+        Returns the stock opnames in the given time range (defaults to today),
+        compacted per drug per day with the batch-level changes listed.
+      parameters:
+        - $ref: '#/components/parameters/DateQuery'
+        - $ref: '#/components/parameters/FromQuery'
+        - $ref: '#/components/parameters/UntilQuery'
+        - $ref: '#/components/parameters/ToQuery'
+      responses:
+        '200':
+          description: Compacted stock opnames in the given time range.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompactedStockOpnamesResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/stock-opnames/summaries:
+    get:
+      operationId: getStockOpnameSummaries
+      tags: [Stock Opnames]
+      summary: Get stock opname summaries
+      description: Returns per-drug summaries of the stock opnames in the given time range (defaults to today).
+      parameters:
+        - $ref: '#/components/parameters/DateQuery'
+        - $ref: '#/components/parameters/FromQuery'
+        - $ref: '#/components/parameters/UntilQuery'
+        - $ref: '#/components/parameters/ToQuery'
+      responses:
+        '200':
+          description: Stock opname summaries in the given time range.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SummariesResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/stock-opnames/dump:
+    post:
+      operationId: dumpTodayStockOpnames
+      tags: [Stock Opnames]
+      summary: Dump today's stock opnames
+      description: Asynchronously dumps today's stock opnames from Vmedis to the database.
+      responses:
+        '200':
+          $ref: '#/components/responses/Message'
+
+  /api/v1/users/login:
+    post:
+      operationId: loginUser
+      tags: [Auth]
+      summary: Login
+      description: |
+        Logs a user in by email. The user is created with the `guest` role if it
+        does not exist yet. Alias of `/api/v1/auth/login`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: The logged-in user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/v1/auth/login:
+    post:
+      operationId: login
+      tags: [Auth]
+      summary: Login
+      description: |
+        Logs a user in by email. The user is created with the `guest` role if it
+        does not exist yet. Alias of `/api/v1/users/login`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: The logged-in user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/v2/drugs:
+    get:
+      operationId: getDrugsV2
+      tags: [Drugs]
+      summary: Get all drugs (v2)
+      description: |
+        Returns all drugs as display-ready sections. The visible sections (prices,
+        stocks, etc.) depend on the role of the authenticated user.
+        Responses are cached for one minute per user role.
+      responses:
+        '200':
+          description: All drugs, rendered as sections based on the user's role.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DrugsResponseV2'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v2/procurements/drugs/{drug_code}/last:
+    get:
+      operationId: getLastDrugProcurements
+      tags: [Procurements]
+      summary: Get last procurements of a drug
+      description: |
+        Returns the last procurements of the given drug as a display-ready table.
+        Requires the `admin` or `staff` role. Responses are cached for one minute.
+      security:
+        - EmailAuth: []
+      parameters:
+        - name: drug_code
+          in: path
+          required: true
+          description: The Vmedis code of the drug.
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum number of procurements to return.
+          schema:
+            type: integer
+            default: 5
+      responses:
+        '200':
+          description: The last procurements of the drug as a table.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Table'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v2/shifts:
+    get:
+      operationId: getShifts
+      tags: [Shifts]
+      summary: Get shifts
+      description: |
+        Returns the cashier shifts in the given time range (defaults to today)
+        as a display-ready table. Requires the `admin` or `staff` role.
+      security:
+        - EmailAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DateQuery'
+        - $ref: '#/components/parameters/FromQuery'
+        - $ref: '#/components/parameters/UntilQuery'
+        - $ref: '#/components/parameters/ToQuery'
+      responses:
+        '200':
+          description: Shifts in the given time range as a table.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Table'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v2/shifts/dump:
+    post:
+      operationId: dumpShifts
+      tags: [Shifts]
+      summary: Dump shifts
+      description: |
+        Dumps the shifts in the given time range (defaults to today) from Vmedis
+        to the database and returns them as a display-ready table.
+        Requires the `admin` or `staff` role.
+      security:
+        - EmailAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DumpShiftRequest'
+      responses:
+        '200':
+          description: The dumped shifts as a table.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Table'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v2/shifts/{vmedis_id}:
+    get:
+      operationId: getShiftByVmedisID
+      tags: [Shifts]
+      summary: Get shift by Vmedis ID
+      description: |
+        Returns the shift with the given Vmedis ID as a display-ready table of
+        label/value rows. Requires the `admin` or `staff` role.
+      security:
+        - EmailAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ShiftVmedisID'
+      responses:
+        '200':
+          description: The shift as a table.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Table'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v2/shifts/{vmedis_id}/show:
+    get:
+      operationId: showShift
+      tags: [Shifts]
+      summary: Show shift as HTML
+      description: |
+        Renders the shift with the given Vmedis ID as an HTML page.
+        Requires the `admin` or `staff` role.
+      security:
+        - EmailAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ShiftVmedisID'
+      responses:
+        '200':
+          description: The shift rendered as an HTML page.
+          content:
+            text/html:
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v2/rejected-drugs:
+    get:
+      operationId: getRejectedDrugs
+      tags: [Rejected Drugs]
+      summary: Get rejected drugs
+      description: |
+        Returns rejected drugs filtered by query parameters. All filters are
+        optional and can be combined. Unlike other time-range endpoints, the
+        created-at filter is only applied when a date query parameter is sent.
+        Requires the `admin` or `staff` role.
+      security:
+        - EmailAuth: []
+      parameters:
+        - name: query
+          in: query
+          description: Fuzzy-matches drug name and resolution notes.
+          schema:
+            type: string
+        - name: drug_name
+          in: query
+          description: Fuzzy-matches the drug name.
+          schema:
+            type: string
+        - name: resolution_notes
+          in: query
+          description: Fuzzy-matches the resolution notes.
+          schema:
+            type: string
+        - name: resolutions
+          in: query
+          description: |
+            Filter by resolutions. Can be repeated and/or given as a
+            comma-separated list. `resolution` is accepted as an alias.
+            Values are case-insensitive.
+          explode: true
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/RejectedDrugResolution'
+        - name: created_by
+          in: query
+          description: Exact match on the email of the user who created the entry.
+          schema:
+            type: string
+        - name: resolved_by
+          in: query
+          description: Exact match on the email of the user who resolved the entry.
+          schema:
+            type: string
+        - $ref: '#/components/parameters/DateQuery'
+        - $ref: '#/components/parameters/FromQuery'
+        - $ref: '#/components/parameters/UntilQuery'
+        - $ref: '#/components/parameters/ToQuery'
+        - name: resolved_from
+          in: query
+          description: Start of the resolved-at date range, in `YYYY-MM-DD` format.
+          schema:
+            type: string
+            format: date
+        - name: resolved_until
+          in: query
+          description: End (inclusive) of the resolved-at date range, in `YYYY-MM-DD` format.
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: The matching rejected drugs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RejectedDrugsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      operationId: createRejectedDrug
+      tags: [Rejected Drugs]
+      summary: Create a rejected drug
+      description: |
+        Creates a rejected drug entry with the `UNRESOLVED` resolution.
+        The creator is taken from the authenticated user.
+        Requires the `admin` or `staff` role.
+      security:
+        - EmailAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRejectedDrugRequest'
+      responses:
+        '201':
+          description: The created rejected drug.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RejectedDrugResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v2/rejected-drugs/resolutions:
+    get:
+      operationId: getRejectedDrugResolutions
+      tags: [Rejected Drugs]
+      summary: Get available resolutions
+      description: Returns all known rejected drug resolutions. Requires the `admin` or `staff` role.
+      security:
+        - EmailAuth: []
+      responses:
+        '200':
+          description: All known resolutions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolutionsResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v2/rejected-drugs/{id}:
+    get:
+      operationId: getRejectedDrug
+      tags: [Rejected Drugs]
+      summary: Get a rejected drug
+      description: Returns the rejected drug with the given ID. Requires the `admin` or `staff` role.
+      security:
+        - EmailAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RejectedDrugID'
+      responses:
+        '200':
+          description: The rejected drug.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RejectedDrugResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    patch:
+      operationId: updateRejectedDrug
+      tags: [Rejected Drugs]
+      summary: Update a rejected drug
+      description: |
+        Updates the rejected drug with the given ID. Omitted (null) fields are
+        left unchanged. Setting a resolution other than `UNRESOLVED` marks the
+        entry as resolved by the authenticated user.
+        Requires the `admin` or `staff` role.
+      security:
+        - EmailAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RejectedDrugID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRejectedDrugRequest'
+      responses:
+        '200':
+          description: The updated rejected drug.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RejectedDrugResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      operationId: deleteRejectedDrug
+      tags: [Rejected Drugs]
+      summary: Delete a rejected drug
+      description: Deletes the rejected drug with the given ID. Requires the `admin` or `staff` role.
+      security:
+        - EmailAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RejectedDrugID'
+      responses:
+        '200':
+          $ref: '#/components/responses/Message'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v2/vmedis/tokens:
+    get:
+      operationId: getVmedisTokens
+      tags: [Vmedis Tokens]
+      summary: Get Vmedis tokens
+      description: Returns all Vmedis session tokens as a display-ready table. Requires the `admin` or `staff` role.
+      security:
+        - EmailAuth: []
+      responses:
+        '200':
+          description: The Vmedis tokens as a table.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Table'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      operationId: insertVmedisToken
+      tags: [Vmedis Tokens]
+      summary: Insert a Vmedis token
+      description: Inserts a new Vmedis session token. Requires the `admin` or `staff` role.
+      security:
+        - EmailAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InsertTokenRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/Message'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v2/vmedis/tokens/{id}:
+    delete:
+      operationId: deleteVmedisToken
+      tags: [Vmedis Tokens]
+      summary: Delete a Vmedis token
+      description: Deletes the Vmedis token with the given ID. Requires the `admin` or `staff` role.
+      security:
+        - EmailAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The ID of the token.
+          schema:
+            type: integer
+            minimum: 0
+      responses:
+        '200':
+          $ref: '#/components/responses/Message'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    EmailAuth:
+      type: apiKey
+      in: header
+      name: X-Email
+      description: |
+        The email address of the user. Requests without this header are treated
+        as the `guest` user.
+
+  parameters:
+    DateQuery:
+      name: date
+      in: query
+      description: A single day, in `YYYY-MM-DD` format. Ignored when `from` is given.
+      schema:
+        type: string
+        format: date
+
+    FromQuery:
+      name: from
+      in: query
+      description: Start of the day range, in `YYYY-MM-DD` format. Takes precedence over `date`.
+      schema:
+        type: string
+        format: date
+
+    UntilQuery:
+      name: until
+      in: query
+      description: End (inclusive) of the day range, in `YYYY-MM-DD` format. Only used together with `from`. Defaults to today.
+      schema:
+        type: string
+        format: date
+
+    ToQuery:
+      name: to
+      in: query
+      description: Alias of `until`. Ignored when `until` is given.
+      schema:
+        type: string
+        format: date
+
+    ShiftVmedisID:
+      name: vmedis_id
+      in: path
+      required: true
+      description: The Vmedis ID of the shift.
+      schema:
+        type: integer
+
+    RejectedDrugID:
+      name: id
+      in: path
+      required: true
+      description: The ID of the rejected drug.
+      schema:
+        type: integer
+        minimum: 0
+
+  responses:
+    Message:
+      description: Operation accepted or completed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MessageResponse'
+
+    BadRequest:
+      description: Invalid request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Forbidden:
+      description: The user's role is not allowed to access this endpoint.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: The requested resource was not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    InternalServerError:
+      description: Internal server error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: A human-readable error message.
+      required: [error]
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: A human-readable message.
+      required: [message]
+
+    # ----- Auth -----
+
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          description: The email address of the user.
+      required: [email]
+
+    User:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        role:
+          $ref: '#/components/schemas/Role'
+
+    Role:
+      type: string
+      description: The role of a user.
+      enum: [admin, staff, reseller, guest]
+
+    # ----- Drugs -----
+
+    DrugsResponse:
+      type: object
+      properties:
+        drugs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Drug'
+
+    Drug:
+      type: object
+      description: A drug in the inventory.
+      properties:
+        kfaCode:
+          type: string
+          description: The KFA (Kamus Farmasi dan Alat Kesehatan) code of the drug.
+        vmedisCode:
+          type: string
+          description: The Vmedis code of the drug.
+        name:
+          type: string
+        manufacturer:
+          type: string
+        supplier:
+          type: string
+        minimumStock:
+          $ref: '#/components/schemas/Stock'
+        units:
+          type: array
+          items:
+            $ref: '#/components/schemas/DrugUnit'
+        stocks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Stock'
+
+    DrugUnit:
+      type: object
+      description: A unit of a drug.
+      properties:
+        unit:
+          type: string
+        parentUnit:
+          type: string
+        conversionToParentUnit:
+          type: number
+          description: The number of this unit that makes up one parent unit.
+        unitOrder:
+          type: integer
+          description: The order of the unit of the drug. The smallest unit has the lowest order.
+        priceOne:
+          type: number
+          description: The price for common customers.
+        priceTwo:
+          type: number
+          description: The price for medical facilities.
+        priceThree:
+          type: number
+          description: The price for prescription.
+
+    Stock:
+      type: string
+      description: |
+        One instance of stock, encoded as a string in the
+        `<quantity> <unit>` format. The unit can be empty.
+      example: 10 TABLET
+
+    DrugsResponseV2:
+      type: object
+      properties:
+        drugs:
+          type: array
+          items:
+            $ref: '#/components/schemas/DrugV2'
+
+    DrugV2:
+      type: object
+      description: A drug rendered as display-ready sections based on the user's role.
+      properties:
+        vmedisCode:
+          type: string
+        name:
+          type: string
+        sections:
+          type: array
+          items:
+            $ref: '#/components/schemas/Section'
+
+    Section:
+      type: object
+      properties:
+        title:
+          type: string
+          example: Harga Normal
+        rows:
+          type: array
+          items:
+            type: string
+
+    # ----- Sales -----
+
+    SalesResponse:
+      type: object
+      properties:
+        sales:
+          type: array
+          items:
+            $ref: '#/components/schemas/Sale'
+
+    Sale:
+      type: object
+      properties:
+        vmedisId:
+          type: integer
+        soldAt:
+          type: string
+          format: date-time
+        invoiceNumber:
+          type: string
+        patientName:
+          type: string
+        doctor:
+          type: string
+        salesman:
+          type: string
+        payment:
+          type: string
+        total:
+          type: number
+        saleUnits:
+          type: array
+          items:
+            $ref: '#/components/schemas/SaleUnit'
+
+    SaleUnit:
+      type: object
+      properties:
+        idInSale:
+          type: integer
+        drugCode:
+          type: string
+        drugName:
+          type: string
+        batch:
+          type: string
+        amount:
+          type: number
+        unit:
+          type: string
+        unitPrice:
+          type: number
+        priceCategory:
+          type: string
+        discount:
+          type: number
+        tuslah:
+          type: number
+        embalase:
+          type: number
+        total:
+          type: number
+
+    SoldDrugsResponse:
+      type: object
+      properties:
+        drugs:
+          type: array
+          items:
+            $ref: '#/components/schemas/SoldDrug'
+
+    SoldDrug:
+      type: object
+      description: A sold drug.
+      properties:
+        drug:
+          $ref: '#/components/schemas/Drug'
+        occurrences:
+          type: integer
+          description: The number of sales that include this drug.
+        totalAmount:
+          type: number
+          description: The total amount sold.
+
+    StatisticsResponse:
+      type: object
+      properties:
+        history:
+          type: array
+          description: The raw history of pulled sales statistics.
+          items:
+            $ref: '#/components/schemas/Statistics'
+        dailyHistory:
+          type: array
+          description: The history aggregated per day.
+          items:
+            $ref: '#/components/schemas/Statistics'
+
+    Statistics:
+      type: object
+      properties:
+        pulledAt:
+          type: string
+          format: date-time
+        totalSales:
+          type: number
+        numberOfSales:
+          type: integer
+
+    StatisticsSensorsResponse:
+      type: object
+      description: Response for creating Home Assistant sensors based on sale statistics.
+      properties:
+        today:
+          $ref: '#/components/schemas/StatisticsSensor'
+        yesterday:
+          $ref: '#/components/schemas/StatisticsSensor'
+
+    StatisticsSensor:
+      type: object
+      properties:
+        dateString:
+          type: string
+          description: The formatted date of the statistics.
+        totalSales:
+          type: string
+          description: The total sales, formatted in Rupiah.
+          example: Rp1.234.567
+        updatedAt:
+          type: string
+          description: The formatted time the statistics were last updated.
+
+    # ----- Procurements -----
+
+    DumpProcurementsRequest:
+      type: object
+      description: When either date is missing, the range defaults to the last 14 days.
+      properties:
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+
+    RecommendationsResponse:
+      type: object
+      properties:
+        recommendations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Recommendation'
+        computedAt:
+          type: string
+          format: date-time
+
+    Recommendation:
+      type: object
+      description: A procurement recommendation for a drug.
+      properties:
+        drug:
+          $ref: '#/components/schemas/Drug'
+        stock:
+          $ref: '#/components/schemas/Stock'
+        fromSupplier:
+          type: string
+        procurement:
+          $ref: '#/components/schemas/Stock'
+        alternatives:
+          type: array
+          items:
+            $ref: '#/components/schemas/Stock'
+
+    InvoiceCalculatorsResponse:
+      type: object
+      properties:
+        calculators:
+          type: array
+          items:
+            $ref: '#/components/schemas/InvoiceCalculator'
+
+    InvoiceCalculator:
+      type: object
+      description: An invoice calculator for a supplier.
+      properties:
+        supplier:
+          type: string
+        shouldRound:
+          type: boolean
+        components:
+          type: array
+          items:
+            $ref: '#/components/schemas/InvoiceComponent'
+
+    InvoiceComponent:
+      type: object
+      description: An invoice component.
+      properties:
+        name:
+          type: string
+        multiplier:
+          type: number
+
+    # ----- Stock Opnames -----
+
+    StockOpnamesResponse:
+      type: object
+      properties:
+        stockOpnames:
+          type: array
+          items:
+            $ref: '#/components/schemas/StockOpname'
+
+    StockOpname:
+      type: object
+      description: A stock opname (physical stock count) of one drug batch.
+      properties:
+        vmedisId:
+          type: string
+        date:
+          type: string
+          format: date
+        drugCode:
+          type: string
+        drugName:
+          type: string
+        batchCode:
+          type: string
+        unit:
+          type: string
+        initialQuantity:
+          type: number
+        realQuantity:
+          type: number
+        quantityDifference:
+          type: number
+        hppDifference:
+          type: number
+          description: The difference in cost of goods sold (HPP).
+        salePriceDifference:
+          type: number
+        notes:
+          type: string
+
+    CompactedStockOpnamesResponse:
+      type: object
+      properties:
+        stockOpnames:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompactedStockOpname'
+
+    CompactedStockOpname:
+      type: object
+      description: Stock opnames of one drug on one day, compacted across batches.
+      properties:
+        date:
+          type: string
+          format: date
+        drugCode:
+          type: string
+        drugName:
+          type: string
+        unit:
+          type: string
+        changes:
+          type: array
+          items:
+            $ref: '#/components/schemas/StockChange'
+        quantityDifference:
+          type: number
+        hppDifference:
+          type: number
+          description: The difference in cost of goods sold (HPP).
+        salePriceDifference:
+          type: number
+
+    SummariesResponse:
+      type: object
+      properties:
+        summaries:
+          type: array
+          items:
+            $ref: '#/components/schemas/StockOpnameSummary'
+
+    StockOpnameSummary:
+      type: object
+      description: A per-drug summary of stock opnames.
+      properties:
+        drugCode:
+          type: string
+        drugName:
+          type: string
+        unit:
+          type: string
+        changes:
+          type: array
+          items:
+            $ref: '#/components/schemas/StockChange'
+        quantityDifference:
+          type: number
+        hppDifference:
+          type: number
+          description: The difference in cost of goods sold (HPP).
+        salePriceDifference:
+          type: number
+
+    StockChange:
+      type: object
+      properties:
+        batchCode:
+          type: string
+        initialQuantity:
+          type: number
+        realQuantity:
+          type: number
+
+    # ----- Rejected drugs -----
+
+    RejectedDrugsResponse:
+      type: object
+      properties:
+        rejectedDrugs:
+          type: array
+          items:
+            $ref: '#/components/schemas/RejectedDrug'
+
+    RejectedDrugResponse:
+      type: object
+      properties:
+        rejectedDrug:
+          $ref: '#/components/schemas/RejectedDrug'
+
+    RejectedDrug:
+      type: object
+      description: A drug that was asked by a customer but is not sold (yet).
+      properties:
+        id:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        drugName:
+          type: string
+        resolution:
+          $ref: '#/components/schemas/RejectedDrugResolution'
+        resolutionNotes:
+          type: string
+        resolvedAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+          description: The email of the user who created the entry.
+        resolvedBy:
+          type: string
+          description: The email of the user who resolved the entry.
+
+    RejectedDrugResolution:
+      type: string
+      description: The resolution of a rejected drug.
+      enum: [UNRESOLVED, ORDERED, STOCKED, SUBSTITUTED, WILL_NOT_STOCK]
+
+    CreateRejectedDrugRequest:
+      type: object
+      properties:
+        drugName:
+          type: string
+      required: [drugName]
+
+    UpdateRejectedDrugRequest:
+      type: object
+      description: Omitted (null) fields are left unchanged.
+      properties:
+        drugName:
+          type: string
+          nullable: true
+        resolution:
+          type: string
+          description: The resolution of a rejected drug.
+          enum: [UNRESOLVED, ORDERED, STOCKED, SUBSTITUTED, WILL_NOT_STOCK]
+          nullable: true
+        resolutionNotes:
+          type: string
+          nullable: true
+
+    ResolutionsResponse:
+      type: object
+      properties:
+        resolutions:
+          type: array
+          items:
+            $ref: '#/components/schemas/RejectedDrugResolution'
+
+    # ----- Vmedis tokens -----
+
+    InsertTokenRequest:
+      type: object
+      properties:
+        token:
+          type: string
+          description: The Vmedis session token.
+      required: [token]
+
+    # ----- Shifts -----
+
+    DumpShiftRequest:
+      type: object
+      description: The time range to dump. Defaults to today when empty.
+      properties:
+        from:
+          type: string
+          format: date
+        to:
+          type: string
+          format: date
+
+    # ----- Generic display table -----
+
+    Table:
+      type: object
+      description: A generic display-ready table.
+      properties:
+        header:
+          type: array
+          items:
+            type: string
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/TableRow'
+
+    TableRow:
+      type: object
+      properties:
+        id:
+          type: string
+        columns:
+          type: array
+          items:
+            type: string
