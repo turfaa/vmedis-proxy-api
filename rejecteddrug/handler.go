@@ -208,10 +208,7 @@ func (h *ApiHandler) transformRejectedDrugsToTable(rejectedDrugs []RejectedDrug)
 		"Nama Obat",
 		"Status",
 		"Catatan",
-		"Dicatat Oleh",
 		"Waktu Dicatat",
-		"Diselesaikan Oleh",
-		"Waktu Diselesaikan",
 	}
 
 	rows := slices2.Map(rejectedDrugs, func(rejectedDrug RejectedDrug) cui.Row {
@@ -221,10 +218,7 @@ func (h *ApiHandler) transformRejectedDrugsToTable(rejectedDrugs []RejectedDrug)
 				rejectedDrug.DrugName,
 				resolutionLabel(rejectedDrug.Resolution),
 				rejectedDrug.ResolutionNotes,
-				rejectedDrug.CreatedBy,
 				time2.FormatDateTime(rejectedDrug.CreatedAt),
-				orDash(rejectedDrug.ResolvedBy),
-				formatNullableDateTime(rejectedDrug.ResolvedAt),
 			},
 		}
 	})
