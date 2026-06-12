@@ -19,11 +19,3 @@ type UpdateRejectedDrugRequest struct {
 type RejectedDrugResponse struct {
 	RejectedDrug RejectedDrug `json:"rejectedDrug"`
 }
-
-type RejectedDrugsResponse struct {
-	RejectedDrugs []RejectedDrug `json:"rejectedDrugs"`
-}
-
-type ResolutionsResponse struct {
-	Resolutions []models.RejectedDrugResolution `json:"resolutions"`
-}

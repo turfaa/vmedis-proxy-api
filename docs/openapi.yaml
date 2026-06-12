@@ -641,7 +641,10 @@ paths:
       tags: [Rejected Drugs]
       summary: Get rejected drugs
       description: |
-        Returns rejected drugs filtered by query parameters. All filters are
+        Returns rejected drugs as a display-ready table. The row IDs are the
+        rejected drug IDs.
+
+        The rejected drugs are filtered by query parameters. All filters are
         optional and can be combined. Unlike other time-range endpoints, the
         created-at filter is only applied when a date query parameter is sent.
         Requires the `admin` or `staff` role.
@@ -702,11 +705,11 @@ paths:
             format: date
       responses:
         '200':
-          description: The matching rejected drugs.
+          description: The matching rejected drugs as a table.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RejectedDrugsResponse'
+                $ref: '#/components/schemas/Table'
         '400':
           $ref: '#/components/responses/BadRequest'
         '403':
@@ -749,16 +752,41 @@ paths:
       operationId: getRejectedDrugResolutions
       tags: [Rejected Drugs]
       summary: Get available resolutions
-      description: Returns all known rejected drug resolutions. Requires the `admin` or `staff` role.
+      description: |
+        Returns all known rejected drug resolutions as labeled options,
+        e.g. for the resolution filter dropdown. The option values are
+        `RejectedDrugResolution` values.
+        Requires the `admin` or `staff` role.
       security:
         - EmailAuth: []
       responses:
         '200':
-          description: All known resolutions.
+          description: All known resolutions as labeled options.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResolutionsResponse'
+                $ref: '#/components/schemas/Options'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v2/rejected-drugs/form:
+    get:
+      operationId: getCreateRejectedDrugForm
+      tags: [Rejected Drugs]
+      summary: Get the create form
+      description: |
+        Returns an empty form for recording a new rejected drug. The filled
+        form can be submitted to `POST /api/v2/rejected-drugs`.
+        Requires the `admin` or `staff` role.
+      security:
+        - EmailAuth: []
+      responses:
+        '200':
+          description: The create form.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Form'
         '403':
           $ref: '#/components/responses/Forbidden'
 
@@ -767,18 +795,21 @@ paths:
       operationId: getRejectedDrug
       tags: [Rejected Drugs]
       summary: Get a rejected drug
-      description: Returns the rejected drug with the given ID. Requires the `admin` or `staff` role.
+      description: |
+        Returns the rejected drug with the given ID as a display-ready
+        key-value table. Each row's columns are `[label, value]`.
+        Requires the `admin` or `staff` role.
       security:
         - EmailAuth: []
       parameters:
         - $ref: '#/components/parameters/RejectedDrugID'
       responses:
         '200':
-          description: The rejected drug.
+          description: The rejected drug as a key-value table.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RejectedDrugResponse'
+                $ref: '#/components/schemas/Table'
         '400':
           $ref: '#/components/responses/BadRequest'
         '403':
@@ -839,6 +870,36 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v2/rejected-drugs/{id}/form:
+    get:
+      operationId: getUpdateRejectedDrugForm
+      tags: [Rejected Drugs]
+      summary: Get the update form
+      description: |
+        Returns a form prefilled with the current raw values of the rejected
+        drug, including the selectable resolutions. The filled form can be
+        submitted to `PATCH /api/v2/rejected-drugs/{id}`.
+        Requires the `admin` or `staff` role.
+      security:
+        - EmailAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RejectedDrugID'
+      responses:
+        '200':
+          description: The prefilled update form.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Form'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -1468,14 +1529,6 @@ components:
 
     # ----- Rejected drugs -----
 
-    RejectedDrugsResponse:
-      type: object
-      properties:
-        rejectedDrugs:
-          type: array
-          items:
-            $ref: '#/components/schemas/RejectedDrug'
-
     RejectedDrugResponse:
       type: object
       properties:
@@ -1538,14 +1591,6 @@ components:
           type: string
           nullable: true
 
-    ResolutionsResponse:
-      type: object
-      properties:
-        resolutions:
-          type: array
-          items:
-            $ref: '#/components/schemas/RejectedDrugResolution'
-
     # ----- Vmedis tokens -----
 
     InsertTokenRequest:
@@ -1569,7 +1614,7 @@ components:
           type: string
           format: date
 
-    # ----- Generic display table -----
+    # ----- Generic display components (cui) -----
 
     Table:
       type: object
@@ -1593,3 +1638,57 @@ components:
           type: array
           items:
             type: string
+
+    Form:
+      type: object
+      description: |
+        A display-ready input form for creating or updating a resource.
+        Field IDs match the JSON field names expected by the corresponding
+        write endpoint, so a filled form can be submitted as-is.
+      properties:
+        title:
+          type: string
+        fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/FormField'
+
+    FormField:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The JSON field name to use when submitting the field's value.
+        label:
+          type: string
+        type:
+          type: string
+          enum: [TEXT, TEXTAREA, SELECT]
+        value:
+          type: string
+          description: The raw current value of the field, used to prefill the input.
+        options:
+          type: array
+          description: The selectable values of a `SELECT` field.
+          items:
+            $ref: '#/components/schemas/Option'
+        required:
+          type: boolean
+
+    Options:
+      type: object
+      description: A standalone list of selectable options, e.g. for filter dropdowns.
+      properties:
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/Option'
+
+    Option:
+      type: object
+      description: A raw value with its human-friendly label.
+      properties:
+        value:
+          type: string
+        label:
+          type: string
