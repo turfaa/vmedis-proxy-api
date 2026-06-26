@@ -97,11 +97,6 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 				s.procurementHandler.GetRecommendations,
 			)
 
-			group.GET(
-				"/recommendations/status",
-				s.procurementHandler.GetRecommendationStatus,
-			)
-
 			group.POST(
 				"/recommendations/dump",
 				s.procurementHandler.DumpRecommendations,
@@ -117,6 +112,12 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 				s.procurementHandler.DumpProcurements,
 			)
 		}
+
+		// Status is a new endpoint, only exposed under the /procurements prefix.
+		procurementsHandlers.GET(
+			"/recommendations/status",
+			s.procurementHandler.GetRecommendationStatus,
+		)
 
 		drugs := v1.Group("/drugs")
 		{

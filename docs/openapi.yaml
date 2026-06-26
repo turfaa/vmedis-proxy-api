@@ -310,23 +310,6 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/v1/procurement/recommendations/status:
-    get:
-      operationId: getProcurementRecommendationStatusLegacy
-      tags: [Procurements]
-      summary: Get procurement recommendation status (legacy path)
-      description: Deprecated alias of `/api/v1/procurements/recommendations/status`.
-      deprecated: true
-      responses:
-        '200':
-          description: Procurement recommendation status.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RecommendationStatusResponse'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
   /api/v1/procurement/recommendations/dump:
     post:
       operationId: dumpProcurementRecommendationsLegacy
