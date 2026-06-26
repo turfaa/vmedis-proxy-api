@@ -113,6 +113,12 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 			)
 		}
 
+		// Status is a new endpoint, only exposed under the /procurements prefix.
+		procurementsHandlers.GET(
+			"/recommendations/status",
+			s.procurementHandler.GetRecommendationStatus,
+		)
+
 		drugs := v1.Group("/drugs")
 		{
 			drugs.GET(

@@ -228,6 +228,25 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /api/v1/procurements/recommendations/status:
+    get:
+      operationId: getProcurementRecommendationStatus
+      tags: [Procurements]
+      summary: Get procurement recommendation status
+      description: |
+        Returns whether procurement recommendations are currently being generated.
+        `GENERATING` means a generation is in progress (the distributed lock is held);
+        `IDLE` means no generation is running.
+      responses:
+        '200':
+          description: Procurement recommendation status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecommendationStatusResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /api/v1/procurements/recommendations/dump:
     post:
       operationId: dumpProcurementRecommendations
@@ -1365,6 +1384,16 @@ components:
         computedAt:
           type: string
           format: date-time
+
+    RecommendationStatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [IDLE, GENERATING]
+          description: |
+            Whether procurement recommendations are currently being generated.
+            `GENERATING` means a generation is in progress; `IDLE` means none is running.
 
     Recommendation:
       type: object
