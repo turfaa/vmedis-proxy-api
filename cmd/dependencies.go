@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"crypto/tls"
 	"log"
 	"net"
@@ -119,6 +120,13 @@ func getRedisClient() redis.UniversalClient {
 	}
 
 	newClient := redis.NewUniversalClient(options)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if _, err := newClient.Ping(ctx).Result(); err != nil {
+		log.Fatalf("Error pinging Redis: %s", err)
+	}
 
 	if !redisClient.CompareAndSwap(nil, &newClient) {
 		return *redisClient.Load()
