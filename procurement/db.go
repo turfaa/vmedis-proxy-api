@@ -8,6 +8,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -19,8 +20,26 @@ import (
 )
 
 var (
-	procurementRecommendationsRedisKey = "procurement:recommendations"
+	procurementRecommendationsRedisKey     = "procurement:recommendations"
+	procurementRecommendationsLockRedisKey = "procurement:recommendations:lock"
 )
+
+const (
+	// recommendationsLockTTL is the maximum duration the procurement recommendations
+	// lock is held before it is automatically released by Redis.
+	recommendationsLockTTL = 10 * time.Minute
+)
+
+// releaseRecommendationsLockScript releases the lock only if it is still held by
+// the caller, identified by the token in ARGV[1]. This prevents a process from
+// releasing a lock that was auto-expired and then re-acquired by another process.
+var releaseRecommendationsLockScript = redis.NewScript(`
+if redis.call("get", KEYS[1]) == ARGV[1] then
+	return redis.call("del", KEYS[1])
+else
+	return 0
+end
+`)
 
 type Database struct {
 	db *gorm.DB
@@ -234,6 +253,47 @@ func (d *RedisDatabase) SetRecommendations(ctx context.Context, recommendations 
 	}
 
 	return d.redis.Set(ctx, d.recommendationsKey(), data, 30*24*time.Hour).Err()
+}
+
+// AcquireRecommendationsLock attempts to acquire the procurement recommendations
+// lock. It returns the lock token and true if the lock was acquired, or an empty
+// token and false if the lock is already held by another process. The returned
+// token must be passed to ReleaseRecommendationsLock to release the lock.
+func (d *RedisDatabase) AcquireRecommendationsLock(ctx context.Context) (token string, acquired bool, err error) {
+	token = uuid.NewString()
+
+	acquired, err = d.redis.SetNX(ctx, procurementRecommendationsLockRedisKey, token, recommendationsLockTTL).Result()
+	if err != nil {
+		return "", false, fmt.Errorf("acquire procurement recommendations lock: %w", err)
+	}
+
+	if !acquired {
+		return "", false, nil
+	}
+
+	return token, true, nil
+}
+
+// ReleaseRecommendationsLock releases the procurement recommendations lock only
+// if it is still held by the caller identified by token. Releasing a lock that
+// has already been auto-expired and re-acquired by another process is a no-op.
+func (d *RedisDatabase) ReleaseRecommendationsLock(ctx context.Context, token string) error {
+	if err := releaseRecommendationsLockScript.Run(ctx, d.redis, []string{procurementRecommendationsLockRedisKey}, token).Err(); err != nil && !errors.Is(err, redis.Nil) {
+		return fmt.Errorf("release procurement recommendations lock: %w", err)
+	}
+
+	return nil
+}
+
+// IsRecommendationsLocked reports whether the procurement recommendations lock is
+// currently held by any process.
+func (d *RedisDatabase) IsRecommendationsLocked(ctx context.Context) (bool, error) {
+	exists, err := d.redis.Exists(ctx, procurementRecommendationsLockRedisKey).Result()
+	if err != nil {
+		return false, fmt.Errorf("check procurement recommendations lock: %w", err)
+	}
+
+	return exists > 0, nil
 }
 
 func (d *RedisDatabase) recommendationsKey() string {

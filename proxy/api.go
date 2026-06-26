@@ -97,6 +97,11 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 				s.procurementHandler.GetRecommendations,
 			)
 
+			group.GET(
+				"/recommendations/status",
+				s.procurementHandler.GetRecommendationStatus,
+			)
+
 			group.POST(
 				"/recommendations/dump",
 				s.procurementHandler.DumpRecommendations,

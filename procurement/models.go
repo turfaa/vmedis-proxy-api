@@ -36,6 +36,21 @@ type RecommendationsResponse struct {
 	ComputedAt      time.Time        `json:"computedAt"`
 }
 
+// RecommendationStatus represents the state of procurement recommendation generation.
+type RecommendationStatus string
+
+const (
+	// RecommendationStatusIdle means no procurement recommendation generation is in progress.
+	RecommendationStatusIdle RecommendationStatus = "IDLE"
+	// RecommendationStatusGenerating means procurement recommendations are currently being generated.
+	RecommendationStatusGenerating RecommendationStatus = "GENERATING"
+)
+
+// RecommendationStatusResponse is the response schema for the procurement recommendation status API.
+type RecommendationStatusResponse struct {
+	Status RecommendationStatus `json:"status"`
+}
+
 type Recommendation struct {
 	DrugStock    drug.WithStock `json:",inline"`
 	FromSupplier string         `json:"fromSupplier,omitempty"`
