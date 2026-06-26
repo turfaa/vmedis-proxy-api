@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	drugsKey                            = "drugs"
-	drugDetailsByVmedisCodeProcessedKey = "drug-details-by-vmedis-code-processed:%s"
+	drugsKey                            = "drug:drugs"
+	drugDetailsByVmedisCodeProcessedKey = "drug:drug-details-by-vmedis-code-processed:%s"
 	drugDetailsByVmedisIDProcessedKey   = "drug-details-by-vmedis-id-processed:%s"
 
 	processedKeysExpiry = 30 * 24 * time.Hour

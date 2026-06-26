@@ -3,6 +3,7 @@ package procurement
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -18,7 +19,7 @@ import (
 )
 
 var (
-	procurementRecommendationsRedisKey = "static_key.procurement_recommendations.json.zstd"
+	procurementRecommendationsRedisKey = "procurement:recommendations"
 )
 
 type Database struct {
@@ -187,18 +188,28 @@ func NewDatabase(db *gorm.DB) *Database {
 }
 
 type RedisDatabase struct {
-	redis redis.UniversalClient
+	redis                         redis.UniversalClient
+	shouldCompressRecommendations bool
 }
 
 func (d *RedisDatabase) GetRecommendations(ctx context.Context) (RecommendationsResponse, error) {
-	compressed, err := d.redis.Get(ctx, procurementRecommendationsRedisKey).Result()
+	raw, err := d.redis.Get(ctx, d.recommendationsKey()).Result()
 	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return RecommendationsResponse{}, nil
+		}
+
 		return RecommendationsResponse{}, fmt.Errorf("get procurement recommendations from Redis: %w", err)
 	}
 
-	data, err := zstd2.Decompress([]byte(compressed))
-	if err != nil {
-		return RecommendationsResponse{}, fmt.Errorf("decompress procurement recommendations: %w", err)
+	var data []byte
+	if d.shouldCompressRecommendations {
+		data, err = zstd2.Decompress([]byte(raw))
+		if err != nil {
+			return RecommendationsResponse{}, fmt.Errorf("decompress procurement recommendations: %w", err)
+		}
+	} else {
+		data = []byte(raw)
 	}
 
 	var response RecommendationsResponse
@@ -215,12 +226,22 @@ func (d *RedisDatabase) SetRecommendations(ctx context.Context, recommendations 
 		return fmt.Errorf("marshal procurement recommendations: %w", err)
 	}
 
-	compressed, err := zstd2.Compress(data)
-	if err != nil {
-		return fmt.Errorf("compress procurement recommendations: %w", err)
+	if d.shouldCompressRecommendations {
+		data, err = zstd2.Compress(data)
+		if err != nil {
+			return fmt.Errorf("compress procurement recommendations: %w", err)
+		}
 	}
 
-	return d.redis.Set(ctx, procurementRecommendationsRedisKey, string(compressed), 30*24*time.Hour).Err()
+	return d.redis.Set(ctx, d.recommendationsKey(), data, 30*24*time.Hour).Err()
+}
+
+func (d *RedisDatabase) recommendationsKey() string {
+	if d.shouldCompressRecommendations {
+		return procurementRecommendationsRedisKey + ".zstd"
+	}
+
+	return procurementRecommendationsRedisKey
 }
 
 func NewRedisDatabase(redisClient redis.UniversalClient) *RedisDatabase {
