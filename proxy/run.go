@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 
 	"github.com/turfaa/vmedis-proxy-api/auth"
@@ -25,7 +25,7 @@ import (
 // Config is the proxy server configuration.
 type Config struct {
 	DB          *gorm.DB
-	RedisClient *redis.Client
+	RedisClient redis.UniversalClient
 	AuthService *auth.Service
 
 	AuthHandler         *auth.ApiHandler

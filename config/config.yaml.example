@@ -4,9 +4,11 @@ concurrency: 10
 refresh_interval: "1m"
 rate_limit: 100
 
-redis_address: "localhost:6379"
+redis_address: "localhost:26379"
 redis_password: ""
 redis_db: 0
+redis_sentinel_mode: true
+redis_sentinel_master_name: myprimary
 
 kafka_brokers:
     - "localhost:9092"

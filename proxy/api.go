@@ -7,12 +7,13 @@ import (
 	"github.com/chenyahui/gin-cache/persist"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 	gzip "github.com/turfaa/gin-gzip"
 	"gorm.io/gorm"
 
 	"github.com/turfaa/vmedis-proxy-api/auth"
 	"github.com/turfaa/vmedis-proxy-api/drug"
+	"github.com/turfaa/vmedis-proxy-api/pkg2/gin2"
 	"github.com/turfaa/vmedis-proxy-api/procurement"
 	"github.com/turfaa/vmedis-proxy-api/rejecteddrug"
 	"github.com/turfaa/vmedis-proxy-api/sale"
@@ -24,7 +25,7 @@ import (
 // ApiServer is the proxy api server.
 type ApiServer struct {
 	db          *gorm.DB
-	redisClient *redis.Client
+	redisClient redis.UniversalClient
 	authService *auth.Service
 
 	authHandler         *auth.ApiHandler
@@ -51,7 +52,8 @@ func (s *ApiServer) GinEngine() *gin.Engine {
 
 // SetupRoute sets up the routes of the proxy api server.
 func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
-	store := CompressedCache{Store: persist.NewRedisStore(s.redisClient)}
+	store := persist.CacheStore(gin2.NewRedisCacheAdapter(s.redisClient))
+	// store = CompressedCache{Store: store} // try to not use compressed cache for now
 
 	v1 := router.Group("/api/v1")
 	{
@@ -305,7 +307,7 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 // NewApiServer creates a new api server.
 func NewApiServer(
 	db *gorm.DB,
-	redisClient *redis.Client,
+	redisClient redis.UniversalClient,
 	authService *auth.Service,
 
 	authHandler *auth.ApiHandler,

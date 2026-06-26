@@ -8,7 +8,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 	"github.com/segmentio/kafka-go"
 	"gorm.io/gorm"
 
@@ -16,7 +16,7 @@ import (
 	"github.com/turfaa/vmedis-proxy-api/kafkapb"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/chans"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/slices2"
-	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+	vmedisv1 "github.com/turfaa/vmedis-proxy-api/vmedis/v1"
 )
 
 const (
@@ -285,7 +285,7 @@ func (s *Service) DumpDrugDetailsFromVmedisToDBByVmedisID(ctx context.Context, v
 }
 
 // NewService creates a new drug service.
-func NewService(redisClient *redis.Client, db *gorm.DB, vmedisClient *vmedisv1.Client, kafkaWriter *kafka.Writer) *Service {
+func NewService(redisClient redis.UniversalClient, db *gorm.DB, vmedisClient *vmedisv1.Client, kafkaWriter *kafka.Writer) *Service {
 	return &Service{
 		cache:    NewCache(redisClient),
 		db:       NewDatabase(db),

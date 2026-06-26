@@ -8,7 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 	"github.com/segmentio/kafka-go"
 	"github.com/spf13/viper"
 	"golang.org/x/time/rate"
@@ -23,14 +23,14 @@ import (
 	"github.com/turfaa/vmedis-proxy-api/sale"
 	"github.com/turfaa/vmedis-proxy-api/shift"
 	"github.com/turfaa/vmedis-proxy-api/stockopname"
-	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+	vmedisv1 "github.com/turfaa/vmedis-proxy-api/vmedis/v1"
 	token2 "github.com/turfaa/vmedis-proxy-api/vmedis/v1/token"
 )
 
 var (
 	db                 atomic.Pointer[gorm.DB]
 	vmedisClient       atomic.Pointer[vmedisv1.Client]
-	redisClient        atomic.Pointer[redis.Client]
+	redisClient        atomic.Pointer[redis.UniversalClient]
 	drugProducer       atomic.Pointer[drug.Producer]
 	kafkaWriter        atomic.Pointer[kafka.Writer]
 	tokenProvider      atomic.Pointer[token2.Provider]
@@ -103,19 +103,25 @@ func getVmedisClient() *vmedisv1.Client {
 	return newClient
 }
 
-func getRedisClient() *redis.Client {
+func getRedisClient() redis.UniversalClient {
 	if val := redisClient.Load(); val != nil {
-		return val
+		return *val
 	}
 
-	newClient := redis.NewClient(&redis.Options{
-		Addr:     viper.GetString("redis_address"),
+	options := &redis.UniversalOptions{
+		Addrs:    []string{viper.GetString("redis_address")},
 		Password: viper.GetString("redis_password"),
 		DB:       viper.GetInt("redis_db"),
-	})
+	}
 
-	if !redisClient.CompareAndSwap(nil, newClient) {
-		return redisClient.Load()
+	if viper.GetBool("redis_sentinel_mode") {
+		options.MasterName = viper.GetString("redis_sentinel_master_name")
+	}
+
+	newClient := redis.NewUniversalClient(options)
+
+	if !redisClient.CompareAndSwap(nil, &newClient) {
+		return *redisClient.Load()
 	}
 
 	return newClient

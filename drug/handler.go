@@ -8,14 +8,14 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 	"github.com/segmentio/kafka-go"
 	"google.golang.org/protobuf/encoding/protojson"
 	"gorm.io/gorm"
 
 	"github.com/turfaa/vmedis-proxy-api/kafkapb"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/time2"
-	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+	vmedisv1 "github.com/turfaa/vmedis-proxy-api/vmedis/v1"
 )
 
 // ApiHandler is the handler for drug-related APIs.
@@ -190,7 +190,7 @@ func (h *ConsumerHandler) DumpDrugDetailsByVmedisID(ctx context.Context, kafkaMe
 }
 
 // NewConsumerHandler creates a new ConsumerHandler.
-func NewConsumerHandler(db *gorm.DB, redisClient *redis.Client, vmedisClient *vmedisv1.Client, kafkaWriter *kafka.Writer) *ConsumerHandler {
+func NewConsumerHandler(db *gorm.DB, redisClient redis.UniversalClient, vmedisClient *vmedisv1.Client, kafkaWriter *kafka.Writer) *ConsumerHandler {
 	return &ConsumerHandler{
 		service: NewService(redisClient, db, vmedisClient, kafkaWriter),
 		cache:   NewCache(redisClient),

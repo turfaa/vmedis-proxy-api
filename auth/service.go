@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
@@ -65,7 +65,7 @@ func (s *Service) GetOrCreateUser(ctx context.Context, email string) (User, erro
 	return user, nil
 }
 
-func NewService(redisClient *redis.Client, db *gorm.DB) *Service {
+func NewService(redisClient redis.UniversalClient, db *gorm.DB) *Service {
 	return &Service{
 		cache: NewCache(redisClient),
 		db:    NewDatabase(db),

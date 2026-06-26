@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 	"github.com/vmihailenco/msgpack/v5"
 )
 
@@ -14,10 +14,10 @@ const (
 )
 
 type Cache struct {
-	redis *redis.Client
+	redis redis.UniversalClient
 }
 
-func NewCache(redis *redis.Client) *Cache {
+func NewCache(redis redis.UniversalClient) *Cache {
 	return &Cache{redis: redis}
 }
 

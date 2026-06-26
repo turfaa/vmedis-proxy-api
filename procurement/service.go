@@ -9,12 +9,12 @@ import (
 	"sort"
 	"time"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 
 	"github.com/turfaa/vmedis-proxy-api/drug"
 	"github.com/turfaa/vmedis-proxy-api/kafkapb"
-	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+	vmedisv1 "github.com/turfaa/vmedis-proxy-api/vmedis/v1"
 )
 
 const (
@@ -249,7 +249,7 @@ func (s *Service) GetLastDrugProcurements(ctx context.Context, drugCode string, 
 
 func NewService(
 	db *gorm.DB,
-	redisClient *redis.Client,
+	redisClient redis.UniversalClient,
 	vmedisClient *vmedisv1.Client,
 	drugProducer UpdatedDrugProducer,
 	drugUnitsGetter DrugUnitsGetter,

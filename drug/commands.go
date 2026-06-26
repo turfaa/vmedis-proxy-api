@@ -8,16 +8,16 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 	"github.com/segmentio/kafka-go"
 	"gorm.io/gorm"
 
-	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+	vmedisv1 "github.com/turfaa/vmedis-proxy-api/vmedis/v1"
 )
 
 func DumpDrugsFromVmedisToDB(
 	ctx context.Context,
-	redisClient *redis.Client,
+	redisClient redis.UniversalClient,
 	db *gorm.DB,
 	vmedisClient *vmedisv1.Client,
 	kafkaWriter *kafka.Writer,

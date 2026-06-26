@@ -7,14 +7,14 @@ import (
 	"log"
 	"time"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
 	"github.com/turfaa/vmedis-proxy-api/database/models"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/slices2"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/zstd2"
-	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+	vmedisv1 "github.com/turfaa/vmedis-proxy-api/vmedis/v1"
 )
 
 var (
@@ -187,7 +187,7 @@ func NewDatabase(db *gorm.DB) *Database {
 }
 
 type RedisDatabase struct {
-	redis *redis.Client
+	redis redis.UniversalClient
 }
 
 func (d *RedisDatabase) GetRecommendations(ctx context.Context) (RecommendationsResponse, error) {
@@ -223,7 +223,7 @@ func (d *RedisDatabase) SetRecommendations(ctx context.Context, recommendations 
 	return d.redis.Set(ctx, procurementRecommendationsRedisKey, string(compressed), 30*24*time.Hour).Err()
 }
 
-func NewRedisDatabase(redisClient *redis.Client) *RedisDatabase {
+func NewRedisDatabase(redisClient redis.UniversalClient) *RedisDatabase {
 	return &RedisDatabase{
 		redis: redisClient,
 	}
