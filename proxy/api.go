@@ -87,37 +87,33 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 			)
 		}
 
-		// We are migrating to /procurements
-		procurementHandlers := v1.Group("/procurement")
 		procurementsHandlers := v1.Group("/procurements")
-
-		for _, group := range []*gin.RouterGroup{procurementHandlers, procurementsHandlers} {
-			group.GET(
+		{
+			procurementsHandlers.GET(
 				"/recommendations",
 				s.procurementHandler.GetRecommendations,
 			)
 
-			group.POST(
+			procurementsHandlers.POST(
 				"/recommendations/dump",
 				s.procurementHandler.DumpRecommendations,
 			)
 
-			group.GET(
+			procurementsHandlers.GET(
 				"/invoice-calculators",
 				s.procurementHandler.GetInvoiceCalculators,
 			)
 
-			group.POST(
+			procurementsHandlers.POST(
 				"/dump",
 				s.procurementHandler.DumpProcurements,
 			)
-		}
 
-		// Status is a new endpoint, only exposed under the /procurements prefix.
-		procurementsHandlers.GET(
-			"/recommendations/status",
-			s.procurementHandler.GetRecommendationStatus,
-		)
+			procurementsHandlers.GET(
+				"/recommendations/status",
+				s.procurementHandler.GetRecommendationStatus,
+			)
+		}
 
 		drugs := v1.Group("/drugs")
 		{
