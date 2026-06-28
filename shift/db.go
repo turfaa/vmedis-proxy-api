@@ -2,8 +2,12 @@ package shift
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 
 	"github.com/turfaa/vmedis-proxy-api/database/models"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/slices2"
@@ -12,6 +16,25 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
+
+const (
+	shiftDumpLockRedisKey = "shift:dump:lock"
+
+	// dumpLockTTL is the maximum duration the shift dump lock is held before it
+	// is automatically released by Redis.
+	dumpLockTTL = 30 * time.Second
+)
+
+// releaseDumpLockScript releases the lock only if it is still held by the
+// caller, identified by the token in ARGV[1]. This prevents a process from
+// releasing a lock that was auto-expired and then re-acquired by another process.
+var releaseDumpLockScript = redis.NewScript(`
+if redis.call("get", KEYS[1]) == ARGV[1] then
+	return redis.call("del", KEYS[1])
+else
+	return 0
+end
+`)
 
 type Database struct {
 	db *gorm.DB
@@ -87,4 +110,53 @@ func (d *Database) UpsertVmedisShifts(ctx context.Context, shifts []vmedisv1.Shi
 
 func (d *Database) dbCtx(ctx context.Context) *gorm.DB {
 	return d.db.WithContext(ctx)
+}
+
+type RedisDatabase struct {
+	redis redis.UniversalClient
+}
+
+func NewRedisDatabase(redisClient redis.UniversalClient) *RedisDatabase {
+	return &RedisDatabase{redis: redisClient}
+}
+
+// AcquireDumpLock attempts to acquire the shift dump lock. It returns the lock
+// token and true if the lock was acquired, or an empty token and false if the
+// lock is already held by another process. The returned token must be passed to
+// ReleaseDumpLock to release the lock.
+func (d *RedisDatabase) AcquireDumpLock(ctx context.Context) (token string, acquired bool, err error) {
+	token = uuid.NewString()
+
+	acquired, err = d.redis.SetNX(ctx, shiftDumpLockRedisKey, token, dumpLockTTL).Result()
+	if err != nil {
+		return "", false, fmt.Errorf("acquire shift dump lock: %w", err)
+	}
+
+	if !acquired {
+		return "", false, nil
+	}
+
+	return token, true, nil
+}
+
+// ReleaseDumpLock releases the shift dump lock only if it is still held by the
+// caller identified by token. Releasing a lock that has already been auto-expired
+// and re-acquired by another process is a no-op.
+func (d *RedisDatabase) ReleaseDumpLock(ctx context.Context, token string) error {
+	if err := releaseDumpLockScript.Run(ctx, d.redis, []string{shiftDumpLockRedisKey}, token).Err(); err != nil && !errors.Is(err, redis.Nil) {
+		return fmt.Errorf("release shift dump lock: %w", err)
+	}
+
+	return nil
+}
+
+// IsDumpLocked reports whether the shift dump lock is currently held by any
+// process.
+func (d *RedisDatabase) IsDumpLocked(ctx context.Context) (bool, error) {
+	exists, err := d.redis.Exists(ctx, shiftDumpLockRedisKey).Result()
+	if err != nil {
+		return false, fmt.Errorf("check shift dump lock: %w", err)
+	}
+
+	return exists > 0, nil
 }
