@@ -1,9 +1,11 @@
 package shift
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"strconv"
 
 	"github.com/turfaa/vmedis-proxy-api/cui"
@@ -141,13 +143,23 @@ func (h *ApiHandler) DumpShiftsFromVmedisToDB(c *gin.Context) {
 		return
 	}
 
-	shifts, err := h.service.DumpShiftsFromVmedisToDB(c, from, to)
+	go func() {
+		if err := h.service.DumpShiftsFromVmedisToDB(context.Background(), from, to); err != nil {
+			log.Printf("Failed to dump shifts from vmedis to db: %s", err)
+		}
+	}()
+
+	c.JSON(200, gin.H{"message": "dumping shifts from vmedis to db"})
+}
+
+func (h *ApiHandler) GetShiftDumpStatus(c *gin.Context) {
+	status, err := h.service.GetShiftDumpStatus(c)
 	if err != nil {
-		c.JSON(500, gin.H{"error": fmt.Sprintf("failed to dump shifts from vmedis to db: %s", err)})
+		c.JSON(500, gin.H{"error": fmt.Sprintf("failed to get shift dump status: %s", err)})
 		return
 	}
 
-	c.JSON(200, h.transformShiftsToTable(shifts))
+	c.JSON(200, status)
 }
 
 func (h *ApiHandler) ShowShift(c *gin.Context) {

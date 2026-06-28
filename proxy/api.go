@@ -217,6 +217,12 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 			)
 
 			shifts.GET(
+				"/dump/status",
+				auth.AllowedRoles(auth.RoleAdmin, auth.RoleStaff),
+				s.shiftHandler.GetShiftDumpStatus,
+			)
+
+			shifts.GET(
 				"/:vmedis_id",
 				auth.AllowedRoles(auth.RoleAdmin, auth.RoleStaff),
 				s.shiftHandler.GetShiftByVmedisID,

@@ -425,7 +425,7 @@ func getShiftService() *shift.Service {
 		return val
 	}
 
-	newService := shift.NewService(getDatabase(), getVmedisClient())
+	newService := shift.NewService(getDatabase(), getRedisClient(), getVmedisClient())
 
 	if !shiftService.CompareAndSwap(nil, newService) {
 		return shiftService.Load()

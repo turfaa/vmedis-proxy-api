@@ -513,8 +513,10 @@ paths:
       tags: [Shifts]
       summary: Dump shifts
       description: |
-        Dumps the shifts in the given time range (defaults to today) from Vmedis
-        to the database and returns them as a display-ready table.
+        Asynchronously dumps the shifts in the given time range (defaults to today)
+        from Vmedis to the database. The dump is guarded by a distributed lock held
+        for at most 30 seconds; if a dump is already running, the request is a no-op.
+        Use the dump status endpoint to check whether a dump is in progress.
         Requires the `admin` or `staff` role.
       security:
         - EmailAuth: []
@@ -526,13 +528,32 @@ paths:
               $ref: '#/components/schemas/DumpShiftRequest'
       responses:
         '200':
-          description: The dumped shifts as a table.
+          $ref: '#/components/responses/Message'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v2/shifts/dump/status:
+    get:
+      operationId: getShiftDumpStatus
+      tags: [Shifts]
+      summary: Get shift dump status
+      description: |
+        Returns whether a shift dump is currently in progress.
+        `DUMPING` means a dump is running (the distributed lock is held);
+        `IDLE` means no dump is running. Requires the `admin` or `staff` role.
+      security:
+        - EmailAuth: []
+      responses:
+        '200':
+          description: Shift dump status.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Table'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+                $ref: '#/components/schemas/ShiftDumpStatusResponse'
         '403':
           $ref: '#/components/responses/Forbidden'
         '500':
@@ -1578,6 +1599,16 @@ components:
         to:
           type: string
           format: date
+
+    ShiftDumpStatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [IDLE, DUMPING]
+          description: |
+            Whether a shift dump is currently in progress.
+            `DUMPING` means a dump is running; `IDLE` means none is running.
 
     # ----- Generic display components (cui) -----
 

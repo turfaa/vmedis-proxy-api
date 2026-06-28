@@ -23,6 +23,21 @@ type Shift struct {
 	Notes               string    `json:"notes"`
 }
 
+// ShiftDumpStatus represents the state of the shift dump.
+type ShiftDumpStatus string
+
+const (
+	// ShiftDumpStatusIdle means no shift dump is in progress.
+	ShiftDumpStatusIdle ShiftDumpStatus = "IDLE"
+	// ShiftDumpStatusDumping means shifts are currently being dumped from Vmedis.
+	ShiftDumpStatusDumping ShiftDumpStatus = "DUMPING"
+)
+
+// ShiftDumpStatusResponse is the response schema for the shift dump status API.
+type ShiftDumpStatusResponse struct {
+	Status ShiftDumpStatus `json:"status"`
+}
+
 func (s Shift) ToTemplateData() templates.ShiftData {
 	return templates.ShiftData{
 		Code:                s.Code,

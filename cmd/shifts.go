@@ -32,7 +32,7 @@ var shiftsCommands = []commandWithInit{
 				toUTC := viper.GetTime("to")
 				to := time.Date(toUTC.Year(), toUTC.Month(), toUTC.Day(), toUTC.Hour(), toUTC.Minute(), toUTC.Second(), toUTC.Nanosecond(), time.Local)
 
-				shift.DumpShiftsFromVmedisToDB(cmd.Context(), from, to, getDatabase(), getVmedisClient())
+				shift.DumpShiftsFromVmedisToDB(cmd.Context(), from, to, getDatabase(), getRedisClient(), getVmedisClient())
 			},
 		},
 	},
