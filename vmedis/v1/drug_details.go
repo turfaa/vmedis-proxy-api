@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"sort"
 
 	"github.com/PuerkitoBio/goquery"
@@ -70,19 +69,26 @@ func ParseStocksInDrugDetails(doc *goquery.Document) ([]Stock, error) {
 
 	stocksTab := doc.Find("div#detail")
 
-	var stocks []Stock
-	stocksTab.Find("tr[data-key]").Each(func(i int, s *goquery.Selection) {
+	var (
+		stocks []Stock
+		err    error
+	)
+	stocksTab.Find("tr[data-key]").EachWithBreak(func(i int, s *goquery.Selection) bool {
 		var stock shadowStock
-		if err := UnmarshalDataColumnByIndex("column-index", s, &stock); err != nil {
-			log.Printf("error parsing stock #%d: %s", i, err)
-			return
+		if unmarshalErr := UnmarshalDataColumnByIndex("column-index", s, &stock); unmarshalErr != nil {
+			err = fmt.Errorf("parse stock #%d: %w", i, unmarshalErr)
+			return false
 		}
 
 		stocks = append(stocks, Stock{
 			Unit:     stock.Unit,
 			Quantity: stock.Quantity,
 		})
+		return true
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	return compactStocks(stocks), nil
 }

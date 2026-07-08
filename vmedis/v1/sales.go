@@ -4,9 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"strconv"
-	"sync"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -18,67 +16,17 @@ type SalesResponse struct {
 }
 
 // GetAllTodaySales gets all sales from today from vmedis.
-// It starts with getting the number of pages by calling the API with page 9999. The last page is the number of pages.
-// Then it calls the /apt-lap-penjualanobat-batch/index?page=<page> page and try to parse the sales from it.
+// It fetches every /apt-lap-penjualanobat-batch/index?page=<page> page
+// concurrently and returns an error if any page cannot be fetched or parsed.
 func (c *Client) GetAllTodaySales(ctx context.Context) ([]Sale, error) {
-	var (
-		sales []Sale
-		pages = make(chan int, c.concurrency*2)
-		wg    sync.WaitGroup
-		lock  sync.Mutex
-	)
-
-	// Get the number of pages
-	log.Println("Getting number of pages of today sales")
-	res, err := c.GetTodaySales(ctx, 9999)
-	if err != nil {
-		return nil, fmt.Errorf("get number of pages: %w", err)
-	}
-
-	lastPage := 1
-	for _, p := range res.OtherPages {
-		if p > lastPage {
-			lastPage = p
+	return getAllPages(ctx, "today sales", c.concurrency, func(ctx context.Context, page int) ([]Sale, []int, error) {
+		res, err := c.GetTodaySales(ctx, page)
+		if err != nil {
+			return nil, nil, err
 		}
-	}
 
-	log.Printf("Number of today sales pages: %d\n", lastPage)
-
-	go func() {
-		for i := 1; i <= lastPage; i++ {
-			pages <- i
-		}
-		close(pages)
-	}()
-
-	// Start the workers
-	for i := 0; i < c.concurrency; i++ {
-		wg.Add(1)
-
-		go func() {
-			defer wg.Done()
-
-			for page := range pages {
-				log.Printf("Getting today sales at page %d\n", page)
-
-				res, err := c.GetTodaySales(ctx, page)
-				if err != nil {
-					log.Printf("Error getting today sales at page #%d: %v\n", page, err)
-					continue
-				}
-
-				lock.Lock()
-				sales = append(sales, res.Sales...)
-				lock.Unlock()
-
-				log.Printf("Got %d sales at page %d\n", len(res.Sales), page)
-			}
-		}()
-	}
-
-	wg.Wait()
-
-	return sales, nil
+		return res.Sales, res.OtherPages, nil
+	})
 }
 
 // GetTodaySales gets one page of the sales from today from vmedis.
@@ -107,15 +55,19 @@ func ParseSales(r io.Reader) (SalesResponse, error) {
 	}
 
 	var sales []Sale
-	doc.Find("tr[data-key]").Each(func(i int, s *goquery.Selection) {
-		sale, err := parseSale(s)
-		if err != nil {
-			log.Printf("error parsing sale #%d: %s", i, err)
-			return
+	doc.Find("tr[data-key]").EachWithBreak(func(i int, s *goquery.Selection) bool {
+		sale, parseErr := parseSale(s)
+		if parseErr != nil {
+			err = fmt.Errorf("parse sale #%d: %w", i, parseErr)
+			return false
 		}
 
 		sales = append(sales, sale)
+		return true
 	})
+	if err != nil {
+		return SalesResponse{}, err
+	}
 
 	return SalesResponse{Sales: sales, OtherPages: parsePagination(doc)}, nil
 }
@@ -126,15 +78,20 @@ func parseSale(selection *goquery.Selection) (Sale, error) {
 		return Sale{}, fmt.Errorf("unmarshal sale: %w", err)
 	}
 
-	selection.Find("table tr:nth-child(n+2)").Each(func(i int, s *goquery.Selection) {
-		su, err := parseSaleUnit(s)
-		if err != nil {
-			log.Printf("error parsing sale unit #%d: %s", i, err)
-			return
+	var err error
+	selection.Find("table tr:nth-child(n+2)").EachWithBreak(func(i int, s *goquery.Selection) bool {
+		su, parseErr := parseSaleUnit(s)
+		if parseErr != nil {
+			err = fmt.Errorf("parse sale unit #%d: %w", i, parseErr)
+			return false
 		}
 
 		sale.SaleUnits = append(sale.SaleUnits, su)
+		return true
 	})
+	if err != nil {
+		return Sale{}, err
+	}
 
 	// Get the value from <button type="button" class="btn btn-warning btn-xs actionPrint" value="110844" title="Cetak Faktur">.
 	idStr, ok := selection.Find("button.actionPrint").Attr("value")

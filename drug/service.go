@@ -14,7 +14,6 @@ import (
 
 	"github.com/turfaa/vmedis-proxy-api/database/models"
 	"github.com/turfaa/vmedis-proxy-api/kafkapb"
-	"github.com/turfaa/vmedis-proxy-api/pkg2/chans"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/slices2"
 	vmedisv1 "github.com/turfaa/vmedis-proxy-api/vmedis/v1"
 )
@@ -189,11 +188,11 @@ func (s *Service) DumpDrugsFromVmedisToDB(ctx context.Context) error {
 
 	log.Printf("Got %d drugs from Vmedis", len(drugs))
 
-	batches := chans.GenerateBatches(drugs, insertBatchSize)
+	batches := slices2.GenerateBatches(drugs, insertBatchSize)
 
 	var errs []error
-	batchNum := 1
-	for batch := range batches {
+	for i, batch := range batches {
+		batchNum := i + 1
 		log.Printf("Starting to dump drugs batch %d, number of drugs: %d", batchNum, len(batch))
 
 		log.Println("Upserting drugs to DB")
@@ -222,10 +221,13 @@ func (s *Service) DumpDrugsFromVmedisToDB(ctx context.Context) error {
 		}
 
 		log.Printf("Finished dumping drugs batch %d, number of drugs: %d", batchNum, len(batch))
-		batchNum++
 	}
 
-	log.Printf("Finished dumping drugs, got %d errors, errs: %s", len(errs), errors.Join(errs...))
+	if len(errs) > 0 {
+		return fmt.Errorf("dump drugs from Vmedis to DB: %w", errors.Join(errs...))
+	}
+
+	log.Println("Finished dumping drugs from Vmedis to DB")
 	return nil
 }
 

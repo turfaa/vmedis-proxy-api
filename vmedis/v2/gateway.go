@@ -6,16 +6,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/turfaa/vmedis-proxy-api/pkg2/retry"
+	"github.com/turfaa/vmedis-proxy-api/vmedis/internal/httputil"
 )
 
 type GatewayClient struct {
-	url        string
-	httpClient *http.Client
-	crypt      Crypt
+	url         string
+	httpClient  *http.Client
+	crypt       Crypt
+	retryConfig retry.Config
 }
 
 type GatewayRequest struct {
@@ -41,27 +44,21 @@ func (o GatewayTargetOptions) String() string {
 
 func NewGatewayClient(baseUrl string, crypt *Crypt) *GatewayClient {
 	return &GatewayClient{
-		url:        baseUrl,
-		httpClient: &http.Client{Timeout: time.Minute},
-		crypt:      *crypt,
+		url:         baseUrl,
+		httpClient:  &http.Client{Timeout: time.Minute},
+		crypt:       *crypt,
+		retryConfig: retry.DefaultConfig,
 	}
 }
 
+// Call sends the request to the vmedis gateway, retrying transient failures,
+// and decodes the response into responseTarget.
 func (c *GatewayClient) Call(ctx context.Context, req GatewayRequest, responseTarget any) error {
-	httpReq, err := c.buildHTTPRequest(ctx, req)
+	bodyBytes, err := retry.Do(ctx, c.retryConfig, func(ctx context.Context) ([]byte, error) {
+		return c.doHTTPRequest(ctx, req)
+	})
 	if err != nil {
-		return fmt.Errorf("build HTTP request: %w", err)
-	}
-
-	res, err := c.httpClient.Do(httpReq)
-	if err != nil {
-		return fmt.Errorf("do HTTP request: %w", err)
-	}
-	defer res.Body.Close()
-
-	bodyBytes, err := io.ReadAll(res.Body)
-	if err != nil {
-		return fmt.Errorf("read response body: %w", err)
+		return fmt.Errorf("call gateway target %s: %w", req.TargetUrl, err)
 	}
 
 	if err := c.parseHTTPResponseBody(bodyBytes, responseTarget); err != nil {
@@ -69,6 +66,30 @@ func (c *GatewayClient) Call(ctx context.Context, req GatewayRequest, responseTa
 	}
 
 	return nil
+}
+
+func (c *GatewayClient) doHTTPRequest(ctx context.Context, req GatewayRequest) ([]byte, error) {
+	httpReq, err := c.buildHTTPRequest(ctx, req)
+	if err != nil {
+		return nil, retry.Permanent(fmt.Errorf("build HTTP request: %w", err))
+	}
+
+	res, err := c.httpClient.Do(httpReq)
+	if err != nil {
+		return nil, fmt.Errorf("do HTTP request: %w", err)
+	}
+	defer res.Body.Close()
+
+	if err := httputil.EnsureSuccess(res); err != nil {
+		return nil, err
+	}
+
+	bodyBytes, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, fmt.Errorf("read response body: %w", err)
+	}
+
+	return bodyBytes, nil
 }
 
 func (c *GatewayClient) buildHTTPRequest(ctx context.Context, req GatewayRequest) (*http.Request, error) {
@@ -140,8 +161,7 @@ func (c *GatewayClient) parseHTTPResponseBody(bodyBytes []byte, responseTarget a
 	}{}
 
 	if err := json.Unmarshal(bodyBytes, &body); err != nil {
-		log.Printf("failed to unmarshal response body: %s", string(bodyBytes))
-		return fmt.Errorf("unmarshal response body: %w", err)
+		return fmt.Errorf("unmarshal response body %q: %w", string(bodyBytes), err)
 	}
 
 	if body.Error != "" {
