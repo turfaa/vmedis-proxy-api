@@ -33,7 +33,7 @@ func (c *Client) RefreshTokens(ctx context.Context, tokens []string) (map[string
 			}
 
 			body := string(bodyBytes)
-			if strings.Contains(body, "Vmedis - Login") {
+			if strings.Contains(body, loginPageMarker) {
 				lock.Lock()
 				result[token] = models.TokenStateExpired
 				lock.Unlock()
