@@ -3,6 +3,7 @@ package vmedisv1
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -49,40 +50,46 @@ func New(
 // status code when the session token is invalid.
 const loginPageMarker = "Vmedis - Login"
 
-// get performs a GET request to vmedis using an active session token,
-// retrying transient failures. Receiving the login page is treated as an
-// error too: every attempt fetches a token from the token provider anew,
-// so a retry may run with a different token.
-// The caller owns the response body of a successful request.
-func (c *Client) get(ctx context.Context, path string) (*http.Response, error) {
-	res, err := retry.Do(ctx, c.retryConfig, func(ctx context.Context) (*http.Response, error) {
-		sessionId, err := c.tokenProvider.GetActiveToken()
-		if err != nil {
-			return nil, retry.Permanent(fmt.Errorf("get active session id: %w", err))
-		}
+// ErrInvalidToken is returned when vmedis responds with the login page,
+// which means the session token used is invalid.
+var ErrInvalidToken = errors.New("invalid session token: vmedis responded with the login page")
 
+func (c *Client) get(ctx context.Context, path string) (*http.Response, error) {
+	sessionId, err := c.tokenProvider.GetActiveToken()
+	if err != nil {
+		return nil, fmt.Errorf("get active session id: %w", err)
+	}
+
+	return c.getWithSessionId(ctx, path, sessionId)
+}
+
+// getWithSessionId performs a GET request to vmedis, retrying transient
+// failures. Receiving the login page instead of the requested page is an
+// error too, reported as ErrInvalidToken.
+// The caller owns the response body of a successful request.
+func (c *Client) getWithSessionId(ctx context.Context, path, sessionId string) (*http.Response, error) {
+	res, err := retry.Do(ctx, c.retryConfig, func(ctx context.Context) (*http.Response, error) {
 		res, err := c.doGet(ctx, path, sessionId)
 		if err != nil {
 			return nil, err
 		}
 
 		if err := ensureSessionActive(res); err != nil {
-			return nil, fmt.Errorf("session id %s: %w", sessionId, err)
+			return nil, err
 		}
 
 		return res, nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("GET %s: %w", path, err)
+		return nil, fmt.Errorf("GET %s with session id %s: %w", path, sessionId, err)
 	}
 
 	return res, nil
 }
 
-// ensureSessionActive returns an error if the response is the vmedis login
-// page, which means the session token used is invalid. It consumes the
-// response body and, when the session is active, restores it so the caller
-// can still read it. On error, the body is closed.
+// ensureSessionActive returns ErrInvalidToken if the response is the vmedis
+// login page. It consumes the response body and, when the session is active,
+// restores it so the caller can still read it. On error, the body is closed.
 func ensureSessionActive(res *http.Response) error {
 	bodyBytes, err := io.ReadAll(res.Body)
 	res.Body.Close()
@@ -91,27 +98,13 @@ func ensureSessionActive(res *http.Response) error {
 	}
 
 	if bytes.Contains(bodyBytes, []byte(loginPageMarker)) {
-		return fmt.Errorf("invalid session token: vmedis responded with the login page")
+		// Retrying with the same session token would get the login page
+		// again, so fail immediately.
+		return retry.Permanent(ErrInvalidToken)
 	}
 
 	res.Body = io.NopCloser(bytes.NewReader(bodyBytes))
 	return nil
-}
-
-// getWithSessionId performs a GET request to vmedis with the given session
-// id, retrying transient failures. Unlike get, it does not treat the login
-// page as an error: callers like RefreshTokens inspect the body themselves
-// to find out whether the session is still active.
-// The caller owns the response body of a successful request.
-func (c *Client) getWithSessionId(ctx context.Context, path, sessionId string) (*http.Response, error) {
-	res, err := retry.Do(ctx, c.retryConfig, func(ctx context.Context) (*http.Response, error) {
-		return c.doGet(ctx, path, sessionId)
-	})
-	if err != nil {
-		return nil, fmt.Errorf("GET %s with session id %s: %w", path, sessionId, err)
-	}
-
-	return res, nil
 }
 
 func (c *Client) doGet(ctx context.Context, path, sessionId string) (*http.Response, error) {
