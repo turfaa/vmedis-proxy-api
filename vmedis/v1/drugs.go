@@ -4,9 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"strconv"
-	"sync"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -18,68 +16,17 @@ type DrugsResponse struct {
 }
 
 // GetAllDrugs gets all the drugs from vmedis.
-// It starts with getting the number of pages by calling the API with page 9999. The last page is the number of pages.
-// Then it calls the /obat-batch/index?page=<page> page and try to parse the drugs from it.
-// The resulting drugs will be returned in a channel.
-func (c *Client) GetAllDrugs(ctx context.Context) (<-chan Drug, error) {
-	// Get the number of pages
-	log.Println("Getting number of pages of drugs")
-	res, err := c.GetDrugs(ctx, 9999)
-	if err != nil {
-		return nil, fmt.Errorf("get number of pages: %w", err)
-	}
-
-	lastPage := 1
-	for _, p := range res.OtherPages {
-		if p > lastPage {
-			lastPage = p
+// It fetches every /obat-batch/index?page=<page> page concurrently and
+// returns an error if any page cannot be fetched or parsed.
+func (c *Client) GetAllDrugs(ctx context.Context) ([]Drug, error) {
+	return getAllPages(ctx, "drugs", c.concurrency, func(ctx context.Context, page int) ([]Drug, []int, error) {
+		res, err := c.GetDrugs(ctx, page)
+		if err != nil {
+			return nil, nil, err
 		}
-	}
 
-	log.Printf("Number of drugs pages: %d\n", lastPage)
-
-	var (
-		drugs = make(chan Drug, lastPage*10)
-		pages = make(chan int, c.concurrency*2)
-		wg    sync.WaitGroup
-	)
-
-	go func() {
-		for i := 1; i <= lastPage; i++ {
-			pages <- i
-		}
-		close(pages)
-	}()
-
-	// Start the workers
-	for i := 0; i < c.concurrency; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-
-			for page := range pages {
-				log.Printf("Getting drugs from page %d\n", page)
-
-				res, err := c.GetDrugs(ctx, page)
-				if err != nil {
-					log.Printf("error getting drugs from page %d: %s", page, err)
-					continue
-				}
-
-				log.Printf("Got %d drugs from page %d\n", len(res.Drugs), page)
-				for _, drug := range res.Drugs {
-					drugs <- drug
-				}
-			}
-		}()
-	}
-
-	go func() {
-		wg.Wait()
-		close(drugs)
-	}()
-
-	return drugs, nil
+		return res.Drugs, res.OtherPages, nil
+	})
 }
 
 // GetDrugs gets the drugs from one page of "Data Obat" page in vmedis.
@@ -107,15 +54,19 @@ func ParseDrugs(r io.Reader) (DrugsResponse, error) {
 	}
 
 	var drugs []Drug
-	doc.Find("tr[data-key]").Each(func(i int, s *goquery.Selection) {
-		drug, err := parseDrug(s)
-		if err != nil {
-			log.Printf("error parsing drug #%d: %s", i, err)
-			return
+	doc.Find("tr[data-key]").EachWithBreak(func(i int, s *goquery.Selection) bool {
+		drug, parseErr := parseDrug(s)
+		if parseErr != nil {
+			err = fmt.Errorf("parse drug #%d: %w", i, parseErr)
+			return false
 		}
 
 		drugs = append(drugs, drug)
+		return true
 	})
+	if err != nil {
+		return DrugsResponse{}, err
+	}
 
 	return DrugsResponse{Drugs: drugs, OtherPages: parsePagination(doc)}, nil
 }

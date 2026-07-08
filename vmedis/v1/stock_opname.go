@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
-	"sync"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -17,59 +15,20 @@ type StockOpnamesResponse struct {
 }
 
 // GetAllTodayStockOpnames gets all stock opnames from today from vmedis.
-// It starts with getting the number of pages by calling the API with page 9999. The last page is the number of pages.
-// Then it calls the /laporan-stokopname-batch/index?page=<page> page and try to parse the stock opnames from it.
+// It fetches every /laporan-stokopname-batch/index?page=<page> page
+// concurrently and returns an error if any page cannot be fetched or parsed.
 func (c *Client) GetAllTodayStockOpnames(ctx context.Context) ([]StockOpname, error) {
-	var (
-		stockOpnames []StockOpname
-		pages        = make(chan int, c.concurrency*2)
-		wg           sync.WaitGroup
-	)
+	stockOpnames, err := getAllPages(ctx, "today stock opnames", c.concurrency, func(ctx context.Context, page int) ([]StockOpname, []int, error) {
+		res, err := c.GetTodayStockOpnames(ctx, page)
+		if err != nil {
+			return nil, nil, err
+		}
 
-	// Get the number of pages
-	log.Println("Getting number of pages of today stock opnames")
-	res, err := c.GetTodayStockOpnames(ctx, 9999)
+		return res.StockOpnames, res.OtherPages, nil
+	})
 	if err != nil {
-		return nil, fmt.Errorf("get number of pages: %w", err)
+		return nil, err
 	}
-
-	lastPage := 1
-	for _, p := range res.OtherPages {
-		if p > lastPage {
-			lastPage = p
-		}
-	}
-
-	log.Printf("Number of today stock opnames pages: %d\n", lastPage)
-
-	go func() {
-		for i := 1; i <= lastPage; i++ {
-			pages <- i
-		}
-		close(pages)
-	}()
-
-	// Start the workers
-	for i := 0; i < c.concurrency; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-
-			for page := range pages {
-				res, err := c.GetTodayStockOpnames(ctx, page)
-				if err != nil {
-					log.Printf("error getting today stock opnames page #%d: %s", page, err)
-					continue
-				}
-
-				for _, so := range res.StockOpnames {
-					stockOpnames = append(stockOpnames, so)
-				}
-			}
-		}()
-	}
-
-	wg.Wait()
 
 	augmentDuplicatedStockOpnameCodes(stockOpnames)
 	return stockOpnames, nil
@@ -82,6 +41,7 @@ func (c *Client) GetTodayStockOpnames(ctx context.Context, page int) (StockOpnam
 	if err != nil {
 		return StockOpnamesResponse{}, fmt.Errorf("get stock opnames: %w", err)
 	}
+	defer res.Body.Close()
 
 	sos, err := ParseStockOpnames(res.Body)
 	if err != nil {
@@ -100,15 +60,19 @@ func ParseStockOpnames(r io.Reader) (StockOpnamesResponse, error) {
 	}
 
 	var stockOpnames []StockOpname
-	doc.Find("tr[data-key]").Each(func(i int, s *goquery.Selection) {
-		so, err := parseStockOpname(s)
-		if err != nil {
-			log.Printf("error parsing stock opname #%d: %s", i, err)
-			return
+	doc.Find("tr[data-key]").EachWithBreak(func(i int, s *goquery.Selection) bool {
+		so, parseErr := parseStockOpname(s)
+		if parseErr != nil {
+			err = fmt.Errorf("parse stock opname #%d: %w", i, parseErr)
+			return false
 		}
 
 		stockOpnames = append(stockOpnames, so)
+		return true
 	})
+	if err != nil {
+		return StockOpnamesResponse{}, err
+	}
 
 	return StockOpnamesResponse{StockOpnames: stockOpnames, OtherPages: parsePagination(doc)}, nil
 }

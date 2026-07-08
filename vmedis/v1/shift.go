@@ -4,13 +4,10 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
-	"golang.org/x/sync/errgroup"
 )
 
 type ShiftsResponse struct {
@@ -18,69 +15,22 @@ type ShiftsResponse struct {
 	OtherPages []int
 }
 
+// GetAllShiftsBetweenTimes gets all the shifts between the given times from vmedis.
+// It fetches every /laporan-gantishift/index page concurrently and returns an
+// error if any page cannot be fetched or parsed.
 func (c *Client) GetAllShiftsBetweenTimes(ctx context.Context, startTime time.Time, endTime time.Time) ([]Shift, error) {
-	log.Println("Getting number of pages of shifts")
-	res, err := c.GetShifts(ctx, SearchByTimeParameters[ParameterTypeShifts]{
-		StartTime: startTime,
-		EndTime:   endTime,
-		Page:      999999,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("get number of pages: %w", err)
-	}
-
-	lastPage := 1
-	for _, p := range res.OtherPages {
-		if p > lastPage {
-			lastPage = p
-		}
-	}
-
-	log.Printf("Number of shifts pages: %d\n", lastPage)
-
-	var (
-		shifts []Shift
-		pages  = make(chan int, c.concurrency*2)
-		lock   sync.Mutex
-	)
-
-	go func() {
-		for i := 1; i <= lastPage; i++ {
-			pages <- i
-		}
-		close(pages)
-	}()
-
-	eg, ctx := errgroup.WithContext(ctx)
-
-	for i := 0; i < c.concurrency; i++ {
-		eg.Go(func() error {
-			for page := range pages {
-				log.Printf("Getting shifts at page %d\n", page)
-
-				res, err := c.GetShifts(ctx, SearchByTimeParameters[ParameterTypeShifts]{
-					StartTime: startTime,
-					EndTime:   endTime,
-					Page:      page,
-				})
-				if err != nil {
-					return fmt.Errorf("get shifts at page %d: %w", page, err)
-				}
-
-				lock.Lock()
-				shifts = append(shifts, res.Shifts...)
-				lock.Unlock()
-			}
-
-			return nil
+	return getAllPages(ctx, "shifts", c.concurrency, func(ctx context.Context, page int) ([]Shift, []int, error) {
+		res, err := c.GetShifts(ctx, SearchByTimeParameters[ParameterTypeShifts]{
+			StartTime: startTime,
+			EndTime:   endTime,
+			Page:      page,
 		})
-	}
+		if err != nil {
+			return nil, nil, err
+		}
 
-	if err := eg.Wait(); err != nil {
-		return nil, fmt.Errorf("get all shifts: %w", err)
-	}
-
-	return shifts, nil
+		return res.Shifts, res.OtherPages, nil
+	})
 }
 
 func (c *Client) GetShifts(ctx context.Context, params SearchByTimeParameters[ParameterTypeShifts]) (ShiftsResponse, error) {
@@ -105,14 +55,15 @@ func ParseShifts(r io.Reader) (ShiftsResponse, error) {
 	}
 
 	var shifts []Shift
-	doc.Find("tr[data-key]").Each(func(i int, s *goquery.Selection) {
-		shift, innerErr := parseShift(s)
-		if innerErr != nil {
-			err = fmt.Errorf("parse shift #%d: %w", i, innerErr)
-			return
+	doc.Find("tr[data-key]").EachWithBreak(func(i int, s *goquery.Selection) bool {
+		shift, parseErr := parseShift(s)
+		if parseErr != nil {
+			err = fmt.Errorf("parse shift #%d: %w", i, parseErr)
+			return false
 		}
 
 		shifts = append(shifts, shift)
+		return true
 	})
 	if err != nil {
 		return ShiftsResponse{}, err
