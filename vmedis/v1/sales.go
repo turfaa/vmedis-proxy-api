@@ -16,20 +16,6 @@ type SalesResponse struct {
 	OtherPages []int
 }
 
-// GetAllTodaySales gets all sales from today from vmedis.
-// It fetches every /apt-lap-penjualanobat-batch/index?page=<page> page
-// concurrently and returns an error if any page cannot be fetched or parsed.
-func (c *Client) GetAllTodaySales(ctx context.Context) ([]Sale, error) {
-	return getAllPages(ctx, "today sales", c.concurrency, func(ctx context.Context, page int) ([]Sale, []int, error) {
-		res, err := c.GetTodaySales(ctx, page)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		return res.Sales, res.OtherPages, nil
-	})
-}
-
 // GetAllSalesBetweenDates gets all sales between the given dates from vmedis.
 // It fetches every /apt-lap-penjualanobat-batch/index page concurrently
 // and returns an error if any page cannot be fetched or parsed.
@@ -46,12 +32,6 @@ func (c *Client) GetAllSalesBetweenDates(ctx context.Context, startDate time.Tim
 
 		return res.Sales, res.OtherPages, nil
 	})
-}
-
-// GetTodaySales gets one page of the sales from today from vmedis.
-// It calls the /apt-lap-penjualanobat-batch/index?page=<page> page and try to parse the sales from it.
-func (c *Client) GetTodaySales(ctx context.Context, page int) (SalesResponse, error) {
-	return c.GetSales(ctx, SearchByTimeParameters[ParameterTypeSales]{Page: page})
 }
 
 // GetSales gets one page of sales matching the given search parameters from vmedis.

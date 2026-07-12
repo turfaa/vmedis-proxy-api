@@ -162,22 +162,11 @@ func (s *Service) GetSalesStatisticsBetweenTime(ctx context.Context, from time.T
 	return stats, nil
 }
 
-func (s *Service) DumpTodaySalesFromVmedisToDB(ctx context.Context) error {
-	log.Printf("Dumping today's sales from Vmedis to DB")
+// DumpSalesBetweenDatesFromVmedisToDB dumps the sales between the given dates from Vmedis to the DB.
+func (s *Service) DumpSalesBetweenDatesFromVmedisToDB(ctx context.Context, startDate time.Time, endDate time.Time) error {
+	log.Printf("Dumping sales between %s and %s from Vmedis to DB", startDate.Format(time.DateOnly), endDate.Format(time.DateOnly))
 
-	vmedisSales, err := s.vmedis.GetAllTodaySales(ctx)
-	if err != nil {
-		return fmt.Errorf("get sales from vmedis: %w", err)
-	}
-
-	return s.dumpSalesToDB(ctx, vmedisSales)
-}
-
-// DumpSalesByDateFromVmedisToDB dumps the sales at the given date from Vmedis to the DB.
-func (s *Service) DumpSalesByDateFromVmedisToDB(ctx context.Context, date time.Time) error {
-	log.Printf("Dumping sales at %s from Vmedis to DB", date.Format(time.DateOnly))
-
-	vmedisSales, err := s.vmedis.GetAllSalesBetweenDates(ctx, date, date)
+	vmedisSales, err := s.vmedis.GetAllSalesBetweenDates(ctx, startDate, endDate)
 	if err != nil {
 		return fmt.Errorf("get sales from vmedis: %w", err)
 	}
