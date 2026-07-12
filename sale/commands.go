@@ -3,14 +3,17 @@ package sale
 import (
 	"context"
 	"log"
+	"time"
 
 	"gorm.io/gorm"
 
 	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
 )
 
-func DumpTodaySalesFromVmedisToDB(
+func DumpSalesBetweenDatesFromVmedisToDB(
 	ctx context.Context,
+	startDate time.Time,
+	endDate time.Time,
 	db *gorm.DB,
 	vmedisClient *vmedisv1.Client,
 	drugsGetter DrugsGetter,
@@ -18,8 +21,8 @@ func DumpTodaySalesFromVmedisToDB(
 ) {
 	service := NewService(db, vmedisClient, drugsGetter, drugProducer)
 
-	if err := service.DumpTodaySalesFromVmedisToDB(ctx); err != nil {
-		log.Fatalf("Failed to dump today's sales from Vmedis to DB: %s", err)
+	if err := service.DumpSalesBetweenDatesFromVmedisToDB(ctx, startDate, endDate); err != nil {
+		log.Fatalf("DumpSalesBetweenDatesFromVmedisToDB: %s", err)
 	}
 }
 

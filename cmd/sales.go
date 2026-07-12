@@ -17,14 +17,21 @@ var salesCommands = []commandWithInit{
 			Use:   "dump",
 			Short: "Run one-time sales dumper",
 			Run: func(cmd *cobra.Command, args []string) {
-				sale.DumpTodaySalesFromVmedisToDB(
+				startTime, endTime := getDateRangeFromFlags(cmd)
+
+				sale.DumpSalesBetweenDatesFromVmedisToDB(
 					cmd.Context(),
+					startTime,
+					endTime,
 					getDatabase(),
 					getVmedisClient(),
 					getDrugService(),
 					getDrugProducer(),
 				)
 			},
+		},
+		init: func(cmd *cobra.Command) {
+			registerDateRangeFlags(cmd, 0)
 		},
 	},
 	{
