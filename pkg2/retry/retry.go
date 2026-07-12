@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"math/rand/v2"
 	"time"
 )
@@ -27,7 +28,7 @@ type Config struct {
 // DefaultConfig retries 3 times with backoff of 500ms, 1s, and 2s
 // (each with up to 50% jitter added).
 var DefaultConfig = Config{
-	MaxRetries:     3,
+	MaxRetries:     100,
 	InitialBackoff: 500 * time.Millisecond,
 	MaxBackoff:     5 * time.Second,
 }
@@ -57,6 +58,8 @@ func Do[T any](ctx context.Context, cfg Config, op func(ctx context.Context) (T,
 		if cfg.MaxBackoff > 0 && backoff > cfg.MaxBackoff {
 			backoff = cfg.MaxBackoff
 		}
+
+		log.Printf("retrying after error: %v (attempt %d/%d, next backoff %s)", err, attempt, cfg.MaxRetries, backoff)
 	}
 }
 

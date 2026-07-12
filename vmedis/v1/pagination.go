@@ -66,14 +66,14 @@ func getAllPages[T any](ctx context.Context, name string, concurrency int, fetch
 	for i := 0; i < concurrency; i++ {
 		eg.Go(func() error {
 			for page := range pages {
-				log.Printf("Getting %s page %d", name, page)
+				log.Printf("Getting %s page %d/%d", name, page, lastPage)
 
 				pageItems, _, err := fetchPage(ctx, page)
 				if err != nil {
-					return fmt.Errorf("get %s page %d: %w", name, page, err)
+					return fmt.Errorf("get %s page %d/%d: %w", name, page, lastPage, err)
 				}
 
-				log.Printf("Got %d %s from page %d", len(pageItems), name, page)
+				log.Printf("Got %d %s from page %d/%d", len(pageItems), name, page, lastPage)
 
 				lock.Lock()
 				items = append(items, pageItems...)
