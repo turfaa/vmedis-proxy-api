@@ -57,7 +57,11 @@ func ParseProcurements(r io.Reader) (ProcurementsResponse, error) {
 		return ProcurementsResponse{}, fmt.Errorf("new document from reader: %w", err)
 	}
 
-	procurementsSelections := doc.Find("div#w8-container > table > tbody > tr[data-key]")
+	// The grid widget's id changes between vmedis deployments (w5, w8, w6, ...),
+	// so match the stable kv-grid-container class instead. The nested per-procurement
+	// detail grids don't have this class, and the direct child combinators keep
+	// their rows out of this selection anyway.
+	procurementsSelections := doc.Find("div.kv-grid-container > table > tbody > tr[data-key]")
 
 	var procurements []Procurement
 	procurementsSelections.EachWithBreak(func(i int, s *goquery.Selection) bool {

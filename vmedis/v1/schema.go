@@ -258,7 +258,8 @@ type ProcurementUnit struct {
 	UnitTaxedPrice          float64    `procurement-index:"11"`
 	ExpiryDate              Date       `procurement-index:"12"`
 	BatchNumber             string     `procurement-index:"13"`
-	Total                   float64    `procurement-index:"14"`
+	// Columns 14 ("Ketentuan Retur") and 15 ("Maks bln sblm ED") pushed "Total" to 16.
+	Total float64 `procurement-index:"16"`
 }
 
 type Shift struct {
