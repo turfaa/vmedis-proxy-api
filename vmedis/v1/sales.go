@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -29,18 +30,42 @@ func (c *Client) GetAllTodaySales(ctx context.Context) ([]Sale, error) {
 	})
 }
 
+// GetAllSalesBetweenDates gets all sales between the given dates from vmedis.
+// It fetches every /apt-lap-penjualanobat-batch/index page concurrently
+// and returns an error if any page cannot be fetched or parsed.
+func (c *Client) GetAllSalesBetweenDates(ctx context.Context, startDate time.Time, endDate time.Time) ([]Sale, error) {
+	return getAllPages(ctx, "sales", c.concurrency, func(ctx context.Context, page int) ([]Sale, []int, error) {
+		res, err := c.GetSales(ctx, SearchByTimeParameters[ParameterTypeSales]{
+			StartTime: startDate,
+			EndTime:   endDate,
+			Page:      page,
+		})
+		if err != nil {
+			return nil, nil, err
+		}
+
+		return res.Sales, res.OtherPages, nil
+	})
+}
+
 // GetTodaySales gets one page of the sales from today from vmedis.
 // It calls the /apt-lap-penjualanobat-batch/index?page=<page> page and try to parse the sales from it.
 func (c *Client) GetTodaySales(ctx context.Context, page int) (SalesResponse, error) {
-	res, err := c.get(ctx, fmt.Sprintf("/apt-lap-penjualanobat-batch/index?page=%d", page))
+	return c.GetSales(ctx, SearchByTimeParameters[ParameterTypeSales]{Page: page})
+}
+
+// GetSales gets one page of sales matching the given search parameters from vmedis.
+// It calls the /apt-lap-penjualanobat-batch/index page and tries to parse the sales from it.
+func (c *Client) GetSales(ctx context.Context, params SearchByTimeParameters[ParameterTypeSales]) (SalesResponse, error) {
+	res, err := c.get(ctx, fmt.Sprintf("/apt-lap-penjualanobat-batch/index?%s", params.ToQuery(dateFormat)))
 	if err != nil {
-		return SalesResponse{}, fmt.Errorf("get today sales at page #%d: %w", page, err)
+		return SalesResponse{}, fmt.Errorf("get sales with params %+v: %w", params, err)
 	}
 	defer res.Body.Close()
 
 	sales, err := ParseSales(res.Body)
 	if err != nil {
-		return SalesResponse{}, fmt.Errorf("parse today sales at page #%d: %w", page, err)
+		return SalesResponse{}, fmt.Errorf("parse sales with params %+v: %w", params, err)
 	}
 
 	return sales, nil

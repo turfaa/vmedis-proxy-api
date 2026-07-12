@@ -170,6 +170,22 @@ func (s *Service) DumpTodaySalesFromVmedisToDB(ctx context.Context) error {
 		return fmt.Errorf("get sales from vmedis: %w", err)
 	}
 
+	return s.dumpSalesToDB(ctx, vmedisSales)
+}
+
+// DumpSalesByDateFromVmedisToDB dumps the sales at the given date from Vmedis to the DB.
+func (s *Service) DumpSalesByDateFromVmedisToDB(ctx context.Context, date time.Time) error {
+	log.Printf("Dumping sales at %s from Vmedis to DB", date.Format(time.DateOnly))
+
+	vmedisSales, err := s.vmedis.GetAllSalesBetweenDates(ctx, date, date)
+	if err != nil {
+		return fmt.Errorf("get sales from vmedis: %w", err)
+	}
+
+	return s.dumpSalesToDB(ctx, vmedisSales)
+}
+
+func (s *Service) dumpSalesToDB(ctx context.Context, vmedisSales []vmedisv1.Sale) error {
 	log.Printf("Got %d sales from Vmedis, dumping to DB", len(vmedisSales))
 
 	vmedisSales = s.makeSalesInvoiceNumbersUnique(vmedisSales)
@@ -186,7 +202,7 @@ func (s *Service) DumpTodaySalesFromVmedisToDB(ctx context.Context) error {
 		batchNum++
 	}
 
-	log.Printf("Dumped today's sales from Vmedis to DB, producing updated drug messages")
+	log.Printf("Dumped sales from Vmedis to DB, producing updated drug messages")
 
 	messages := make([]*kafkapb.UpdatedDrugByVmedisCode, 0, len(vmedisSales))
 	for _, sale := range vmedisSales {
@@ -202,7 +218,7 @@ func (s *Service) DumpTodaySalesFromVmedisToDB(ctx context.Context) error {
 		return fmt.Errorf("produce updated drug messages: %w", err)
 	}
 
-	log.Printf("Produced updated drug messages, finished dumping today's sales from Vmedis to DB")
+	log.Printf("Produced updated drug messages, finished dumping sales from Vmedis to DB")
 
 	return nil
 }
