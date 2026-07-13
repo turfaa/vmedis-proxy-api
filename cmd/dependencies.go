@@ -453,7 +453,7 @@ func getTokenService() *token2.Service {
 		return val
 	}
 
-	newService := token2.NewService(getDatabase())
+	newService := token2.NewService(getDatabase(), getRedisClient(), getTokenRefresher())
 
 	if !tokenService.CompareAndSwap(nil, newService) {
 		return tokenService.Load()

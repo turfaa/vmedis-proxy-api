@@ -922,6 +922,62 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /api/v2/vmedis/tokens/refresh:
+    post:
+      operationId: refreshVmedisTokens
+      tags: [Vmedis Tokens]
+      summary: Refresh Vmedis token statuses
+      description: |
+        Starts an asynchronous refresh of every non-expired Vmedis token's
+        status against Vmedis and returns immediately. The refresh is guarded by
+        a distributed lock held for at most one minute, so only one refresh runs
+        at a time. Requires the `admin` or `staff` role.
+      security:
+        - EmailAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/Message'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v2/vmedis/tokens/refresh/status:
+    get:
+      operationId: getVmedisTokenRefreshStatus
+      tags: [Vmedis Tokens]
+      summary: Get Vmedis token refresh status
+      description: Reports whether a token refresh is currently in progress. Requires the `admin` or `staff` role.
+      security:
+        - EmailAuth: []
+      responses:
+        '200':
+          description: The token refresh status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefreshStatusResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v2/vmedis/tokens/expired:
+    delete:
+      operationId: deleteExpiredVmedisTokens
+      tags: [Vmedis Tokens]
+      summary: Delete all expired Vmedis tokens
+      description: Deletes every Vmedis token whose status is `EXPIRED`. Requires the `admin` or `staff` role.
+      security:
+        - EmailAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/Message'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /api/v2/vmedis/tokens/{id}:
     delete:
       operationId: deleteVmedisToken
@@ -1586,6 +1642,15 @@ components:
           type: string
           description: The Vmedis session token.
       required: [token]
+
+    TokenRefreshStatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          description: Whether a token refresh is currently in progress.
+          enum: [IDLE, REFRESHING]
+      required: [status]
 
     # ----- Shifts -----
 
