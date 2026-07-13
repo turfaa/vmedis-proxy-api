@@ -302,6 +302,24 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 					s.tokenHandler.InsertToken,
 				)
 
+				tokens.POST(
+					"/refresh",
+					auth.AllowedRoles(auth.RoleAdmin, auth.RoleStaff),
+					s.tokenHandler.RefreshTokens,
+				)
+
+				tokens.GET(
+					"/refresh/status",
+					auth.AllowedRoles(auth.RoleAdmin, auth.RoleStaff),
+					s.tokenHandler.GetRefreshStatus,
+				)
+
+				tokens.DELETE(
+					"/expired",
+					auth.AllowedRoles(auth.RoleAdmin, auth.RoleStaff),
+					s.tokenHandler.DeleteExpiredTokens,
+				)
+
 				tokens.DELETE(
 					"/:id",
 					auth.AllowedRoles(auth.RoleAdmin, auth.RoleStaff),

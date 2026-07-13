@@ -1,7 +1,9 @@
 package token
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -33,6 +35,7 @@ func (h *Handler) GetTokens(c *gin.Context) {
 
 func (h *Handler) transformTokensToTable(tokens []models.VmedisToken) cui.Table {
 	header := []string{
+		"No",
 		"Diinput",
 		"Terakhir Diperbarui",
 		"Token",
@@ -44,6 +47,7 @@ func (h *Handler) transformTokensToTable(tokens []models.VmedisToken) cui.Table 
 		rows[i] = cui.Row{
 			ID: strconv.FormatUint(uint64(token.ID), 10),
 			Columns: []string{
+				strconv.Itoa(i + 1),
 				time2.FormatDateTime(token.CreatedAt),
 				time2.FormatDateTime(token.UpdatedAt),
 				token.Token,
@@ -98,4 +102,43 @@ func (h *Handler) DeleteToken(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"message": "Token deleted successfully",
 	})
+}
+
+func (h *Handler) DeleteExpiredTokens(c *gin.Context) {
+	deleted, err := h.service.DeleteExpiredTokens(c)
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": fmt.Sprintf("failed to delete expired tokens: %s", err),
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"message": fmt.Sprintf("%d expired tokens deleted successfully", deleted),
+		"deleted": deleted,
+	})
+}
+
+func (h *Handler) RefreshTokens(c *gin.Context) {
+	go func() {
+		if err := h.service.RefreshTokens(context.Background()); err != nil {
+			log.Printf("Failed to refresh tokens: %s", err)
+		}
+	}()
+
+	c.JSON(200, gin.H{
+		"message": "refreshing tokens",
+	})
+}
+
+func (h *Handler) GetRefreshStatus(c *gin.Context) {
+	status, err := h.service.GetRefreshStatus(c)
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": fmt.Sprintf("failed to get token refresh status: %s", err),
+		})
+		return
+	}
+
+	c.JSON(200, RefreshStatusResponse{Status: status})
 }
