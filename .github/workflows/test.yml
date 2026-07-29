@@ -32,5 +32,15 @@ jobs:
             - name: Vet
               run: go vet ./...
 
+            - name: Check formatting
+              run: |
+                  unformatted=$(gofmt -l .)
+                  if [ -n "$unformatted" ]; then
+                      echo "Not gofmt-clean:"
+                      echo "$unformatted"
+                      gofmt -d .
+                      exit 1
+                  fi
+
             - name: Test
               run: go test -race ./...
