@@ -15,7 +15,7 @@ func (h *ApiHandler) Login(c *gin.Context) {
 		return
 	}
 
-	user, err := h.service.GetOrCreateUser(c, req.Email)
+	user, err := h.service.GetOrCreateUser(c.Request.Context(), req.Email)
 	if err != nil {
 		c.JSON(400, gin.H{
 			"error": "failed to login: " + err.Error(),

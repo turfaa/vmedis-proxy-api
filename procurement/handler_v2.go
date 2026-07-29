@@ -23,7 +23,7 @@ func (h *ApiHandler) GetSupplierProcurementRecaps(c *gin.Context) {
 		return
 	}
 
-	recaps, err := h.service.GetSupplierProcurementRecapsBetweenTime(c, from, until)
+	recaps, err := h.service.GetSupplierProcurementRecapsBetweenTime(c.Request.Context(), from, until)
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": fmt.Sprintf("failed to get supplier procurement recaps: %s", err),
@@ -100,7 +100,7 @@ func (h *ApiHandler) GetLastDrugProcurements(c *gin.Context) {
 		limit = 5
 	}
 
-	procurements, err := h.service.GetLastDrugProcurements(c, request.DrugCode, limit)
+	procurements, err := h.service.GetLastDrugProcurements(c.Request.Context(), request.DrugCode, limit)
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": fmt.Sprintf("failed to get last drug procurements: %s", err),

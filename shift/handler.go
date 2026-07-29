@@ -33,7 +33,7 @@ func (h *ApiHandler) GetShiftByVmedisID(c *gin.Context) {
 		return
 	}
 
-	shift, err := h.service.GetShiftByVmedisID(c, vmedisID)
+	shift, err := h.service.GetShiftByVmedisID(c.Request.Context(), vmedisID)
 	if err != nil {
 		c.JSON(500, gin.H{"error": fmt.Sprintf("failed to get shift by vmedis id %d: %s", vmedisID, err)})
 		return
@@ -119,7 +119,7 @@ func (h *ApiHandler) GetShifts(c *gin.Context) {
 		return
 	}
 
-	shifts, err := h.service.GetShiftsBetween(c, from, to)
+	shifts, err := h.service.GetShiftsBetween(c.Request.Context(), from, to)
 	if err != nil {
 		c.JSON(500, gin.H{"error": fmt.Sprintf("failed to get shifts: %s", err)})
 		return
@@ -153,7 +153,7 @@ func (h *ApiHandler) DumpShiftsFromVmedisToDB(c *gin.Context) {
 }
 
 func (h *ApiHandler) GetShiftDumpStatus(c *gin.Context) {
-	status, err := h.service.GetShiftDumpStatus(c)
+	status, err := h.service.GetShiftDumpStatus(c.Request.Context())
 	if err != nil {
 		c.JSON(500, gin.H{"error": fmt.Sprintf("failed to get shift dump status: %s", err)})
 		return
@@ -169,7 +169,7 @@ func (h *ApiHandler) ShowShift(c *gin.Context) {
 		return
 	}
 
-	shift, err := h.service.GetShiftByVmedisID(c, vmedisID)
+	shift, err := h.service.GetShiftByVmedisID(c.Request.Context(), vmedisID)
 	if err != nil {
 		c.JSON(500, gin.H{"error": fmt.Sprintf("failed to get shift by vmedis id %d: %s", vmedisID, err)})
 		return

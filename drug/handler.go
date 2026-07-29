@@ -26,7 +26,7 @@ type ApiHandler struct {
 
 // GetDrugs handles requests to get all drugs.
 func (h *ApiHandler) GetDrugs(c *gin.Context) {
-	drugs, err := h.service.GetDrugs(c)
+	drugs, err := h.service.GetDrugs(c.Request.Context())
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": fmt.Sprintf("failed to get drugs: %s", err),
@@ -72,7 +72,7 @@ func (h *ApiHandler) GetConservativeDrugsToStockOpname(c *gin.Context) {
 
 	yesterdayUntil := todayUntil.Add(-24 * time.Hour)
 
-	drugs, err := h.service.GetDrugsToStockOpname(c, h.stockOpnameLookupStartTime, yesterdayUntil)
+	drugs, err := h.service.GetDrugsToStockOpname(c.Request.Context(), h.stockOpnameLookupStartTime, yesterdayUntil)
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": fmt.Sprintf("failed to get drugs to stock opname: %s", err),
@@ -95,7 +95,7 @@ func (h *ApiHandler) GetSalesBasedDrugsToStockOpname(c *gin.Context) {
 
 	yesterdayUntil := todayUntil.Add(-24 * time.Hour)
 
-	drugs, err := h.service.GetSalesBasedDrugsToStockOpname(c, h.stockOpnameLookupStartTime, yesterdayUntil)
+	drugs, err := h.service.GetSalesBasedDrugsToStockOpname(c.Request.Context(), h.stockOpnameLookupStartTime, yesterdayUntil)
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": fmt.Sprintf("failed to get sales-based drugs to stock opname: %s", err),
