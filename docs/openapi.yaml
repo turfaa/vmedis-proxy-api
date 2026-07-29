@@ -478,6 +478,38 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /api/v2/procurements/suppliers/recap:
+    get:
+      operationId: getSupplierProcurementRecaps
+      tags: [Procurements]
+      summary: Get procurement recap per supplier
+      description: |
+        Returns the total procurement amount per supplier in the given time range
+        (defaults to today), based on the invoice date, as a display-ready table
+        sorted by the total amount, descending. The table footer contains the
+        total of all suppliers. Requires the `admin` or `staff` role.
+        Responses are cached for one minute.
+      security:
+        - EmailAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DateQuery'
+        - $ref: '#/components/parameters/FromQuery'
+        - $ref: '#/components/parameters/UntilQuery'
+        - $ref: '#/components/parameters/ToQuery'
+      responses:
+        '200':
+          description: The procurement recap per supplier as a table.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Table'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /api/v2/shifts:
     get:
       operationId: getShifts
@@ -1689,6 +1721,13 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/TableRow'
+        footer:
+          type: array
+          description: |
+            A summary row rendered below the rows, e.g. the totals of the
+            numeric columns. Omitted when the table has no summary.
+          items:
+            type: string
 
     TableRow:
       type: object
