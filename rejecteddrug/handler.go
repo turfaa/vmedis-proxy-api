@@ -43,7 +43,7 @@ func (h *ApiHandler) GetRejectedDrugs(c *gin.Context) {
 		return
 	}
 
-	rejectedDrugs, err := h.service.GetRejectedDrugs(c, filters)
+	rejectedDrugs, err := h.service.GetRejectedDrugs(c.Request.Context(), filters)
 	if err != nil {
 		c.JSON(500, gin.H{"error": fmt.Sprintf("failed to get rejected drugs: %s", err)})
 		return
@@ -61,7 +61,7 @@ func (h *ApiHandler) GetRejectedDrug(c *gin.Context) {
 		return
 	}
 
-	rejectedDrug, err := h.service.GetRejectedDrugByID(c, uint(id))
+	rejectedDrug, err := h.service.GetRejectedDrugByID(c.Request.Context(), uint(id))
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(404, gin.H{"error": fmt.Sprintf("rejected drug %d not found", id)})
@@ -82,7 +82,7 @@ func (h *ApiHandler) CreateRejectedDrug(c *gin.Context) {
 		return
 	}
 
-	rejectedDrug, err := h.service.CreateRejectedDrug(c, request, auth.FromGinContext(c).Email)
+	rejectedDrug, err := h.service.CreateRejectedDrug(c.Request.Context(), request, auth.FromGinContext(c).Email)
 	if err != nil {
 		c.JSON(500, gin.H{"error": fmt.Sprintf("failed to create rejected drug: %s", err)})
 		return
@@ -104,7 +104,7 @@ func (h *ApiHandler) UpdateRejectedDrug(c *gin.Context) {
 		return
 	}
 
-	rejectedDrug, err := h.service.UpdateRejectedDrug(c, uint(id), request, auth.FromGinContext(c).Email)
+	rejectedDrug, err := h.service.UpdateRejectedDrug(c.Request.Context(), uint(id), request, auth.FromGinContext(c).Email)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(404, gin.H{"error": fmt.Sprintf("rejected drug %d not found", id)})
@@ -125,7 +125,7 @@ func (h *ApiHandler) DeleteRejectedDrug(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.DeleteRejectedDrug(c, uint(id)); err != nil {
+	if err := h.service.DeleteRejectedDrug(c.Request.Context(), uint(id)); err != nil {
 		c.JSON(500, gin.H{"error": fmt.Sprintf("failed to delete rejected drug %d: %s", id, err)})
 		return
 	}
@@ -165,7 +165,7 @@ func (h *ApiHandler) GetUpdateRejectedDrugForm(c *gin.Context) {
 		return
 	}
 
-	rejectedDrug, err := h.service.GetRejectedDrugByID(c, uint(id))
+	rejectedDrug, err := h.service.GetRejectedDrugByID(c.Request.Context(), uint(id))
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(404, gin.H{"error": fmt.Sprintf("rejected drug %d not found", id)})

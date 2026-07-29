@@ -15,7 +15,7 @@ import (
 func (h *ApiHandler) GetDrugsV2(c *gin.Context) {
 	user := auth.FromGinContext(c)
 
-	drugs, err := h.service.GetDrugs(c)
+	drugs, err := h.service.GetDrugs(c.Request.Context())
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": fmt.Sprintf("failed to get drugs: %s", err),

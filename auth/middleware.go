@@ -27,7 +27,7 @@ func GinMiddleware(service *Service) gin.HandlerFunc {
 			return
 		}
 
-		user, err := service.GetOrCreateUser(c, email)
+		user, err := service.GetOrCreateUser(c.Request.Context(), email)
 		if err != nil {
 			c.JSON(500, gin.H{
 				"error": fmt.Sprintf("failed to get or create user: %s", err),

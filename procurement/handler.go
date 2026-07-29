@@ -45,7 +45,7 @@ func (h *ApiHandler) DumpProcurements(c *gin.Context) {
 }
 
 func (h *ApiHandler) GetRecommendations(c *gin.Context) {
-	recommendations, err := h.service.GetRecommendations(c)
+	recommendations, err := h.service.GetRecommendations(c.Request.Context())
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": fmt.Sprintf("failed to get recommendations: %s", err),
@@ -70,7 +70,7 @@ func (h *ApiHandler) DumpRecommendations(c *gin.Context) {
 }
 
 func (h *ApiHandler) GetRecommendationStatus(c *gin.Context) {
-	status, err := h.service.GetRecommendationStatus(c)
+	status, err := h.service.GetRecommendationStatus(c.Request.Context())
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": fmt.Sprintf("failed to get recommendation status: %s", err),
@@ -82,7 +82,7 @@ func (h *ApiHandler) GetRecommendationStatus(c *gin.Context) {
 }
 
 func (h *ApiHandler) GetInvoiceCalculators(c *gin.Context) {
-	calculators, err := h.service.GetInvoiceCalculators(c)
+	calculators, err := h.service.GetInvoiceCalculators(c.Request.Context())
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": fmt.Sprintf("failed to get invoice calculators: %s", err),

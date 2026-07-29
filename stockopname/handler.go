@@ -23,7 +23,7 @@ func (h *ApiHandler) GetStockOpnames(c *gin.Context) {
 		return
 	}
 
-	stockOpnames, err := h.service.GetStockOpnamesBetweenTime(c, from, to)
+	stockOpnames, err := h.service.GetStockOpnamesBetweenTime(c.Request.Context(), from, to)
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": fmt.Sprintf("failed to get stock opnames: %s", err),
@@ -43,7 +43,7 @@ func (h *ApiHandler) GetCompactedStockOpnames(c *gin.Context) {
 		return
 	}
 
-	stockOpnames, err := h.service.GetCompactedStockOpnamesBetweenTime(c, from, to)
+	stockOpnames, err := h.service.GetCompactedStockOpnamesBetweenTime(c.Request.Context(), from, to)
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": fmt.Sprintf("failed to get stock opnames: %s", err),
@@ -63,7 +63,7 @@ func (h *ApiHandler) GetStockOpnameSummaries(c *gin.Context) {
 		return
 	}
 
-	summaries, err := h.service.GetStockOpnameSummariesBetweenTime(c, from, to)
+	summaries, err := h.service.GetStockOpnameSummariesBetweenTime(c.Request.Context(), from, to)
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": fmt.Sprintf("failed to get stock opname summaries: %s", err),

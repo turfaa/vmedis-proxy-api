@@ -22,7 +22,7 @@ func (s *ApiHandler) GetSales(c *gin.Context) {
 		return
 	}
 
-	sales, err := s.service.GetSalesBetweenTime(c, from, to)
+	sales, err := s.service.GetSalesBetweenTime(c.Request.Context(), from, to)
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": err.Error(),
@@ -42,7 +42,7 @@ func (s *ApiHandler) GetSoldDrugs(c *gin.Context) {
 		return
 	}
 
-	soldDrugs, err := s.service.GetSoldDrugsBetweenTime(c, from, to)
+	soldDrugs, err := s.service.GetSoldDrugsBetweenTime(c.Request.Context(), from, to)
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": err.Error(),
@@ -62,7 +62,7 @@ func (s *ApiHandler) GetSalesStatistics(c *gin.Context) {
 		return
 	}
 
-	stats, err := s.service.GetSalesStatisticsBetweenTime(c, from, to)
+	stats, err := s.service.GetSalesStatisticsBetweenTime(c.Request.Context(), from, to)
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": err.Error(),
@@ -80,7 +80,7 @@ func (s *ApiHandler) GetSalesStatistics(c *gin.Context) {
 }
 
 func (s *ApiHandler) GetSalesStatisticsSensors(c *gin.Context) {
-	sensors, err := s.service.GetSalesStatisticsSensors(c)
+	sensors, err := s.service.GetSalesStatisticsSensors(c.Request.Context())
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": err.Error(),

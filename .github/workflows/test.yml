@@ -1,0 +1,46 @@
+name: Test
+
+on:
+    push:
+        branches:
+            - main
+        tags-ignore:
+            - '**'
+    pull_request:
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    test:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Set up Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version-file: go.mod
+                  cache: true
+
+            - name: Build
+              run: go build ./...
+
+            - name: Vet
+              run: go vet ./...
+
+            - name: Check formatting
+              run: |
+                  unformatted=$(gofmt -l .)
+                  if [ -n "$unformatted" ]; then
+                      echo "Not gofmt-clean:"
+                      echo "$unformatted"
+                      gofmt -d .
+                      exit 1
+                  fi
+
+            - name: Test
+              run: go test -race ./...

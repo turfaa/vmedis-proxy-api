@@ -22,7 +22,7 @@ func NewHandler(service *Service) *Handler {
 }
 
 func (h *Handler) GetTokens(c *gin.Context) {
-	tokens, err := h.service.GetTokens(c)
+	tokens, err := h.service.GetTokens(c.Request.Context())
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": fmt.Sprintf("failed to get tokens: %s", err),
@@ -71,7 +71,7 @@ func (h *Handler) InsertToken(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.InsertToken(c, request.Token); err != nil {
+	if err := h.service.InsertToken(c.Request.Context(), request.Token); err != nil {
 		c.JSON(500, gin.H{
 			"error": fmt.Sprintf("failed to insert token: %s", err),
 		})
@@ -92,7 +92,7 @@ func (h *Handler) DeleteToken(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.DeleteToken(c, uint(id)); err != nil {
+	if err := h.service.DeleteToken(c.Request.Context(), uint(id)); err != nil {
 		c.JSON(500, gin.H{
 			"error": fmt.Sprintf("failed to delete token: %s", err),
 		})
@@ -105,7 +105,7 @@ func (h *Handler) DeleteToken(c *gin.Context) {
 }
 
 func (h *Handler) DeleteExpiredTokens(c *gin.Context) {
-	deleted, err := h.service.DeleteExpiredTokens(c)
+	deleted, err := h.service.DeleteExpiredTokens(c.Request.Context())
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": fmt.Sprintf("failed to delete expired tokens: %s", err),
@@ -132,7 +132,7 @@ func (h *Handler) RefreshTokens(c *gin.Context) {
 }
 
 func (h *Handler) GetRefreshStatus(c *gin.Context) {
-	status, err := h.service.GetRefreshStatus(c)
+	status, err := h.service.GetRefreshStatus(c.Request.Context())
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": fmt.Sprintf("failed to get token refresh status: %s", err),
