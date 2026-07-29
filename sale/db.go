@@ -9,6 +9,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
+	"github.com/turfaa/vmedis-proxy-api/database"
 	"github.com/turfaa/vmedis-proxy-api/database/models"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/slices2"
 	vmedisv1 "github.com/turfaa/vmedis-proxy-api/vmedis/v1"
@@ -47,10 +48,12 @@ SELECT
 FROM
 	(
 		SELECT drug_code, SUM(amount) as amount, unit
-		FROM 
+		FROM
 			sale_units JOIN sales ON sale_units.invoice_number = sales.invoice_number
-		WHERE 
+		WHERE
 			sales.sold_at BETWEEN ? AND ?
+			AND sales.deleted_at IS NULL
+			AND sale_units.deleted_at IS NULL
 		GROUP BY drug_code, unit
 	) sales
 	JOIN drugs ON sales.drug_code = drugs.vmedis_code
@@ -95,7 +98,7 @@ func (d *Database) UpsertVmedisSales(ctx context.Context, vmedisSales []vmedisv1
 		if err := tx.Clauses(
 			clause.OnConflict{
 				Columns: []clause.Column{{Name: "invoice_number"}},
-				DoUpdates: clause.AssignmentColumns([]string{
+				DoUpdates: database.UndeleteAndUpdateColumns([]string{
 					"updated_at",
 					"vmedis_id",
 					"sold_at",
@@ -118,7 +121,7 @@ func (d *Database) UpsertVmedisSales(ctx context.Context, vmedisSales []vmedisv1
 				if err := tx.Clauses(
 					clause.OnConflict{
 						Columns: []clause.Column{{Name: "invoice_number"}, {Name: "id_in_sale"}},
-						DoUpdates: clause.AssignmentColumns([]string{
+						DoUpdates: database.UndeleteAndUpdateColumns([]string{
 							"updated_at",
 							"drug_code",
 							"drug_name",
@@ -140,6 +143,23 @@ func (d *Database) UpsertVmedisSales(ctx context.Context, vmedisSales []vmedisv1
 			} else {
 				log.Printf("sale %s has no sale unit", sale.InvoiceNumber)
 			}
+		}
+
+		return nil
+	})
+}
+
+// DeleteSaleByInvoiceNumber soft-deletes the sale with the given invoice number
+// together with its sale units, so that queries reading sale units on their own
+// don't keep seeing the units of a deleted sale.
+func (d *Database) DeleteSaleByInvoiceNumber(ctx context.Context, invoiceNumber string) error {
+	return d.dbCtx(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("invoice_number = ?", invoiceNumber).Delete(&models.SaleUnit{}).Error; err != nil {
+			return fmt.Errorf("delete sale units of sale %s: %w", invoiceNumber, err)
+		}
+
+		if err := tx.Where("invoice_number = ?", invoiceNumber).Delete(&models.Sale{}).Error; err != nil {
+			return fmt.Errorf("delete sale %s: %w", invoiceNumber, err)
 		}
 
 		return nil

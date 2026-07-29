@@ -13,6 +13,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
+	"github.com/turfaa/vmedis-proxy-api/database"
 	"github.com/turfaa/vmedis-proxy-api/database/models"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/slices2"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/zstd2"
@@ -56,7 +57,7 @@ func (d *Database) UpsertVmedisProcurements(ctx context.Context, procurements []
 		if err := tx.Clauses(
 			clause.OnConflict{
 				Columns: []clause.Column{{Name: "invoice_number"}},
-				DoUpdates: clause.AssignmentColumns([]string{
+				DoUpdates: database.UndeleteAndUpdateColumns([]string{
 					"updated_at",
 					"invoice_date",
 					"input_date",
@@ -89,7 +90,7 @@ func (d *Database) UpsertVmedisProcurements(ctx context.Context, procurements []
 			if err := tx.Clauses(
 				clause.OnConflict{
 					Columns: []clause.Column{{Name: "invoice_number"}, {Name: "id_in_procurement"}},
-					DoUpdates: clause.AssignmentColumns([]string{
+					DoUpdates: database.UndeleteAndUpdateColumns([]string{
 						"updated_at",
 						"drug_code",
 						"drug_name",
@@ -117,6 +118,24 @@ func (d *Database) UpsertVmedisProcurements(ctx context.Context, procurements []
 	})
 }
 
+// DeleteProcurementByInvoiceNumber soft-deletes the procurement with the given
+// invoice number together with its procurement units, so that queries reading
+// procurement units on their own don't keep seeing the units of a deleted
+// procurement.
+func (d *Database) DeleteProcurementByInvoiceNumber(ctx context.Context, invoiceNumber string) error {
+	return d.dbCtx(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("invoice_number = ?", invoiceNumber).Delete(&models.ProcurementUnit{}).Error; err != nil {
+			return fmt.Errorf("delete procurement units of procurement %s: %w", invoiceNumber, err)
+		}
+
+		if err := tx.Where("invoice_number = ?", invoiceNumber).Delete(&models.Procurement{}).Error; err != nil {
+			return fmt.Errorf("delete procurement %s: %w", invoiceNumber, err)
+		}
+
+		return nil
+	})
+}
+
 func (d *Database) GetAggregatedProcurementsBetweenTime(ctx context.Context, from time.Time, to time.Time) ([]AggregatedProcurement, error) {
 	var procurements []AggregatedProcurement
 	if err := d.dbCtx(ctx).
@@ -129,10 +148,12 @@ SELECT
 FROM
 	(
 		SELECT drug_code, SUM(amount) as amount, unit
-		FROM 
+		FROM
 			procurement_units JOIN procurements ON procurement_units.invoice_number = procurements.invoice_number
 		WHERE
 			procurements.invoice_date BETWEEN ? AND ?
+			AND procurements.deleted_at IS NULL
+			AND procurement_units.deleted_at IS NULL
 		GROUP BY drug_code, unit
 	) procurements
 	JOIN drugs ON procurements.drug_code = drugs.vmedis_code
@@ -162,6 +183,7 @@ SELECT
 	SUM(total) AS total
 FROM procurements
 WHERE invoice_date BETWEEN ? AND ?
+	AND deleted_at IS NULL
 GROUP BY supplier
 ORDER BY total DESC, supplier`,
 			from,
@@ -209,6 +231,8 @@ SELECT
 FROM procurement_units
 JOIN procurements ON procurement_units.invoice_number = procurements.invoice_number
 WHERE procurement_units.drug_code = ?
+	AND procurements.deleted_at IS NULL
+	AND procurement_units.deleted_at IS NULL
 ORDER BY procurement_units.created_at DESC
 LIMIT ?
 			`,

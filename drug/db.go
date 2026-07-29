@@ -114,7 +114,11 @@ func (d *Database) GetDrugSaleStatisticsBetweenTimes(
 	query := d.dbCtx(ctx).
 		Model(&models.SaleUnit{}).
 		Select("drug_code, COUNT(*) AS number_of_sales, SUM(total) AS total_amount").
-		Where("invoice_number IN (SELECT invoice_number FROM sales WHERE sold_at BETWEEN ? AND ?)", startTime, endTime).
+		Where(
+			"invoice_number IN (SELECT invoice_number FROM sales WHERE sold_at BETWEEN ? AND ? AND deleted_at IS NULL)",
+			startTime,
+			endTime,
+		).
 		Group("drug_code")
 
 	var stats []SaleStatistics
