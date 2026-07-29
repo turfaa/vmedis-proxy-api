@@ -47,10 +47,12 @@ SELECT
 FROM
 	(
 		SELECT drug_code, SUM(amount) as amount, unit
-		FROM 
+		FROM
 			sale_units JOIN sales ON sale_units.invoice_number = sales.invoice_number
-		WHERE 
+		WHERE
 			sales.sold_at BETWEEN ? AND ?
+			AND sales.deleted_at IS NULL
+			AND sale_units.deleted_at IS NULL
 		GROUP BY drug_code, unit
 	) sales
 	JOIN drugs ON sales.drug_code = drugs.vmedis_code
@@ -140,6 +142,23 @@ func (d *Database) UpsertVmedisSales(ctx context.Context, vmedisSales []vmedisv1
 			} else {
 				log.Printf("sale %s has no sale unit", sale.InvoiceNumber)
 			}
+		}
+
+		return nil
+	})
+}
+
+// DeleteSaleByInvoiceNumber soft-deletes the sale with the given invoice number
+// together with its sale units, so that queries reading sale units on their own
+// don't keep seeing the units of a deleted sale.
+func (d *Database) DeleteSaleByInvoiceNumber(ctx context.Context, invoiceNumber string) error {
+	return d.dbCtx(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("invoice_number = ?", invoiceNumber).Delete(&models.SaleUnit{}).Error; err != nil {
+			return fmt.Errorf("delete sale units of sale %s: %w", invoiceNumber, err)
+		}
+
+		if err := tx.Where("invoice_number = ?", invoiceNumber).Delete(&models.Sale{}).Error; err != nil {
+			return fmt.Errorf("delete sale %s: %w", invoiceNumber, err)
 		}
 
 		return nil
