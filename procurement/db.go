@@ -13,6 +13,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
+	"github.com/turfaa/vmedis-proxy-api/database"
 	"github.com/turfaa/vmedis-proxy-api/database/models"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/slices2"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/zstd2"
@@ -56,7 +57,7 @@ func (d *Database) UpsertVmedisProcurements(ctx context.Context, procurements []
 		if err := tx.Clauses(
 			clause.OnConflict{
 				Columns: []clause.Column{{Name: "invoice_number"}},
-				DoUpdates: clause.AssignmentColumns([]string{
+				DoUpdates: database.UndeleteAndUpdateColumns([]string{
 					"updated_at",
 					"invoice_date",
 					"input_date",
@@ -89,7 +90,7 @@ func (d *Database) UpsertVmedisProcurements(ctx context.Context, procurements []
 			if err := tx.Clauses(
 				clause.OnConflict{
 					Columns: []clause.Column{{Name: "invoice_number"}, {Name: "id_in_procurement"}},
-					DoUpdates: clause.AssignmentColumns([]string{
+					DoUpdates: database.UndeleteAndUpdateColumns([]string{
 						"updated_at",
 						"drug_code",
 						"drug_name",

@@ -18,8 +18,8 @@ type Sale struct {
 	SoldAt   time.Time `gorm:"index"`
 	Cashier  string    `gorm:"index"`
 	// InvoiceNumber stays unique across soft-deleted sales too, so re-dumping a
-	// sale that was soft-deleted here updates the soft-deleted row instead of
-	// resurrecting it as a second, visible one.
+	// sale that was soft-deleted here conflicts with the hidden row and revives
+	// it, rather than inserting a second sale with the same invoice number.
 	InvoiceNumber string `gorm:"unique"`
 	PatientName   string `gorm:"index"`
 	Doctor        string `gorm:"index"`

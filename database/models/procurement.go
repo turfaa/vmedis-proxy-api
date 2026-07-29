@@ -14,8 +14,9 @@ type Procurement struct {
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 
 	// InvoiceNumber stays unique across soft-deleted procurements too, so
-	// re-dumping a procurement that was soft-deleted here updates the
-	// soft-deleted row instead of resurrecting it as a second, visible one.
+	// re-dumping a procurement that was soft-deleted here conflicts with the
+	// hidden row and revives it, rather than inserting a second procurement
+	// with the same invoice number.
 	InvoiceNumber          string         `gorm:"unique"`
 	InvoiceDate            datatypes.Date `gorm:"index"`
 	InputDate              time.Time

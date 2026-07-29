@@ -9,6 +9,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
+	"github.com/turfaa/vmedis-proxy-api/database"
 	"github.com/turfaa/vmedis-proxy-api/database/models"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/slices2"
 	vmedisv1 "github.com/turfaa/vmedis-proxy-api/vmedis/v1"
@@ -97,7 +98,7 @@ func (d *Database) UpsertVmedisSales(ctx context.Context, vmedisSales []vmedisv1
 		if err := tx.Clauses(
 			clause.OnConflict{
 				Columns: []clause.Column{{Name: "invoice_number"}},
-				DoUpdates: clause.AssignmentColumns([]string{
+				DoUpdates: database.UndeleteAndUpdateColumns([]string{
 					"updated_at",
 					"vmedis_id",
 					"sold_at",
@@ -120,7 +121,7 @@ func (d *Database) UpsertVmedisSales(ctx context.Context, vmedisSales []vmedisv1
 				if err := tx.Clauses(
 					clause.OnConflict{
 						Columns: []clause.Column{{Name: "invoice_number"}, {Name: "id_in_sale"}},
-						DoUpdates: clause.AssignmentColumns([]string{
+						DoUpdates: database.UndeleteAndUpdateColumns([]string{
 							"updated_at",
 							"drug_code",
 							"drug_name",
