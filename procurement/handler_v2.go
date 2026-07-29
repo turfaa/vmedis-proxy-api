@@ -9,9 +9,75 @@ import (
 	"github.com/turfaa/vmedis-proxy-api/cui"
 	"github.com/turfaa/vmedis-proxy-api/drug"
 	"github.com/turfaa/vmedis-proxy-api/money"
+	"github.com/turfaa/vmedis-proxy-api/pkg2/time2"
 
 	"github.com/gin-gonic/gin"
 )
+
+func (h *ApiHandler) GetSupplierProcurementRecaps(c *gin.Context) {
+	from, until, err := time2.GetTimeRangeFromQuery(c)
+	if err != nil {
+		c.JSON(400, gin.H{
+			"error": fmt.Sprintf("invalid request: %s", err),
+		})
+		return
+	}
+
+	recaps, err := h.service.GetSupplierProcurementRecapsBetweenTime(c, from, until)
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": fmt.Sprintf("failed to get supplier procurement recaps: %s", err),
+		})
+		return
+	}
+
+	c.JSON(200, h.transformSupplierProcurementRecapsToTable(recaps))
+}
+
+func (h *ApiHandler) transformSupplierProcurementRecapsToTable(recaps []SupplierProcurementRecap) cui.Table {
+	header := []string{
+		"No",
+		"Supplier",
+		"Jumlah Faktur",
+		"Total Pembelian",
+	}
+
+	var (
+		totalInvoiceCount int64
+		totalAmount       float64
+	)
+
+	rows := make([]cui.Row, len(recaps))
+	for i, recap := range recaps {
+		totalInvoiceCount += recap.InvoiceCount
+		totalAmount += recap.Total
+
+		rows[i] = cui.Row{
+			ID: strconv.Itoa(i),
+			Columns: []string{
+				strconv.Itoa(i + 1),
+				recap.Supplier,
+				formatInvoiceCount(recap.InvoiceCount),
+				money.FormatRupiah(recap.Total),
+			},
+		}
+	}
+
+	return cui.Table{
+		Header: header,
+		Rows:   rows,
+		Footer: []string{
+			"",
+			"Total",
+			formatInvoiceCount(totalInvoiceCount),
+			money.FormatRupiah(totalAmount),
+		},
+	}
+}
+
+func formatInvoiceCount(count int64) string {
+	return strconv.FormatInt(count, 10) + " Faktur"
+}
 
 func (h *ApiHandler) GetLastDrugProcurements(c *gin.Context) {
 	var request LastDrugProcurementsRequest

@@ -148,6 +148,33 @@ ORDER BY drugs.name`,
 	return procurements, nil
 }
 
+// GetSupplierProcurementRecapsBetweenTime returns the total procurement amount
+// per supplier for procurements whose invoice date falls between from and to,
+// sorted by the total amount, descending.
+func (d *Database) GetSupplierProcurementRecapsBetweenTime(ctx context.Context, from time.Time, to time.Time) ([]SupplierProcurementRecap, error) {
+	var recaps []SupplierProcurementRecap
+	if err := d.dbCtx(ctx).
+		Raw(
+			`
+SELECT
+	supplier,
+	COUNT(*) AS invoice_count,
+	SUM(total) AS total
+FROM procurements
+WHERE invoice_date BETWEEN ? AND ?
+GROUP BY supplier
+ORDER BY total DESC, supplier`,
+			from,
+			to,
+		).
+		Find(&recaps).
+		Error; err != nil {
+		return nil, fmt.Errorf("get supplier procurement recaps between %s and %s from DB: %w", from, to, err)
+	}
+
+	return recaps, nil
+}
+
 func (d *Database) GetInvoiceCalculators(ctx context.Context) ([]InvoiceCalculator, error) {
 	var invoiceCalculators []models.InvoiceCalculator
 	if err := d.dbCtx(ctx).

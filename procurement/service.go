@@ -33,6 +33,15 @@ func (s *Service) GetAggregatedProcurementsBetweenTime(ctx context.Context, from
 	return s.db.GetAggregatedProcurementsBetweenTime(ctx, from, to)
 }
 
+func (s *Service) GetSupplierProcurementRecapsBetweenTime(ctx context.Context, from time.Time, to time.Time) ([]SupplierProcurementRecap, error) {
+	recaps, err := s.db.GetSupplierProcurementRecapsBetweenTime(ctx, from, to)
+	if err != nil {
+		return nil, fmt.Errorf("get supplier procurement recaps from DB: %w", err)
+	}
+
+	return recaps, nil
+}
+
 func (s *Service) GetRecommendations(ctx context.Context) (RecommendationsResponse, error) {
 	recommendations, err := s.redisDB.GetRecommendations(ctx)
 	if err != nil {

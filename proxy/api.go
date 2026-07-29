@@ -200,6 +200,13 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 				cache.CacheByRequestURI(store, time.Minute),
 				s.procurementHandler.GetLastDrugProcurements,
 			)
+
+			procurements.GET(
+				"/suppliers/recap",
+				auth.AllowedRoles(auth.RoleAdmin, auth.RoleStaff),
+				cache.CacheByRequestURI(store, time.Minute),
+				s.procurementHandler.GetSupplierProcurementRecaps,
+			)
 		}
 
 		shifts := v2.Group("/shifts")

@@ -109,6 +109,14 @@ type LastDrugProcurementsRequest struct {
 	Limit    int    `json:"limit" form:"limit"`
 }
 
+// SupplierProcurementRecap is the recap of all procurements from one supplier
+// within a time range.
+type SupplierProcurementRecap struct {
+	Supplier     string  `json:"supplier"`
+	InvoiceCount int64   `json:"invoiceCount"`
+	Total        float64 `json:"total"`
+}
+
 type DrugProcurement struct {
 	CreatedAt      time.Time `json:"createdAt"`
 	DrugCode       string    `json:"drugCode"`
