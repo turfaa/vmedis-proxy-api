@@ -31,6 +31,15 @@ func (s *Service) GetAggregatedSalesBetweenTime(ctx context.Context, from time.T
 	return s.db.GetAggregatedSalesBetweenTime(ctx, from, to)
 }
 
+func (s *Service) GetLastDrugSales(ctx context.Context, drugCode string, limit int) ([]DrugSale, error) {
+	sales, err := s.db.GetLastDrugSales(ctx, drugCode, limit)
+	if err != nil {
+		return nil, fmt.Errorf("get last drug sales from DB: %w", err)
+	}
+
+	return sales, nil
+}
+
 func (s *Service) GetSoldDrugsBetweenTime(ctx context.Context, from time.Time, to time.Time) ([]SoldDrug, error) {
 	sales, err := s.db.GetSalesBetweenTime(ctx, from, to)
 	if err != nil {
