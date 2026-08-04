@@ -69,6 +69,45 @@ ORDER BY drugs.name`,
 	return sales, nil
 }
 
+// GetLastDrugSales returns the sales of the given drug, most recent first.
+// The limit is capped at 20 so that one request cannot pull the whole history.
+func (d *Database) GetLastDrugSales(ctx context.Context, drugCode string, limit int) ([]DrugSale, error) {
+	limit = min(limit, 20)
+
+	var sales []DrugSale
+	if err := d.dbCtx(ctx).
+		Raw(
+			`
+SELECT
+	sales.sold_at,
+	sale_units.invoice_number,
+	sale_units.drug_code,
+	sale_units.drug_name,
+	sale_units.amount,
+	sale_units.unit,
+	sale_units.unit_price,
+	sale_units.price_category,
+	sale_units.discount,
+	sale_units.total
+FROM sale_units
+JOIN sales ON sale_units.invoice_number = sales.invoice_number
+WHERE sale_units.drug_code = ?
+	AND sales.deleted_at IS NULL
+	AND sale_units.deleted_at IS NULL
+ORDER BY sales.sold_at DESC, sale_units.id DESC
+LIMIT ?
+			`,
+			drugCode,
+			limit,
+		).
+		Find(&sales).
+		Error; err != nil {
+		return nil, fmt.Errorf("execute SQL query: %w", err)
+	}
+
+	return sales, nil
+}
+
 func (d *Database) GetSalesStatisticsBetweenTime(ctx context.Context, from time.Time, to time.Time) ([]Statistics, error) {
 	var modelStats []models.SaleStatistics
 	if err := d.dbCtx(ctx).

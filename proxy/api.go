@@ -192,6 +192,16 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 			)
 		}
 
+		sales := v2.Group("/sales")
+		{
+			sales.GET(
+				"/drugs/:drug_code/last",
+				auth.AllowedRoles(auth.RoleAdmin, auth.RoleStaff),
+				cache.CacheByRequestURI(store, time.Minute),
+				s.saleHandler.GetLastDrugSales,
+			)
+		}
+
 		procurements := v2.Group("/procurements")
 		{
 			procurements.GET(

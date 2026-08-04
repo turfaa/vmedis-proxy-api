@@ -84,6 +84,26 @@ type AggregatedSale struct {
 	Unit     string  `json:"unit"`
 }
 
+type LastDrugSalesRequest struct {
+	DrugCode string `json:"drugCode" uri:"drug_code"`
+	Limit    int    `json:"limit" form:"limit"`
+}
+
+// DrugSale is one sale of one drug, i.e. a sale unit joined with the sale it
+// belongs to.
+type DrugSale struct {
+	SoldAt        time.Time `json:"soldAt"`
+	InvoiceNumber string    `json:"invoiceNumber"`
+	DrugCode      string    `json:"drugCode"`
+	DrugName      string    `json:"drugName"`
+	Amount        float64   `json:"amount"`
+	Unit          string    `json:"unit"`
+	UnitPrice     float64   `json:"unitPrice"`
+	PriceCategory string    `json:"priceCategory"`
+	Discount      float64   `json:"discount,omitempty"`
+	Total         float64   `json:"total"`
+}
+
 type SoldDrugsResponse struct {
 	Drugs []SoldDrug `json:"drugs"`
 }
