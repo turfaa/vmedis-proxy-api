@@ -16,6 +16,8 @@ There is no lint configuration; use `gofmt`/`go vet`.
 
 Commit messages follow Conventional Commits (`feat:`, `fix:`, `chore:`, with optional scopes like `feat(drug): ...`). Pushes to `main` trigger automatic semver tagging, changelog generation, a Docker image publish to ghcr.io, and deployment (see `.github/workflows/`).
 
+Pull request descriptions MUST follow the template in `.github/pull_request_template.md` — fill in every section (Summary, AI attribution, Changes, Verification, Notes). The AI attribution section is required: name the model(s) used, matching the commit `Co-Authored-By` trailer, or "None" if written entirely by hand.
+
 ## What this service is
 
 A proxy in front of [Vmedis](https://vmedis.com), a pharmacy management web app. It scrapes/fetches data from Vmedis, dumps it into its own database, and serves it through a cleaner HTTP API plus scheduled jobs (Kafka consumers, email reports). All times are hardcoded to `Asia/Jakarta` with the `id_ID` locale (set in `main.go`); domain language is Indonesian pharmacy terminology (e.g. "stock opname" = inventory count).
