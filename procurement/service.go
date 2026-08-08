@@ -100,6 +100,75 @@ func (s *Service) DumpProcurementsBetweenDatesFromVmedisToDB(
 	return nil
 }
 
+// ReconcileProcurementsBetweenDatesWithVmedis re-fetches the procurements of
+// each date between startDate and endDate from Vmedis, one date at a time, and
+// soft-deletes the procurements that are stored in the DB but no longer exist
+// in Vmedis. Procurements can be deleted in Vmedis after being dumped, and the
+// dump only upserts, so this is the way deletions propagate to the DB.
+func (s *Service) ReconcileProcurementsBetweenDatesWithVmedis(ctx context.Context, startDate time.Time, endDate time.Time) error {
+	log.Printf("Reconciling procurements between %s and %s with Vmedis", startDate.Format(time.DateOnly), endDate.Format(time.DateOnly))
+
+	for date := startDate; !date.After(endDate); date = date.AddDate(0, 0, 1) {
+		if err := s.reconcileProcurementsAtDateWithVmedis(ctx, date); err != nil {
+			return fmt.Errorf("reconcile procurements at %s: %w", date.Format(time.DateOnly), err)
+		}
+	}
+
+	log.Printf("Finished reconciling procurements between %s and %s with Vmedis", startDate.Format(time.DateOnly), endDate.Format(time.DateOnly))
+	return nil
+}
+
+func (s *Service) reconcileProcurementsAtDateWithVmedis(ctx context.Context, date time.Time) error {
+	log.Printf("Reconciling procurements at %s with Vmedis", date.Format(time.DateOnly))
+
+	vmedisProcurements, err := s.vmedis.GetAllProcurementsBetweenDates(ctx, date, date)
+	if err != nil {
+		return fmt.Errorf("get procurements at %s from vmedis: %w", date.Format(time.DateOnly), err)
+	}
+
+	deleted, err := s.softDeleteProcurementsMissingFromVmedis(ctx, date, vmedisProcurements)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("Reconciled procurements at %s with Vmedis: %d procurements in Vmedis, %d procurements soft-deleted", date.Format(time.DateOnly), len(vmedisProcurements), deleted)
+	return nil
+}
+
+// softDeleteProcurementsMissingFromVmedis soft-deletes the DB procurements
+// whose invoice date is the given date and whose invoice numbers are not in
+// vmedisProcurements.
+func (s *Service) softDeleteProcurementsMissingFromVmedis(ctx context.Context, date time.Time, vmedisProcurements []vmedisv1.Procurement) (int, error) {
+	inVmedis := make(map[string]struct{}, len(vmedisProcurements))
+	for _, p := range vmedisProcurements {
+		inVmedis[p.InvoiceNumber] = struct{}{}
+	}
+
+	beginningOfDate := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, time.Local)
+	endOfDate := time.Date(date.Year(), date.Month(), date.Day(), 23, 59, 59, 999999999, time.Local)
+
+	dbInvoiceNumbers, err := s.db.GetProcurementInvoiceNumbersBetweenTime(ctx, beginningOfDate, endOfDate)
+	if err != nil {
+		return 0, fmt.Errorf("get procurement invoice numbers at %s from DB: %w", date.Format(time.DateOnly), err)
+	}
+
+	deleted := 0
+	for _, invoiceNumber := range dbInvoiceNumbers {
+		if _, ok := inVmedis[invoiceNumber]; ok {
+			continue
+		}
+
+		log.Printf("Procurement %s no longer exists in Vmedis, soft-deleting it", invoiceNumber)
+		if err := s.db.DeleteProcurementByInvoiceNumber(ctx, invoiceNumber); err != nil {
+			return deleted, fmt.Errorf("soft-delete procurement %s: %w", invoiceNumber, err)
+		}
+
+		deleted++
+	}
+
+	return deleted, nil
+}
+
 func deduplicateProcurementsPickGreatestTotal(procurements []vmedisv1.Procurement) []vmedisv1.Procurement {
 	mp := make(map[string]vmedisv1.Procurement, len(procurements))
 	for _, p := range procurements {
