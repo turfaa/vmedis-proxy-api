@@ -26,6 +26,22 @@ func DumpSalesBetweenDatesFromVmedisToDB(
 	}
 }
 
+func ReconcileSalesBetweenDatesWithVmedis(
+	ctx context.Context,
+	startDate time.Time,
+	endDate time.Time,
+	db *gorm.DB,
+	vmedisClient *vmedisv1.Client,
+	drugsGetter DrugsGetter,
+	drugProducer UpdatedDrugProducer,
+) {
+	service := NewService(db, vmedisClient, drugsGetter, drugProducer)
+
+	if err := service.ReconcileSalesBetweenDatesWithVmedis(ctx, startDate, endDate); err != nil {
+		log.Fatalf("ReconcileSalesBetweenDatesWithVmedis: %s", err)
+	}
+}
+
 func DumpTodaySalesStatisticsFromVmedisToDB(
 	ctx context.Context,
 	db *gorm.DB,
