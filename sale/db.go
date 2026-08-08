@@ -188,6 +188,21 @@ func (d *Database) UpsertVmedisSales(ctx context.Context, vmedisSales []vmedisv1
 	})
 }
 
+// GetSaleInvoiceNumbersBetweenTime returns the invoice numbers of the
+// non-deleted sales sold between the given times.
+func (d *Database) GetSaleInvoiceNumbersBetweenTime(ctx context.Context, from time.Time, to time.Time) ([]string, error) {
+	var invoiceNumbers []string
+	if err := d.dbCtx(ctx).
+		Model(&models.Sale{}).
+		Where("sold_at BETWEEN ? AND ?", from, to).
+		Pluck("invoice_number", &invoiceNumbers).
+		Error; err != nil {
+		return nil, fmt.Errorf("get sale invoice numbers between %s and %s from DB: %w", from, to, err)
+	}
+
+	return invoiceNumbers, nil
+}
+
 // DeleteSaleByInvoiceNumber soft-deletes the sale with the given invoice number
 // together with its sale units, so that queries reading sale units on their own
 // don't keep seeing the units of a deleted sale.

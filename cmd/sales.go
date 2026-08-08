@@ -36,6 +36,28 @@ var salesCommands = []commandWithInit{
 	},
 	{
 		command: &cobra.Command{
+			Use:   "reconcile",
+			Short: "Soft-delete sales that no longer exist in Vmedis, one date at a time",
+			Run: func(cmd *cobra.Command, args []string) {
+				startTime, endTime := getDateRangeFromFlags(cmd)
+
+				sale.ReconcileSalesBetweenDatesWithVmedis(
+					cmd.Context(),
+					startTime,
+					endTime,
+					getDatabase(),
+					getVmedisClient(),
+					getDrugService(),
+					getDrugProducer(),
+				)
+			},
+		},
+		init: func(cmd *cobra.Command) {
+			registerDateRangeFlags(cmd, 0)
+		},
+	},
+	{
+		command: &cobra.Command{
 			Use:   "dump-statistics",
 			Short: "Run one-time sales statistics dumper",
 			Run: func(cmd *cobra.Command, args []string) {

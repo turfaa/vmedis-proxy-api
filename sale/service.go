@@ -247,6 +247,78 @@ func (s *Service) makeSalesInvoiceNumbersUnique(sales []vmedisv1.Sale) []vmedisv
 	return sales
 }
 
+// ReconcileSalesBetweenDatesWithVmedis re-fetches the sales of each date between
+// startDate and endDate from Vmedis, one date at a time, and soft-deletes the
+// sales that are stored in the DB but no longer exist in Vmedis. Sales can be
+// deleted in Vmedis after being dumped, and the dump only upserts, so this is
+// the way deletions propagate to the DB.
+func (s *Service) ReconcileSalesBetweenDatesWithVmedis(ctx context.Context, startDate time.Time, endDate time.Time) error {
+	log.Printf("Reconciling sales between %s and %s with Vmedis", startDate.Format(time.DateOnly), endDate.Format(time.DateOnly))
+
+	for date := startDate; !date.After(endDate); date = date.AddDate(0, 0, 1) {
+		if err := s.reconcileSalesAtDateWithVmedis(ctx, date); err != nil {
+			return fmt.Errorf("reconcile sales at %s: %w", date.Format(time.DateOnly), err)
+		}
+	}
+
+	log.Printf("Finished reconciling sales between %s and %s with Vmedis", startDate.Format(time.DateOnly), endDate.Format(time.DateOnly))
+	return nil
+}
+
+func (s *Service) reconcileSalesAtDateWithVmedis(ctx context.Context, date time.Time) error {
+	log.Printf("Reconciling sales at %s with Vmedis", date.Format(time.DateOnly))
+
+	vmedisSales, err := s.vmedis.GetAllSalesBetweenDates(ctx, date, date)
+	if err != nil {
+		return fmt.Errorf("get sales at %s from vmedis: %w", date.Format(time.DateOnly), err)
+	}
+
+	deleted, err := s.softDeleteSalesMissingFromVmedis(ctx, date, vmedisSales)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("Reconciled sales at %s with Vmedis: %d sales in Vmedis, %d sales soft-deleted", date.Format(time.DateOnly), len(vmedisSales), deleted)
+	return nil
+}
+
+// softDeleteSalesMissingFromVmedis soft-deletes the DB sales sold at the given
+// date whose invoice numbers are not in vmedisSales. The invoice numbers go
+// through the same de-duplication as the dump, so a sale stored with a
+// "-2"-suffixed invoice number still matches its Vmedis counterpart.
+func (s *Service) softDeleteSalesMissingFromVmedis(ctx context.Context, date time.Time, vmedisSales []vmedisv1.Sale) (int, error) {
+	vmedisSales = s.makeSalesInvoiceNumbersUnique(vmedisSales)
+
+	inVmedis := make(map[string]struct{}, len(vmedisSales))
+	for _, sale := range vmedisSales {
+		inVmedis[sale.InvoiceNumber] = struct{}{}
+	}
+
+	beginningOfDate := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, time.Local)
+	endOfDate := time.Date(date.Year(), date.Month(), date.Day(), 23, 59, 59, 999999999, time.Local)
+
+	dbInvoiceNumbers, err := s.db.GetSaleInvoiceNumbersBetweenTime(ctx, beginningOfDate, endOfDate)
+	if err != nil {
+		return 0, fmt.Errorf("get sale invoice numbers at %s from DB: %w", date.Format(time.DateOnly), err)
+	}
+
+	deleted := 0
+	for _, invoiceNumber := range dbInvoiceNumbers {
+		if _, ok := inVmedis[invoiceNumber]; ok {
+			continue
+		}
+
+		log.Printf("Sale %s no longer exists in Vmedis, soft-deleting it", invoiceNumber)
+		if err := s.db.DeleteSaleByInvoiceNumber(ctx, invoiceNumber); err != nil {
+			return deleted, fmt.Errorf("soft-delete sale %s: %w", invoiceNumber, err)
+		}
+
+		deleted++
+	}
+
+	return deleted, nil
+}
+
 func (s *Service) DumpTodaySalesStatisticsFromVmedisToDB(ctx context.Context) error {
 	log.Println("Dumping today's sales statistics from Vmedis to DB")
 
