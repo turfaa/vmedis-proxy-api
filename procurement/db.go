@@ -118,6 +118,21 @@ func (d *Database) UpsertVmedisProcurements(ctx context.Context, procurements []
 	})
 }
 
+// GetProcurementInvoiceNumbersBetweenTime returns the invoice numbers of the
+// non-deleted procurements whose invoice date falls between the given times.
+func (d *Database) GetProcurementInvoiceNumbersBetweenTime(ctx context.Context, from time.Time, to time.Time) ([]string, error) {
+	var invoiceNumbers []string
+	if err := d.dbCtx(ctx).
+		Model(&models.Procurement{}).
+		Where("invoice_date BETWEEN ? AND ?", from, to).
+		Pluck("invoice_number", &invoiceNumbers).
+		Error; err != nil {
+		return nil, fmt.Errorf("get procurement invoice numbers between %s and %s from DB: %w", from, to, err)
+	}
+
+	return invoiceNumbers, nil
+}
+
 // DeleteProcurementByInvoiceNumber soft-deletes the procurement with the given
 // invoice number together with its procurement units, so that queries reading
 // procurement units on their own don't keep seeing the units of a deleted

@@ -28,6 +28,23 @@ func DumpProcurementsBetweenDatesFromVmedisToDB(
 	}
 }
 
+func ReconcileProcurementsBetweenDatesWithVmedis(
+	ctx context.Context,
+	startDate time.Time,
+	endDate time.Time,
+	db *gorm.DB,
+	redisClient redis.UniversalClient,
+	vmedisClient *vmedisv1.Client,
+	drugProducer UpdatedDrugProducer,
+	drugUnitsGetter DrugUnitsGetter,
+) {
+	service := NewService(db, redisClient, vmedisClient, drugProducer, drugUnitsGetter)
+
+	if err := service.ReconcileProcurementsBetweenDatesWithVmedis(ctx, startDate, endDate); err != nil {
+		log.Fatalf("ReconcileProcurementsBetweenDatesWithVmedis: %s", err)
+	}
+}
+
 func DumpProcurementRecommendations(
 	ctx context.Context,
 	db *gorm.DB,
