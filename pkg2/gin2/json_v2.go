@@ -1,18 +1,17 @@
 package gin2
 
 import (
+	"encoding/json/v2"
 	"fmt"
 	"net/http"
-
-	"github.com/go-json-experiment/json"
 )
 
-// ExperimentalJSONRenderer is used to render data with the experimental "encoding/json/v2" candidate.
-type ExperimentalJSONRenderer struct {
+// JSONV2Renderer is used to render data with "encoding/json/v2".
+type JSONV2Renderer struct {
 	Data any
 }
 
-func (r ExperimentalJSONRenderer) Render(w http.ResponseWriter) error {
+func (r JSONV2Renderer) Render(w http.ResponseWriter) error {
 	r.WriteContentType(w)
 
 	jsonBytes, err := json.Marshal(r.Data)
@@ -24,7 +23,7 @@ func (r ExperimentalJSONRenderer) Render(w http.ResponseWriter) error {
 	return err
 }
 
-func (r ExperimentalJSONRenderer) WriteContentType(w http.ResponseWriter) {
+func (r JSONV2Renderer) WriteContentType(w http.ResponseWriter) {
 	header := w.Header()
 	if val := header["Content-Type"]; len(val) == 0 {
 		header["Content-Type"] = []string{"application/json; charset=utf-8"}

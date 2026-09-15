@@ -1,6 +1,6 @@
 module github.com/turfaa/vmedis-proxy-api
 
-go 1.25.0
+go 1.27.1
 
 require (
 	github.com/PuerkitoBio/goquery v1.10.3
@@ -8,7 +8,6 @@ require (
 	github.com/gin-contrib/cors v1.7.5
 	github.com/gin-gonic/gin v1.12.0
 	github.com/glebarez/sqlite v1.11.0
-	github.com/go-json-experiment/json v0.0.0-20250417205406-170dfdcf87d1
 	github.com/google/uuid v1.6.0
 	github.com/jordan-wright/email v4.0.1-0.20210109023952-943e75fe5223+incompatible
 	github.com/klauspost/compress v1.18.5
