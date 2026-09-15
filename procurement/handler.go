@@ -53,8 +53,8 @@ func (h *ApiHandler) GetRecommendations(c *gin.Context) {
 		return
 	}
 
-	// We need to use the experimental JSON renderer to make use of the new "inline" behaviour.
-	c.Render(200, gin2.ExperimentalJSONRenderer{Data: recommendations})
+	// We need to use the json/v2 renderer to make use of the new "inline" behaviour.
+	c.Render(200, gin2.JSONV2Renderer{Data: recommendations})
 }
 
 func (h *ApiHandler) DumpRecommendations(c *gin.Context) {
