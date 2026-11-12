@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"slices"
 	"time"
 
 	"golang.org/x/time/rate"
@@ -64,9 +65,10 @@ func (c *Client) get(ctx context.Context, path string) (*http.Response, error) {
 }
 
 // getWithSessionId performs a GET request to vmedis with the given session id,
-// retrying transient failures. See getWithRetry.
-func (c *Client) getWithSessionId(ctx context.Context, path, sessionId string) (*http.Response, error) {
-	return c.getWithRetry(ctx, path, func() (string, error) { return sessionId, nil })
+// retrying transient failures. Being redirected to one of allowedRedirectPaths
+// is not an error. See getWithRetry.
+func (c *Client) getWithSessionId(ctx context.Context, path, sessionId string, allowedRedirectPaths ...string) (*http.Response, error) {
+	return c.getWithRetry(ctx, path, func() (string, error) { return sessionId, nil }, allowedRedirectPaths...)
 }
 
 // getWithRetry performs a GET request to vmedis, retrying transient failures.
@@ -74,9 +76,9 @@ func (c *Client) getWithSessionId(ctx context.Context, path, sessionId string) (
 // use a different session than the attempt that failed.
 // Receiving the login page instead of the requested page is an error,
 // reported as ErrInvalidToken. Being redirected to another page is an error
-// too, reported as ErrRedirected.
+// too, reported as ErrRedirected, unless it is to one of allowedRedirectPaths.
 // The caller owns the response body of a successful request.
-func (c *Client) getWithRetry(ctx context.Context, path string, getSessionId func() (string, error)) (*http.Response, error) {
+func (c *Client) getWithRetry(ctx context.Context, path string, getSessionId func() (string, error), allowedRedirectPaths ...string) (*http.Response, error) {
 	res, err := retry.Do(ctx, c.retryConfig, func(ctx context.Context) (*http.Response, error) {
 		sessionId, err := getSessionId()
 		if err != nil {
@@ -92,7 +94,7 @@ func (c *Client) getWithRetry(ctx context.Context, path string, getSessionId fun
 			return nil, fmt.Errorf("with session id %s: %w", sessionId, err)
 		}
 
-		if err := ensureNotRedirected(res); err != nil {
+		if err := ensureNotRedirected(res, allowedRedirectPaths); err != nil {
 			return nil, fmt.Errorf("with session id %s: %w", sessionId, err)
 		}
 
@@ -108,8 +110,9 @@ func (c *Client) getWithRetry(ctx context.Context, path string, getSessionId fun
 // ensureNotRedirected returns ErrRedirected if vmedis redirected the request
 // to a different page, which it does (to the home page) when the session
 // cannot open the requested page, e.g. a v1-menu page with a session that
-// has the v2 menu enabled. On error, the body is closed.
-func ensureNotRedirected(res *http.Response) error {
+// has the v2 menu enabled. Redirects to allowedPaths are not errors.
+// On error, the body is closed.
+func ensureNotRedirected(res *http.Response, allowedPaths []string) error {
 	// res.Request is the last request sent. When it was sent because of a
 	// redirect, its Response is that redirect, whose Request is the one before.
 	final := res.Request
@@ -122,7 +125,7 @@ func ensureNotRedirected(res *http.Response) error {
 		first = first.Response.Request
 	}
 
-	if first.URL.Path == final.URL.Path {
+	if first.URL.Path == final.URL.Path || slices.Contains(allowedPaths, final.URL.Path) {
 		return nil
 	}
 

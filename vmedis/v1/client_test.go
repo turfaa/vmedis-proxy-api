@@ -98,3 +98,25 @@ func TestGet_RequestingHomePageIsNotARedirect(t *testing.T) {
 	}
 	res.Body.Close()
 }
+
+func TestGetWithSessionId_AllowedRedirectIsNotAnError(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/" {
+			http.Redirect(w, r, "/dashboard", http.StatusFound)
+			return
+		}
+		_, _ = io.WriteString(w, "dashboard")
+	}))
+	t.Cleanup(srv.Close)
+	c := newTestClient(srv.URL, &sequenceTokenProvider{tokens: []string{"any"}})
+
+	res, err := c.getWithSessionId(context.Background(), "/", "any", "/dashboard")
+	if err != nil {
+		t.Fatalf("getWithSessionId: %v", err)
+	}
+	res.Body.Close()
+
+	if _, err := c.getWithSessionId(context.Background(), "/", "any"); !errors.Is(err, ErrRedirected) {
+		t.Fatalf("got error %v without the allowed redirect, want ErrRedirected", err)
+	}
+}
