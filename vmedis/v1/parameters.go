@@ -41,3 +41,9 @@ type ParameterTypeShifts struct{}
 func (ParameterTypeShifts) QueryLabel() string {
 	return "LaporangantishiftSearch"
 }
+
+type ParameterTypeSales struct{}
+
+func (ParameterTypeSales) QueryLabel() string {
+	return "AptLapPenjualanobatBatchSearch"
+}
