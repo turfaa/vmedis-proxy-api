@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"net/http"
 	"time"
 
 	cache "github.com/chenyahui/gin-cache"
@@ -45,6 +46,13 @@ func (s *ApiServer) GinEngine() *gin.Engine {
 	r.Use(gzip.Gzip(gzip.DefaultCompression))
 	r.Use(cors.Default())
 	r.Use(auth.GinMiddleware(s.authService))
+
+	// Write the 404 body inside the middleware chain. Otherwise gin's serveError
+	// writes it after the gzip middleware has already closed (and pooled) its
+	// writer, failing with "flate: closed writer".
+	r.NoRoute(func(c *gin.Context) {
+		c.String(http.StatusNotFound, "404 page not found")
+	})
 
 	s.SetupRoute(&r.RouterGroup)
 	return r
