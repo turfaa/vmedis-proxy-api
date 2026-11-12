@@ -44,9 +44,9 @@ func TestSupplierDumpRoundTrip(t *testing.T) {
 	names := func() map[int]string {
 		t.Helper()
 
-		var suppliers []models.Supplier
-		if err := db.Find(&suppliers).Error; err != nil {
-			t.Fatalf("find suppliers: %v", err)
+		suppliers, err := d.GetSuppliers(ctx)
+		if err != nil {
+			t.Fatalf("get suppliers: %v", err)
 		}
 
 		out := make(map[int]string, len(suppliers))
@@ -78,6 +78,15 @@ func TestSupplierDumpRoundTrip(t *testing.T) {
 	}
 	if got := names(); len(got) != 2 || got[2] != "B" {
 		t.Errorf("after the third dump, got suppliers %v, want A renamed and B", got)
+	}
+
+	// Suppliers are ordered by name.
+	suppliers, err := d.GetSuppliers(ctx)
+	if err != nil {
+		t.Fatalf("get suppliers: %v", err)
+	}
+	if len(suppliers) != 2 || suppliers[0].Name != "A renamed" || suppliers[1].Name != "B" {
+		t.Errorf("got suppliers %v, want A renamed then B", suppliers)
 	}
 
 	var count int64

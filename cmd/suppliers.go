@@ -17,7 +17,7 @@ var suppliersCommands = []commandWithInit{
 			Use:   "dump",
 			Short: "Dump all suppliers from Vmedis to the DB, soft-deleting the ones no longer in Vmedis",
 			Run: func(cmd *cobra.Command, args []string) {
-				supplier.DumpSuppliersFromVmedisToDB(cmd.Context(), getDatabase(), getVmedisV2Client())
+				supplier.DumpSuppliersFromVmedisToDB(cmd.Context(), getDatabase(), getRedisClient(), getVmedisV2Client())
 			},
 		},
 	},

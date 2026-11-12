@@ -42,6 +42,8 @@ tags:
     description: Stock opnames (physical stock counts).
   - name: Shifts
     description: Cashier shifts.
+  - name: Suppliers
+    description: Suppliers the pharmacy procures drugs from.
   - name: Rejected Drugs
     description: Drugs asked by customers but not sold (yet).
   - name: Vmedis Tokens
@@ -373,6 +375,75 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/Message'
+
+  /api/v1/suppliers:
+    get:
+      operationId: getSuppliers
+      tags: [Suppliers]
+      summary: Get all suppliers
+      description: |
+        Returns all the suppliers synced from Vmedis to the database, ordered by
+        name. Suppliers no longer in Vmedis are left out. Requires the `admin`
+        or `staff` role.
+      security:
+        - EmailAuth: []
+      responses:
+        '200':
+          description: All suppliers.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuppliersResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/suppliers/dump:
+    post:
+      operationId: dumpSuppliers
+      tags: [Suppliers]
+      summary: Dump suppliers
+      description: |
+        Starts dumping all the suppliers from Vmedis to the database in the
+        background, soft-deleting the ones no longer in Vmedis. Only one dump
+        runs at a time, guarded by a distributed lock held for at most 5
+        minutes; if a dump is already running, responds with `409`. Use the
+        dump status endpoint to check whether a dump is in progress.
+        Requires the `admin` or `staff` role.
+      security:
+        - EmailAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/Message'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/suppliers/dump/status:
+    get:
+      operationId: getSupplierDumpStatus
+      tags: [Suppliers]
+      summary: Get supplier dump status
+      description: |
+        Returns whether a supplier dump is currently in progress.
+        Requires the `admin` or `staff` role.
+      security:
+        - EmailAuth: []
+      responses:
+        '200':
+          description: Supplier dump status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierDumpStatusResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /api/v1/users/login:
     post:
@@ -1163,6 +1234,13 @@ components:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
 
+    Conflict:
+      description: The request conflicts with an operation already in progress.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
     InternalServerError:
       description: Internal server error.
       content:
@@ -1743,6 +1821,62 @@ components:
           enum: [IDLE, DUMPING]
           description: |
             Whether a shift dump is currently in progress.
+            `DUMPING` means a dump is running; `IDLE` means none is running.
+
+    # ----- Suppliers -----
+
+    SuppliersResponse:
+      type: object
+      properties:
+        suppliers:
+          type: array
+          items:
+            $ref: '#/components/schemas/Supplier'
+      required: [suppliers]
+
+    Supplier:
+      type: object
+      description: A supplier the pharmacy procures drugs from.
+      properties:
+        vmedisId:
+          type: integer
+          description: The ID of the supplier in Vmedis.
+        code:
+          type: string
+        name:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        phone:
+          type: string
+        mobilePhone:
+          type: string
+        bankAccountNumber:
+          type: string
+        taxNumber:
+          type: string
+          description: The supplier's NPWP.
+        active:
+          type: boolean
+        leadTimeDays:
+          type: integer
+        rating:
+          type: number
+        updatedAt:
+          type: string
+          format: date-time
+          description: When the supplier was last synced from Vmedis.
+
+    SupplierDumpStatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [IDLE, DUMPING]
+          description: |
+            Whether a supplier dump is currently in progress.
             `DUMPING` means a dump is running; `IDLE` means none is running.
 
     # ----- Generic display components (cui) -----
