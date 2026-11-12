@@ -159,7 +159,7 @@ func setupRouterAndDB(t *testing.T, sales []models.Sale) (*gin.Engine, *gorm.DB)
 		}
 	}
 
-	handler := sale.NewApiHandler(sale.NewService(db, nil, nil, nil, nil))
+	handler := sale.NewApiHandler(sale.NewService(db, nil, nil, nil))
 
 	gin.SetMode(gin.TestMode)
 	router := gin.New()

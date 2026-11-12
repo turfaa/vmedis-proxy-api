@@ -7,7 +7,7 @@ import (
 
 	"github.com/turfaa/vmedis-proxy-api/database"
 	"github.com/turfaa/vmedis-proxy-api/database/models"
-	vmedisv1 "github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+	vmedisv2 "github.com/turfaa/vmedis-proxy-api/vmedis/v2"
 )
 
 // TestSaleSoftDeleteRoundTrip checks that a soft-deleted sale disappears from
@@ -32,12 +32,12 @@ func TestSaleSoftDeleteRoundTrip(t *testing.T) {
 	dump := func(total float64) {
 		t.Helper()
 
-		if err := d.UpsertVmedisSales(ctx, []vmedisv1.Sale{{
+		if err := d.UpsertVmedisSales(ctx, []vmedisv2.Sale{{
 			ID:            1,
-			Date:          vmedisv1.Time{Time: soldAt},
+			Date:          soldAt,
 			InvoiceNumber: invoiceNumber,
 			Total:         total,
-			SaleUnits: []vmedisv1.SaleUnit{
+			SaleUnits: []vmedisv2.SaleUnit{
 				{IDInSale: 1, DrugCode: "D1", DrugName: "Drug One", Amount: 2, Unit: "tablet", Total: total},
 			},
 		}}); err != nil {

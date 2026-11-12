@@ -12,7 +12,7 @@ import (
 	"github.com/turfaa/vmedis-proxy-api/database"
 	"github.com/turfaa/vmedis-proxy-api/database/models"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/slices2"
-	vmedisv1 "github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+	vmedisv2 "github.com/turfaa/vmedis-proxy-api/vmedis/v2"
 )
 
 type Database struct {
@@ -126,7 +126,7 @@ func (d *Database) GetSalesStatisticsBetweenTime(ctx context.Context, from time.
 	return stats, nil
 }
 
-func (d *Database) UpsertVmedisSales(ctx context.Context, vmedisSales []vmedisv1.Sale) error {
+func (d *Database) UpsertVmedisSales(ctx context.Context, vmedisSales []vmedisv2.Sale) error {
 	if len(vmedisSales) == 0 {
 		return nil
 	}

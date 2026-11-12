@@ -24,7 +24,6 @@ var salesCommands = []commandWithInit{
 					startTime,
 					endTime,
 					getDatabase(),
-					getVmedisClient(),
 					getVmedisV2Client(),
 					getDrugService(),
 					getDrugProducer(),
@@ -47,7 +46,6 @@ var salesCommands = []commandWithInit{
 					startTime,
 					endTime,
 					getDatabase(),
-					getVmedisClient(),
 					getVmedisV2Client(),
 					getDrugService(),
 					getDrugProducer(),
@@ -66,7 +64,6 @@ var salesCommands = []commandWithInit{
 				sale.DumpTodaySalesStatisticsFromVmedisToDB(
 					cmd.Context(),
 					getDatabase(),
-					getVmedisClient(),
 					getVmedisV2Client(),
 					getDrugService(),
 					getDrugProducer(),

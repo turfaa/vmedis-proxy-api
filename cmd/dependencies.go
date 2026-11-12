@@ -295,7 +295,6 @@ func getSaleService() *sale.Service {
 
 	newService := sale.NewService(
 		getDatabase(),
-		getVmedisClient(),
 		getVmedisV2Client(),
 		getDrugService(),
 		getDrugProducer(),

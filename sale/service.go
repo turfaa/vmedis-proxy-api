@@ -13,14 +13,12 @@ import (
 
 	"github.com/turfaa/vmedis-proxy-api/kafkapb"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/time2"
-	vmedisv1 "github.com/turfaa/vmedis-proxy-api/vmedis/v1"
 	vmedisv2 "github.com/turfaa/vmedis-proxy-api/vmedis/v2"
 )
 
 type Service struct {
 	db           *Database
-	vmedis       *vmedisv1.Client
-	vmedisV2     *vmedisv2.Client
+	vmedis       *vmedisv2.Client
 	drugsGetter  DrugsGetter
 	drugProducer UpdatedDrugProducer
 }
@@ -180,7 +178,7 @@ func (s *Service) DumpSalesBetweenDatesFromVmedisToDB(ctx context.Context, start
 	return s.dumpSalesToDB(ctx, vmedisSales)
 }
 
-func (s *Service) dumpSalesToDB(ctx context.Context, vmedisSales []vmedisv1.Sale) error {
+func (s *Service) dumpSalesToDB(ctx context.Context, vmedisSales []vmedisv2.Sale) error {
 	log.Printf("Got %d sales from Vmedis, dumping to DB", len(vmedisSales))
 
 	vmedisSales = s.makeSalesInvoiceNumbersUnique(vmedisSales)
@@ -218,7 +216,7 @@ func (s *Service) dumpSalesToDB(ctx context.Context, vmedisSales []vmedisv1.Sale
 	return nil
 }
 
-func (s *Service) makeSalesInvoiceNumbersUnique(sales []vmedisv1.Sale) []vmedisv1.Sale {
+func (s *Service) makeSalesInvoiceNumbersUnique(sales []vmedisv2.Sale) []vmedisv2.Sale {
 	sort.Slice(sales, func(i, j int) bool {
 		return sales[i].ID < sales[j].ID
 	})
@@ -283,7 +281,7 @@ func (s *Service) reconcileSalesAtDateWithVmedis(ctx context.Context, date time.
 // date whose invoice numbers are not in vmedisSales. The invoice numbers go
 // through the same de-duplication as the dump, so a sale stored with a
 // "-2"-suffixed invoice number still matches its Vmedis counterpart.
-func (s *Service) softDeleteSalesMissingFromVmedis(ctx context.Context, date time.Time, vmedisSales []vmedisv1.Sale) (int, error) {
+func (s *Service) softDeleteSalesMissingFromVmedis(ctx context.Context, date time.Time, vmedisSales []vmedisv2.Sale) (int, error) {
 	vmedisSales = s.makeSalesInvoiceNumbersUnique(vmedisSales)
 
 	inVmedis := make(map[string]struct{}, len(vmedisSales))
@@ -335,7 +333,7 @@ func (s *Service) DumpTodaySalesStatisticsFromVmedisToDB(ctx context.Context) er
 func (s *Service) getTodaySalesStatisticsFromVmedis(ctx context.Context) (Statistics, error) {
 	now := time.Now()
 
-	vmedisStats, err := s.vmedisV2.GetSalesStatistics(ctx, now, now)
+	vmedisStats, err := s.vmedis.GetSalesStatistics(ctx, now, now)
 	if err != nil {
 		return Statistics{}, err
 	}
@@ -345,15 +343,13 @@ func (s *Service) getTodaySalesStatisticsFromVmedis(ctx context.Context) (Statis
 
 func NewService(
 	db *gorm.DB,
-	vmedisClient *vmedisv1.Client,
-	vmedisV2Client *vmedisv2.Client,
+	vmedisClient *vmedisv2.Client,
 	drugsGetter DrugsGetter,
 	drugProducer UpdatedDrugProducer,
 ) *Service {
 	return &Service{
 		db:           NewDatabase(db),
 		vmedis:       vmedisClient,
-		vmedisV2:     vmedisV2Client,
 		drugsGetter:  drugsGetter,
 		drugProducer: drugProducer,
 	}

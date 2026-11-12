@@ -7,7 +7,7 @@ import (
 
 	"github.com/turfaa/vmedis-proxy-api/database"
 	"github.com/turfaa/vmedis-proxy-api/kafkapb"
-	vmedisv1 "github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+	vmedisv2 "github.com/turfaa/vmedis-proxy-api/vmedis/v2"
 )
 
 type nopDrugProducer struct{}
@@ -29,26 +29,26 @@ func TestSoftDeleteSalesMissingFromVmedis(t *testing.T) {
 		t.Fatalf("open database: %v", err)
 	}
 
-	service := NewService(db, nil, nil, nil, nopDrugProducer{})
+	service := NewService(db, nil, nil, nopDrugProducer{})
 
 	date := time.Date(2026, 8, 7, 0, 0, 0, 0, time.Local)
 	soldAt := date.Add(10 * time.Hour)
 	otherDateSoldAt := date.AddDate(0, 0, -1).Add(10 * time.Hour)
 
-	newSale := func(id int, invoiceNumber string, at time.Time) vmedisv1.Sale {
-		return vmedisv1.Sale{
+	newSale := func(id int, invoiceNumber string, at time.Time) vmedisv2.Sale {
+		return vmedisv2.Sale{
 			ID:            id,
-			Date:          vmedisv1.Time{Time: at},
+			Date:          at,
 			InvoiceNumber: invoiceNumber,
 			Total:         10,
-			SaleUnits: []vmedisv1.SaleUnit{
+			SaleUnits: []vmedisv2.SaleUnit{
 				{IDInSale: 1, DrugCode: "D1", DrugName: "Drug One", Amount: 1, Unit: "tablet", Total: 10},
 			},
 		}
 	}
 
 	// PJ2 and PJ2 share an invoice number, so the dump stores them as PJ2 and PJ2-2.
-	dumped := []vmedisv1.Sale{
+	dumped := []vmedisv2.Sale{
 		newSale(1, "PJ1", soldAt),
 		newSale(2, "PJ2", soldAt),
 		newSale(3, "PJ2", soldAt),
@@ -59,7 +59,7 @@ func TestSoftDeleteSalesMissingFromVmedis(t *testing.T) {
 	}
 
 	// PJ1 was deleted in Vmedis; the duplicated PJ2 pair is still there.
-	stillInVmedis := []vmedisv1.Sale{
+	stillInVmedis := []vmedisv2.Sale{
 		newSale(2, "PJ2", soldAt),
 		newSale(3, "PJ2", soldAt),
 	}

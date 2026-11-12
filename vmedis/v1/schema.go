@@ -179,38 +179,6 @@ func (u *Unit) extractFloatFromInput(selection *goquery.Selection, name string) 
 	return float, nil
 }
 
-// Sale represents a sale.
-type Sale struct {
-	ID            int
-	Date          Time   `sales-column:"2"`
-	Cashier       string `sales-column:"5"`
-	InvoiceNumber string `sales-column:"6"`
-	PatientName   string `sales-column:"13"`
-	Doctor        string `sales-column:"14"`
-	Salesman      string `sales-column:"15"`
-	Payment       string `sales-column:"16"`
-	// New columns ("No Order", "Kode Approval", "Promo Penjualan", "Nama Promo")
-	// pushed "Total" from 25 to 31.
-	Total     float64 `sales-column:"31"`
-	SaleUnits []SaleUnit
-}
-
-// SaleUnit represents one unit of a drug in a sale.
-type SaleUnit struct {
-	IDInSale      int     `sales-index:"1"`
-	DrugCode      string  `sales-index:"4"`
-	DrugName      string  `sales-index:"5"`
-	Batch         string  `sales-index:"6"`
-	Amount        float64 `sales-index:"7"`
-	Unit          string  `sales-index:"8"`
-	UnitPrice     float64 `sales-index:"9"`
-	PriceCategory string  `sales-index:"10"`
-	Discount      float64 `sales-index:"12"`
-	Tuslah        float64 `sales-index:"13"`
-	Embalase      float64 `sales-index:"14"`
-	Total         float64 `sales-index:"15"`
-}
-
 // StockOpname represents a stock opname.
 type StockOpname struct {
 	ID                  string  `so-index:"2"`

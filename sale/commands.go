@@ -7,7 +7,6 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
 	vmedisv2 "github.com/turfaa/vmedis-proxy-api/vmedis/v2"
 )
 
@@ -16,12 +15,11 @@ func DumpSalesBetweenDatesFromVmedisToDB(
 	startDate time.Time,
 	endDate time.Time,
 	db *gorm.DB,
-	vmedisClient *vmedisv1.Client,
-	vmedisV2Client *vmedisv2.Client,
+	vmedisClient *vmedisv2.Client,
 	drugsGetter DrugsGetter,
 	drugProducer UpdatedDrugProducer,
 ) {
-	service := NewService(db, vmedisClient, vmedisV2Client, drugsGetter, drugProducer)
+	service := NewService(db, vmedisClient, drugsGetter, drugProducer)
 
 	if err := service.DumpSalesBetweenDatesFromVmedisToDB(ctx, startDate, endDate); err != nil {
 		log.Fatalf("DumpSalesBetweenDatesFromVmedisToDB: %s", err)
@@ -33,12 +31,11 @@ func ReconcileSalesBetweenDatesWithVmedis(
 	startDate time.Time,
 	endDate time.Time,
 	db *gorm.DB,
-	vmedisClient *vmedisv1.Client,
-	vmedisV2Client *vmedisv2.Client,
+	vmedisClient *vmedisv2.Client,
 	drugsGetter DrugsGetter,
 	drugProducer UpdatedDrugProducer,
 ) {
-	service := NewService(db, vmedisClient, vmedisV2Client, drugsGetter, drugProducer)
+	service := NewService(db, vmedisClient, drugsGetter, drugProducer)
 
 	if err := service.ReconcileSalesBetweenDatesWithVmedis(ctx, startDate, endDate); err != nil {
 		log.Fatalf("ReconcileSalesBetweenDatesWithVmedis: %s", err)
@@ -48,12 +45,11 @@ func ReconcileSalesBetweenDatesWithVmedis(
 func DumpTodaySalesStatisticsFromVmedisToDB(
 	ctx context.Context,
 	db *gorm.DB,
-	vmedisClient *vmedisv1.Client,
-	vmedisV2Client *vmedisv2.Client,
+	vmedisClient *vmedisv2.Client,
 	drugsGetter DrugsGetter,
 	drugProducer UpdatedDrugProducer,
 ) {
-	service := NewService(db, vmedisClient, vmedisV2Client, drugsGetter, drugProducer)
+	service := NewService(db, vmedisClient, drugsGetter, drugProducer)
 
 	if err := service.DumpTodaySalesStatisticsFromVmedisToDB(ctx); err != nil {
 		log.Fatalf("Failed to dump today's sales statistics from Vmedis to DB: %s", err)

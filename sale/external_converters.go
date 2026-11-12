@@ -3,13 +3,13 @@ package sale
 import (
 	"github.com/turfaa/vmedis-proxy-api/database/models"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/slices2"
-	vmedisv1 "github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+	vmedisv2 "github.com/turfaa/vmedis-proxy-api/vmedis/v2"
 )
 
-func VmedisSaleToDBSale(sale vmedisv1.Sale) models.Sale {
+func VmedisSaleToDBSale(sale vmedisv2.Sale) models.Sale {
 	return models.Sale{
 		VmedisID:      sale.ID,
-		SoldAt:        sale.Date.Time,
+		SoldAt:        sale.Date,
 		Cashier:       sale.Cashier,
 		InvoiceNumber: sale.InvoiceNumber,
 		PatientName:   sale.PatientName,
@@ -17,7 +17,7 @@ func VmedisSaleToDBSale(sale vmedisv1.Sale) models.Sale {
 		Salesman:      sale.Salesman,
 		Payment:       sale.Payment,
 		Total:         sale.Total,
-		SaleUnits: slices2.Map(sale.SaleUnits, func(saleUnit vmedisv1.SaleUnit) models.SaleUnit {
+		SaleUnits: slices2.Map(sale.SaleUnits, func(saleUnit vmedisv2.SaleUnit) models.SaleUnit {
 			su := VmedisSaleUnitToDBSaleUnit(saleUnit)
 			su.InvoiceNumber = sale.InvoiceNumber
 			return su
@@ -25,7 +25,7 @@ func VmedisSaleToDBSale(sale vmedisv1.Sale) models.Sale {
 	}
 }
 
-func VmedisSaleUnitToDBSaleUnit(saleUnit vmedisv1.SaleUnit) models.SaleUnit {
+func VmedisSaleUnitToDBSaleUnit(saleUnit vmedisv2.SaleUnit) models.SaleUnit {
 	return models.SaleUnit{
 		IDInSale:      saleUnit.IDInSale,
 		DrugCode:      saleUnit.DrugCode,
