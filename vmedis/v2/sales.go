@@ -59,23 +59,33 @@ const (
 // It calls the endpoints the "Lap Penjualan Obat" v2 report page
 // (/apt-lap-penjualanobat-batch-v2) gets its rows and their details from.
 func (c *Client) GetAllSalesBetweenDates(ctx context.Context, startDate, endDate time.Time) ([]Sale, error) {
+	dates := fmt.Sprintf("%s - %s", startDate.Format(time.DateOnly), endDate.Format(time.DateOnly))
+
+	log.Printf("Getting salesmen")
 	salesmen, err := c.getSalesmen(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("get salesmen: %w", err)
 	}
+	log.Printf("Got %d salesmen", len(salesmen))
 
 	var rows []saleRow
-	for offset := 0; ; offset += salesPageSize {
-		page, err := c.getSalesPage(ctx, startDate, endDate, offset)
+	for page, offset := 1, 0; ; page, offset = page+1, offset+salesPageSize {
+		log.Printf("Getting sales %s page %d (%d per page)", dates, page, salesPageSize)
+
+		pageRows, err := c.getSalesPage(ctx, startDate, endDate, offset)
 		if err != nil {
-			return nil, fmt.Errorf("get sales between %s and %s at offset %d: %w", startDate.Format(time.DateOnly), endDate.Format(time.DateOnly), offset, err)
+			return nil, fmt.Errorf("get sales %s page %d: %w", dates, page, err)
 		}
 
-		rows = append(rows, page...)
-		if len(page) < salesPageSize {
+		log.Printf("Got %d sales from %s page %d", len(pageRows), dates, page)
+
+		rows = append(rows, pageRows...)
+		if len(pageRows) < salesPageSize {
 			break
 		}
 	}
+
+	log.Printf("Got %d sales %s, getting their units", len(rows), dates)
 
 	sales := make([]Sale, len(rows))
 	g, gctx := errgroup.WithContext(ctx)
@@ -87,10 +97,14 @@ func (c *Client) GetAllSalesBetweenDates(ctx context.Context, startDate, endDate
 				return fmt.Errorf("convert sale %s: %w", row.InvoiceNumber, err)
 			}
 
+			log.Printf("Getting units of sale %d/%d (%s)", i+1, len(rows), row.InvoiceNumber)
+
 			sale.SaleUnits, err = c.getSaleUnits(gctx, int(row.ID))
 			if err != nil {
 				return fmt.Errorf("get units of sale %s: %w", row.InvoiceNumber, err)
 			}
+
+			log.Printf("Got %d units of sale %d/%d (%s)", len(sale.SaleUnits), i+1, len(rows), row.InvoiceNumber)
 
 			sales[i] = sale
 			return nil
@@ -99,6 +113,8 @@ func (c *Client) GetAllSalesBetweenDates(ctx context.Context, startDate, endDate
 	if err := g.Wait(); err != nil {
 		return nil, err
 	}
+
+	log.Printf("Got %d sales %s with their units", len(sales), dates)
 
 	return sales, nil
 }

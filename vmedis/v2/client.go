@@ -2,7 +2,9 @@ package vmedisv2
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"log"
 )
 
 // Client calls the vmedis report API, the one behind the "-v2" report pages
@@ -38,6 +40,9 @@ func (c *Client) callReport(ctx context.Context, targetUrl string, payload map[s
 	if c.appID == "" || c.reg == "" {
 		return fmt.Errorf("vmedis v2 app id and reg must be configured")
 	}
+
+	payloadJson, _ := json.Marshal(payload)
+	log.Printf("POST %s %s", targetUrl, payloadJson)
 
 	params := make(map[string]any, len(payload)+3)
 	for k, v := range payload {
