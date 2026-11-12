@@ -22,8 +22,9 @@ func (c *Client) RefreshTokens(ctx context.Context, tokens []string) (map[string
 	for _, t := range tokens {
 		token := t
 		errs.Go(func() error {
-			// Vmedis may redirect the home page to the dashboard.
-			res, err := c.getWithSessionId(ctx, "/", token, "/dashboard")
+			// Vmedis may redirect the home page to the dashboard or to Vmedis
+			// Intelligence, depending on the session.
+			res, err := c.getWithSessionId(ctx, "/", token, "/dashboard", "/vmedis-intelligence")
 			if errors.Is(err, ErrInvalidToken) {
 				lock.Lock()
 				result[token] = models.TokenStateExpired
