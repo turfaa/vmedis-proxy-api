@@ -80,13 +80,15 @@ func (c *GatewayClient) doHTTPRequest(ctx context.Context, req GatewayRequest) (
 	}
 	defer res.Body.Close()
 
+	bodyBytes, readErr := io.ReadAll(res.Body)
+
 	if err := httputil.EnsureSuccess(res); err != nil {
-		return nil, err
+		// The body says why, e.g. {"error":{"message":"Parameter 'login_a' wajib diisi."}}.
+		return nil, fmt.Errorf("%w: %.500s", err, bodyBytes)
 	}
 
-	bodyBytes, err := io.ReadAll(res.Body)
-	if err != nil {
-		return nil, fmt.Errorf("read response body: %w", err)
+	if readErr != nil {
+		return nil, fmt.Errorf("read response body: %w", readErr)
 	}
 
 	return bodyBytes, nil
@@ -156,15 +158,16 @@ func (c *GatewayClient) appendHeadersToHTTPReq(httpReq *http.Request, gatewayReq
 
 func (c *GatewayClient) parseHTTPResponseBody(bodyBytes []byte, responseTarget any) error {
 	body := struct {
-		Error string `json:"error"`
-		Data  string `json:"data"`
+		// Error is a string or an object, depending on where the request failed.
+		Error json.RawMessage `json:"error"`
+		Data  string          `json:"data"`
 	}{}
 
 	if err := json.Unmarshal(bodyBytes, &body); err != nil {
 		return fmt.Errorf("unmarshal response body %q: %w", string(bodyBytes), err)
 	}
 
-	if body.Error != "" {
+	if len(body.Error) > 0 && string(body.Error) != "null" && string(body.Error) != `""` {
 		return fmt.Errorf("gateway error: %s", body.Error)
 	}
 

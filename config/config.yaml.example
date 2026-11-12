@@ -4,6 +4,14 @@ concurrency: 10
 refresh_interval: "1m"
 rate_limit: 100
 
+# The vmedis v2 report API, the one behind the "-v2" report pages. The values
+# are in the gateway requests those pages send.
+vmedis_v2:
+  gateway_url: "https://apimwlap.vmedis.com/api/gateway"
+  crypt_key: ""
+  app_id: ""
+  reg: ""
+
 redis_address: "localhost:26379"
 redis_password: ""
 redis_db: 0

@@ -29,7 +29,7 @@ func TestSoftDeleteSalesMissingFromVmedis(t *testing.T) {
 		t.Fatalf("open database: %v", err)
 	}
 
-	service := NewService(db, nil, nil, nopDrugProducer{})
+	service := NewService(db, nil, nil, nil, nopDrugProducer{})
 
 	date := time.Date(2026, 8, 7, 0, 0, 0, 0, time.Local)
 	soldAt := date.Add(10 * time.Hour)

@@ -25,6 +25,7 @@ var salesCommands = []commandWithInit{
 					endTime,
 					getDatabase(),
 					getVmedisClient(),
+					getVmedisV2Client(),
 					getDrugService(),
 					getDrugProducer(),
 				)
@@ -47,6 +48,7 @@ var salesCommands = []commandWithInit{
 					endTime,
 					getDatabase(),
 					getVmedisClient(),
+					getVmedisV2Client(),
 					getDrugService(),
 					getDrugProducer(),
 				)
@@ -65,6 +67,7 @@ var salesCommands = []commandWithInit{
 					cmd.Context(),
 					getDatabase(),
 					getVmedisClient(),
+					getVmedisV2Client(),
 					getDrugService(),
 					getDrugProducer(),
 				)

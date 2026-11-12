@@ -1,14 +1,13 @@
 package sale
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/turfaa/vmedis-proxy-api/database/models"
 	"github.com/turfaa/vmedis-proxy-api/drug"
 	"github.com/turfaa/vmedis-proxy-api/money"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/time2"
-	vmedisv1 "github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+	vmedisv2 "github.com/turfaa/vmedis-proxy-api/vmedis/v2"
 )
 
 type SalesResponse struct {
@@ -134,17 +133,12 @@ func (s Statistics) ToDBSaleStatistics() models.SaleStatistics {
 	}
 }
 
-func FromVmedisSalesStatistics(pulledAt time.Time, salesStatistics vmedisv1.SalesStatistics) (Statistics, error) {
-	totalSales, err := salesStatistics.TotalSalesFloat64()
-	if err != nil {
-		return Statistics{}, fmt.Errorf("total sales float64: %w", err)
-	}
-
+func FromVmedisSalesStatistics(pulledAt time.Time, salesStatistics vmedisv2.SalesStatistics) Statistics {
 	return Statistics{
 		PulledAt:      pulledAt,
-		TotalSales:    totalSales,
+		TotalSales:    salesStatistics.TotalSales,
 		NumberOfSales: salesStatistics.NumberOfSales,
-	}, nil
+	}
 }
 
 func FromDBSaleStatistics(saleStatistics models.SaleStatistics) Statistics {

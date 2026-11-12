@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/url"
 	"reflect"
+	"strings"
 )
 
 type Crypt struct {
@@ -72,14 +73,17 @@ func (c *Crypt) DecryptFromUnicode(escaped string, vPtr any) error {
 }
 
 // EncryptToURLEncoded encrypts any value using Crypt.Encrypt, then URL-escapes the encrypted bytes
-// so the string can be safely transported in URLs.
+// like JavaScript's encodeURIComponent, which is what vmedis decodes them with.
 func (c *Crypt) EncryptToURLEncoded(v any) (string, error) {
 	encrypted, err := c.Encrypt(v)
 	if err != nil {
 		return "", fmt.Errorf("encrypt to URL encoded: %w", err)
 	}
 
-	return url.QueryEscape(string(encrypted)), nil
+	// QueryEscape encodes a space as "+", which decodeURIComponent leaves as
+	// a literal "+", corrupting the encrypted bytes. A literal "+" is
+	// escaped as "%2B", so every remaining "+" is a space.
+	return strings.ReplaceAll(url.QueryEscape(string(encrypted)), "+", "%20"), nil
 }
 
 // DecryptFromURLEncodedToString takes a URL-encoded encrypted string, decodes and decrypts it, and returns the plaintext as a string.
@@ -94,7 +98,9 @@ func (c *Crypt) DecryptFromURLEncodedToString(urlEncoded string) (string, error)
 
 // DecryptFromURLEncoded takes a URL-encoded encrypted string, decodes and decrypts it into vPtr.
 func (c *Crypt) DecryptFromURLEncoded(urlEncoded string, vPtr any) error {
-	encryptedStr, err := url.QueryUnescape(urlEncoded)
+	// PathUnescape, unlike QueryUnescape, keeps "+" as is, like
+	// JavaScript's decodeURIComponent.
+	encryptedStr, err := url.PathUnescape(urlEncoded)
 	if err != nil {
 		return fmt.Errorf("unescape URL encoded: %w", err)
 	}

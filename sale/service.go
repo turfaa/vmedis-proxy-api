@@ -14,11 +14,13 @@ import (
 	"github.com/turfaa/vmedis-proxy-api/kafkapb"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/time2"
 	vmedisv1 "github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+	vmedisv2 "github.com/turfaa/vmedis-proxy-api/vmedis/v2"
 )
 
 type Service struct {
 	db           *Database
 	vmedis       *vmedisv1.Client
+	vmedisV2     *vmedisv2.Client
 	drugsGetter  DrugsGetter
 	drugProducer UpdatedDrugProducer
 }
@@ -154,14 +156,9 @@ func (s *Service) GetSalesStatisticsBetweenTime(ctx context.Context, from time.T
 		return stats, nil
 	}
 
-	liveStatsVmedis, err := s.vmedis.GetDailySalesStatistics(ctx)
+	liveStats, err := s.getTodaySalesStatisticsFromVmedis(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("get live sales statistics from vmedis: %w", err)
-	}
-
-	liveStats, err := FromVmedisSalesStatistics(time.Now(), liveStatsVmedis)
-	if err != nil {
-		return nil, fmt.Errorf("invalid live sales statistics from Vmedis (%+v): %w", liveStatsVmedis, err)
 	}
 
 	if len(stats) == 0 || (stats[len(stats)-1].TotalSales <= liveStats.TotalSales && stats[len(stats)-1].PulledAt.Before(liveStats.PulledAt)) {
@@ -322,14 +319,9 @@ func (s *Service) softDeleteSalesMissingFromVmedis(ctx context.Context, date tim
 func (s *Service) DumpTodaySalesStatisticsFromVmedisToDB(ctx context.Context) error {
 	log.Println("Dumping today's sales statistics from Vmedis to DB")
 
-	vmedisStats, err := s.vmedis.GetDailySalesStatistics(ctx)
+	stats, err := s.getTodaySalesStatisticsFromVmedis(ctx)
 	if err != nil {
 		return fmt.Errorf("get sales statistics from vmedis: %w", err)
-	}
-
-	stats, err := FromVmedisSalesStatistics(time.Now(), vmedisStats)
-	if err != nil {
-		return fmt.Errorf("invalid sales statistics from Vmedis (%+v): %w", vmedisStats, err)
 	}
 
 	if err := s.db.InsertSalesStatistics(ctx, stats); err != nil {
@@ -340,15 +332,28 @@ func (s *Service) DumpTodaySalesStatisticsFromVmedisToDB(ctx context.Context) er
 	return nil
 }
 
+func (s *Service) getTodaySalesStatisticsFromVmedis(ctx context.Context) (Statistics, error) {
+	now := time.Now()
+
+	vmedisStats, err := s.vmedisV2.GetSalesStatistics(ctx, now, now)
+	if err != nil {
+		return Statistics{}, err
+	}
+
+	return FromVmedisSalesStatistics(now, vmedisStats), nil
+}
+
 func NewService(
 	db *gorm.DB,
 	vmedisClient *vmedisv1.Client,
+	vmedisV2Client *vmedisv2.Client,
 	drugsGetter DrugsGetter,
 	drugProducer UpdatedDrugProducer,
 ) *Service {
 	return &Service{
 		db:           NewDatabase(db),
 		vmedis:       vmedisClient,
+		vmedisV2:     vmedisV2Client,
 		drugsGetter:  drugsGetter,
 		drugProducer: drugProducer,
 	}

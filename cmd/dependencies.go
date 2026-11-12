@@ -26,11 +26,13 @@ import (
 	"github.com/turfaa/vmedis-proxy-api/stockopname"
 	vmedisv1 "github.com/turfaa/vmedis-proxy-api/vmedis/v1"
 	token2 "github.com/turfaa/vmedis-proxy-api/vmedis/v1/token"
+	vmedisv2 "github.com/turfaa/vmedis-proxy-api/vmedis/v2"
 )
 
 var (
 	db                 atomic.Pointer[gorm.DB]
 	vmedisClient       atomic.Pointer[vmedisv1.Client]
+	vmedisV2Client     atomic.Pointer[vmedisv2.Client]
 	redisClient        atomic.Pointer[redis.UniversalClient]
 	drugProducer       atomic.Pointer[drug.Producer]
 	kafkaWriter        atomic.Pointer[kafka.Writer]
@@ -99,6 +101,27 @@ func getVmedisClient() *vmedisv1.Client {
 
 	if !vmedisClient.CompareAndSwap(nil, newClient) {
 		return vmedisClient.Load()
+	}
+
+	return newClient
+}
+
+func getVmedisV2Client() *vmedisv2.Client {
+	if val := vmedisV2Client.Load(); val != nil {
+		return val
+	}
+
+	newClient := vmedisv2.New(
+		vmedisv2.NewGatewayClient(
+			viper.GetString("vmedis_v2.gateway_url"),
+			vmedisv2.NewCrypt(viper.GetString("vmedis_v2.crypt_key")),
+		),
+		viper.GetString("vmedis_v2.app_id"),
+		viper.GetString("vmedis_v2.reg"),
+	)
+
+	if !vmedisV2Client.CompareAndSwap(nil, newClient) {
+		return vmedisV2Client.Load()
 	}
 
 	return newClient
@@ -273,6 +296,7 @@ func getSaleService() *sale.Service {
 	newService := sale.NewService(
 		getDatabase(),
 		getVmedisClient(),
+		getVmedisV2Client(),
 		getDrugService(),
 		getDrugProducer(),
 	)
