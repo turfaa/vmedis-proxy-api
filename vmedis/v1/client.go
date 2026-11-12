@@ -54,37 +54,80 @@ const loginPageMarker = "Vmedis - Login"
 // which means the session token used is invalid.
 var ErrInvalidToken = errors.New("invalid session token: vmedis responded with the login page")
 
-func (c *Client) get(ctx context.Context, path string) (*http.Response, error) {
-	sessionId, err := c.tokenProvider.GetActiveToken()
-	if err != nil {
-		return nil, fmt.Errorf("get active session id: %w", err)
-	}
+// ErrRedirected is returned when vmedis redirects the request to a different
+// page, which means the session used cannot open the requested page. It is
+// retryable, as a retry may use a session that can.
+var ErrRedirected = errors.New("vmedis redirected the request to a different page")
 
-	return c.getWithSessionId(ctx, path, sessionId)
+func (c *Client) get(ctx context.Context, path string) (*http.Response, error) {
+	return c.getWithRetry(ctx, path, c.tokenProvider.GetActiveToken)
 }
 
-// getWithSessionId performs a GET request to vmedis, retrying transient
-// failures. Receiving the login page instead of the requested page is an
-// error too, reported as ErrInvalidToken.
-// The caller owns the response body of a successful request.
+// getWithSessionId performs a GET request to vmedis with the given session id,
+// retrying transient failures. See getWithRetry.
 func (c *Client) getWithSessionId(ctx context.Context, path, sessionId string) (*http.Response, error) {
+	return c.getWithRetry(ctx, path, func() (string, error) { return sessionId, nil })
+}
+
+// getWithRetry performs a GET request to vmedis, retrying transient failures.
+// The session id is picked by getSessionId on every attempt, so a retry can
+// use a different session than the attempt that failed.
+// Receiving the login page instead of the requested page is an error,
+// reported as ErrInvalidToken. Being redirected to another page is an error
+// too, reported as ErrRedirected.
+// The caller owns the response body of a successful request.
+func (c *Client) getWithRetry(ctx context.Context, path string, getSessionId func() (string, error)) (*http.Response, error) {
 	res, err := retry.Do(ctx, c.retryConfig, func(ctx context.Context) (*http.Response, error) {
+		sessionId, err := getSessionId()
+		if err != nil {
+			return nil, retry.Permanent(fmt.Errorf("get session id: %w", err))
+		}
+
 		res, err := c.doGet(ctx, path, sessionId)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("with session id %s: %w", sessionId, err)
 		}
 
 		if err := ensureSessionActive(res); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("with session id %s: %w", sessionId, err)
+		}
+
+		if err := ensureNotRedirected(res); err != nil {
+			return nil, fmt.Errorf("with session id %s: %w", sessionId, err)
 		}
 
 		return res, nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("GET %s with session id %s: %w", path, sessionId, err)
+		return nil, fmt.Errorf("GET %s: %w", path, err)
 	}
 
 	return res, nil
+}
+
+// ensureNotRedirected returns ErrRedirected if vmedis redirected the request
+// to a different page, which it does (to the home page) when the session
+// cannot open the requested page, e.g. a v1-menu page with a session that
+// has the v2 menu enabled. On error, the body is closed.
+func ensureNotRedirected(res *http.Response) error {
+	// res.Request is the last request sent. When it was sent because of a
+	// redirect, its Response is that redirect, whose Request is the one before.
+	final := res.Request
+	if final == nil || final.Response == nil {
+		return nil
+	}
+
+	first := final
+	for first.Response != nil && first.Response.Request != nil {
+		first = first.Response.Request
+	}
+
+	if first.URL.Path == final.URL.Path {
+		return nil
+	}
+
+	res.Body.Close()
+	return fmt.Errorf("%w: %s was redirected to %s", ErrRedirected, first.URL.Path, final.URL.Path)
 }
 
 // ensureSessionActive returns ErrInvalidToken if the response is the vmedis
