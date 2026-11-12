@@ -36,6 +36,7 @@ var serveCmd = commandWithInit{
 					ShiftHandler:        getShiftHandler(),
 					TokenHandler:        getTokenHandler(),
 					RejectedDrugHandler: getRejectedDrugHandler(),
+					SupplierHandler:     getSupplierHandler(),
 				},
 			)
 		},
