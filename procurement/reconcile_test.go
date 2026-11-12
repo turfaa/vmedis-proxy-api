@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/turfaa/vmedis-proxy-api/database"
-	vmedisv1 "github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+	vmedisv2 "github.com/turfaa/vmedis-proxy-api/vmedis/v2"
 )
 
 // TestSoftDeleteProcurementsMissingFromVmedis checks that reconciliation
@@ -21,25 +21,25 @@ func TestSoftDeleteProcurementsMissingFromVmedis(t *testing.T) {
 		t.Fatalf("open database: %v", err)
 	}
 
-	service := NewService(db, nil, nil, nil, nil)
+	service := NewService(db, nil, nil, nil, nil, nil)
 
 	date := time.Date(2026, 8, 7, 0, 0, 0, 0, time.Local)
 	otherDate := date.AddDate(0, 0, -1)
 
-	newProcurement := func(invoiceNumber string, at time.Time) vmedisv1.Procurement {
-		return vmedisv1.Procurement{
-			Date:          vmedisv1.Date{Time: at},
-			InputTime:     vmedisv1.Time{Time: at},
+	newProcurement := func(invoiceNumber string, at time.Time) vmedisv2.Procurement {
+		return vmedisv2.Procurement{
+			Date:          at,
+			InputTime:     at,
 			InvoiceNumber: invoiceNumber,
 			Supplier:      "Supplier A",
 			Total:         10,
-			ProcurementUnits: []vmedisv1.ProcurementUnit{
+			ProcurementUnits: []vmedisv2.ProcurementUnit{
 				{IDInProcurement: 1, DrugCode: "D1", DrugName: "Drug One", Amount: 5, Unit: "box", Total: 10},
 			},
 		}
 	}
 
-	dumped := []vmedisv1.Procurement{
+	dumped := []vmedisv2.Procurement{
 		newProcurement("OBT1", date),
 		newProcurement("OBT2", date),
 		newProcurement("OBT-OTHER-DATE", otherDate),
@@ -49,7 +49,7 @@ func TestSoftDeleteProcurementsMissingFromVmedis(t *testing.T) {
 	}
 
 	// OBT1 was deleted in Vmedis; OBT2 is still there.
-	stillInVmedis := []vmedisv1.Procurement{
+	stillInVmedis := []vmedisv2.Procurement{
 		newProcurement("OBT2", date),
 	}
 

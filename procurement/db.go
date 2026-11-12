@@ -17,7 +17,7 @@ import (
 	"github.com/turfaa/vmedis-proxy-api/database/models"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/slices2"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/zstd2"
-	vmedisv1 "github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+	vmedisv2 "github.com/turfaa/vmedis-proxy-api/vmedis/v2"
 )
 
 var (
@@ -46,7 +46,7 @@ type Database struct {
 	db *gorm.DB
 }
 
-func (d *Database) UpsertVmedisProcurements(ctx context.Context, procurements []vmedisv1.Procurement) error {
+func (d *Database) UpsertVmedisProcurements(ctx context.Context, procurements []vmedisv2.Procurement) error {
 	if len(procurements) == 0 {
 		return nil
 	}

@@ -5,27 +5,27 @@ import (
 
 	"github.com/turfaa/vmedis-proxy-api/database/models"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/slices2"
-	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+	vmedisv2 "github.com/turfaa/vmedis-proxy-api/vmedis/v2"
 )
 
-func vmedisProcurementToDBProcurement(p vmedisv1.Procurement) models.Procurement {
+func vmedisProcurementToDBProcurement(p vmedisv2.Procurement) models.Procurement {
 	return models.Procurement{
 		InvoiceNumber:          p.InvoiceNumber,
-		InvoiceDate:            datatypes.Date(p.Date.Time),
-		InputDate:              p.InputTime.Time,
+		InvoiceDate:            datatypes.Date(p.Date),
+		InputDate:              p.InputTime,
 		Supplier:               p.Supplier,
 		Warehouse:              p.Warehouse,
 		PaymentType:            p.PaymentType,
 		PaymentAccount:         p.PaymentAccount,
 		Operator:               p.Operator,
-		CashDiscountPercentage: p.CashDiscountPercentage.Value,
-		DiscountPercentage:     p.DiscountPercentage.Value,
+		CashDiscountPercentage: p.CashDiscountPercentage,
+		DiscountPercentage:     p.DiscountPercentage,
 		DiscountAmount:         p.DiscountAmount,
-		TaxPercentage:          p.TaxPercentage.Value,
+		TaxPercentage:          p.TaxPercentage,
 		TaxAmount:              p.TaxAmount,
 		MiscellaneousCost:      p.MiscellaneousCost,
 		Total:                  p.Total,
-		ProcurementUnits: slices2.Map(p.ProcurementUnits, func(u vmedisv1.ProcurementUnit) models.ProcurementUnit {
+		ProcurementUnits: slices2.Map(p.ProcurementUnits, func(u vmedisv2.ProcurementUnit) models.ProcurementUnit {
 			unit := vmedisProcurementUnitToDBProcurementUnit(u)
 			unit.InvoiceNumber = p.InvoiceNumber
 			return unit
@@ -33,7 +33,7 @@ func vmedisProcurementToDBProcurement(p vmedisv1.Procurement) models.Procurement
 	}
 }
 
-func vmedisProcurementUnitToDBProcurementUnit(u vmedisv1.ProcurementUnit) models.ProcurementUnit {
+func vmedisProcurementUnitToDBProcurementUnit(u vmedisv2.ProcurementUnit) models.ProcurementUnit {
 	return models.ProcurementUnit{
 		IDInProcurement:         u.IDInProcurement,
 		DrugCode:                u.DrugCode,
@@ -41,12 +41,12 @@ func vmedisProcurementUnitToDBProcurementUnit(u vmedisv1.ProcurementUnit) models
 		Amount:                  u.Amount,
 		Unit:                    u.Unit,
 		UnitBasePrice:           u.UnitBasePrice,
-		DiscountPercentage:      u.DiscountPercentage.Value,
-		DiscountTwoPercentage:   u.DiscountTwoPercentage.Value,
-		DiscountThreePercentage: u.DiscountThreePercentage.Value,
+		DiscountPercentage:      u.DiscountPercentage,
+		DiscountTwoPercentage:   u.DiscountTwoPercentage,
+		DiscountThreePercentage: u.DiscountThreePercentage,
 		TotalUnitPrice:          u.TotalUnitPrice,
 		UnitTaxedPrice:          u.UnitTaxedPrice,
-		ExpiryDate:              u.ExpiryDate.Time,
+		ExpiryDate:              u.ExpiryDate,
 		BatchNumber:             u.BatchNumber,
 		Total:                   u.Total,
 	}

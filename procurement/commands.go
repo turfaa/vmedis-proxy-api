@@ -9,6 +9,7 @@ import (
 	"gorm.io/gorm"
 
 	vmedisv1 "github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+	vmedisv2 "github.com/turfaa/vmedis-proxy-api/vmedis/v2"
 )
 
 func DumpProcurementsBetweenDatesFromVmedisToDB(
@@ -18,10 +19,11 @@ func DumpProcurementsBetweenDatesFromVmedisToDB(
 	db *gorm.DB,
 	redisClient redis.UniversalClient,
 	vmedisClient *vmedisv1.Client,
+	vmedisV2Client *vmedisv2.Client,
 	drugProducer UpdatedDrugProducer,
 	drugUnitsGetter DrugUnitsGetter,
 ) {
-	service := NewService(db, redisClient, vmedisClient, drugProducer, drugUnitsGetter)
+	service := NewService(db, redisClient, vmedisClient, vmedisV2Client, drugProducer, drugUnitsGetter)
 
 	if err := service.DumpProcurementsBetweenDatesFromVmedisToDB(ctx, startDate, endDate); err != nil {
 		log.Fatalf("DumpProcurementsBetweenDatesFromVmedisToDB: %s", err)
@@ -35,10 +37,11 @@ func ReconcileProcurementsBetweenDatesWithVmedis(
 	db *gorm.DB,
 	redisClient redis.UniversalClient,
 	vmedisClient *vmedisv1.Client,
+	vmedisV2Client *vmedisv2.Client,
 	drugProducer UpdatedDrugProducer,
 	drugUnitsGetter DrugUnitsGetter,
 ) {
-	service := NewService(db, redisClient, vmedisClient, drugProducer, drugUnitsGetter)
+	service := NewService(db, redisClient, vmedisClient, vmedisV2Client, drugProducer, drugUnitsGetter)
 
 	if err := service.ReconcileProcurementsBetweenDatesWithVmedis(ctx, startDate, endDate); err != nil {
 		log.Fatalf("ReconcileProcurementsBetweenDatesWithVmedis: %s", err)
@@ -50,10 +53,11 @@ func DumpProcurementRecommendations(
 	db *gorm.DB,
 	redisClient redis.UniversalClient,
 	vmedisClient *vmedisv1.Client,
+	vmedisV2Client *vmedisv2.Client,
 	drugProducer UpdatedDrugProducer,
 	drugUnitsGetter DrugUnitsGetter,
 ) {
-	service := NewService(db, redisClient, vmedisClient, drugProducer, drugUnitsGetter)
+	service := NewService(db, redisClient, vmedisClient, vmedisV2Client, drugProducer, drugUnitsGetter)
 
 	if err := service.DumpRecommendationsFromVmedisToRedis(ctx); err != nil {
 		log.Fatalf("DumpProcurementsBetweenDatesFromVmedisToDB: %s", err)

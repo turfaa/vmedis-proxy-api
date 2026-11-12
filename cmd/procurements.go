@@ -27,6 +27,7 @@ var procurementsCommands = []commandWithInit{
 					getDatabase(),
 					getRedisClient(),
 					getVmedisClient(),
+					getVmedisV2Client(),
 					getDrugProducer(),
 					drug.NewDatabase(getDatabase()),
 				)
@@ -50,6 +51,7 @@ var procurementsCommands = []commandWithInit{
 					getDatabase(),
 					getRedisClient(),
 					getVmedisClient(),
+					getVmedisV2Client(),
 					getDrugProducer(),
 					drug.NewDatabase(getDatabase()),
 				)
@@ -69,6 +71,7 @@ var procurementsCommands = []commandWithInit{
 					getDatabase(),
 					getRedisClient(),
 					getVmedisClient(),
+					getVmedisV2Client(),
 					getDrugProducer(),
 					drug.NewDatabase(getDatabase()),
 				)

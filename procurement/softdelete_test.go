@@ -7,7 +7,7 @@ import (
 
 	"github.com/turfaa/vmedis-proxy-api/database"
 	"github.com/turfaa/vmedis-proxy-api/database/models"
-	vmedisv1 "github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+	vmedisv2 "github.com/turfaa/vmedis-proxy-api/vmedis/v2"
 )
 
 // TestProcurementSoftDeleteRoundTrip checks that a soft-deleted procurement
@@ -32,13 +32,13 @@ func TestProcurementSoftDeleteRoundTrip(t *testing.T) {
 	dump := func(total float64) {
 		t.Helper()
 
-		if err := d.UpsertVmedisProcurements(ctx, []vmedisv1.Procurement{{
-			Date:          vmedisv1.Date{Time: day},
-			InputTime:     vmedisv1.Time{Time: day},
+		if err := d.UpsertVmedisProcurements(ctx, []vmedisv2.Procurement{{
+			Date:          day,
+			InputTime:     day,
 			InvoiceNumber: invoiceNumber,
 			Supplier:      "Supplier A",
 			Total:         total,
-			ProcurementUnits: []vmedisv1.ProcurementUnit{
+			ProcurementUnits: []vmedisv2.ProcurementUnit{
 				{IDInProcurement: 1, DrugCode: "D1", DrugName: "Drug One", Amount: 5, Unit: "box", Total: total},
 			},
 		}}); err != nil {

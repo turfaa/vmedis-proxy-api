@@ -15,6 +15,7 @@ import (
 	"github.com/turfaa/vmedis-proxy-api/drug"
 	"github.com/turfaa/vmedis-proxy-api/kafkapb"
 	vmedisv1 "github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+	vmedisv2 "github.com/turfaa/vmedis-proxy-api/vmedis/v2"
 )
 
 const (
@@ -25,6 +26,7 @@ type Service struct {
 	db              *Database
 	redisDB         *RedisDatabase
 	vmedis          *vmedisv1.Client
+	vmedisV2        *vmedisv2.Client
 	drugProducer    UpdatedDrugProducer
 	drugUnitsGetter DrugUnitsGetter
 }
@@ -58,7 +60,7 @@ func (s *Service) DumpProcurementsBetweenDatesFromVmedisToDB(
 ) error {
 	log.Printf("Dumping procurements from %s to %s from vmedis to DB", startDate, endDate)
 
-	procurements, err := s.vmedis.GetAllProcurementsBetweenDates(ctx, startDate, endDate)
+	procurements, err := s.vmedisV2.GetAllProcurementsBetweenDates(ctx, startDate, endDate)
 	if err != nil {
 		return fmt.Errorf("get all procurements between %s and %s from vmedis: %w", startDate, endDate, err)
 	}
@@ -121,7 +123,7 @@ func (s *Service) ReconcileProcurementsBetweenDatesWithVmedis(ctx context.Contex
 func (s *Service) reconcileProcurementsAtDateWithVmedis(ctx context.Context, date time.Time) error {
 	log.Printf("Reconciling procurements at %s with Vmedis", date.Format(time.DateOnly))
 
-	vmedisProcurements, err := s.vmedis.GetAllProcurementsBetweenDates(ctx, date, date)
+	vmedisProcurements, err := s.vmedisV2.GetAllProcurementsBetweenDates(ctx, date, date)
 	if err != nil {
 		return fmt.Errorf("get procurements at %s from vmedis: %w", date.Format(time.DateOnly), err)
 	}
@@ -138,7 +140,7 @@ func (s *Service) reconcileProcurementsAtDateWithVmedis(ctx context.Context, dat
 // softDeleteProcurementsMissingFromVmedis soft-deletes the DB procurements
 // whose invoice date is the given date and whose invoice numbers are not in
 // vmedisProcurements.
-func (s *Service) softDeleteProcurementsMissingFromVmedis(ctx context.Context, date time.Time, vmedisProcurements []vmedisv1.Procurement) (int, error) {
+func (s *Service) softDeleteProcurementsMissingFromVmedis(ctx context.Context, date time.Time, vmedisProcurements []vmedisv2.Procurement) (int, error) {
 	inVmedis := make(map[string]struct{}, len(vmedisProcurements))
 	for _, p := range vmedisProcurements {
 		inVmedis[p.InvoiceNumber] = struct{}{}
@@ -169,8 +171,8 @@ func (s *Service) softDeleteProcurementsMissingFromVmedis(ctx context.Context, d
 	return deleted, nil
 }
 
-func deduplicateProcurementsPickGreatestTotal(procurements []vmedisv1.Procurement) []vmedisv1.Procurement {
-	mp := make(map[string]vmedisv1.Procurement, len(procurements))
+func deduplicateProcurementsPickGreatestTotal(procurements []vmedisv2.Procurement) []vmedisv2.Procurement {
+	mp := make(map[string]vmedisv2.Procurement, len(procurements))
 	for _, p := range procurements {
 		existing, ok := mp[p.InvoiceNumber]
 		if !ok {
@@ -185,17 +187,17 @@ func deduplicateProcurementsPickGreatestTotal(procurements []vmedisv1.Procuremen
 		}
 	}
 
-	deduplicated := make([]vmedisv1.Procurement, 0, len(mp))
+	deduplicated := make([]vmedisv2.Procurement, 0, len(mp))
 	for _, p := range mp {
 		deduplicated = append(deduplicated, p)
 	}
 
 	sort.Slice(deduplicated, func(i, j int) bool {
-		if deduplicated[i].Date.Time.Equal(deduplicated[j].Date.Time) {
-			return deduplicated[i].InputTime.Time.Before(deduplicated[j].InputTime.Time)
+		if deduplicated[i].Date.Equal(deduplicated[j].Date) {
+			return deduplicated[i].InputTime.Before(deduplicated[j].InputTime)
 		}
 
-		return deduplicated[i].Date.Time.Before(deduplicated[j].Date.Time)
+		return deduplicated[i].Date.Before(deduplicated[j].Date)
 	})
 
 	return deduplicated
@@ -359,6 +361,7 @@ func NewService(
 	db *gorm.DB,
 	redisClient redis.UniversalClient,
 	vmedisClient *vmedisv1.Client,
+	vmedisV2Client *vmedisv2.Client,
 	drugProducer UpdatedDrugProducer,
 	drugUnitsGetter DrugUnitsGetter,
 ) *Service {
@@ -366,6 +369,7 @@ func NewService(
 		db:              NewDatabase(db),
 		redisDB:         NewRedisDatabase(redisClient),
 		vmedis:          vmedisClient,
+		vmedisV2:        vmedisV2Client,
 		drugProducer:    drugProducer,
 		drugUnitsGetter: drugUnitsGetter,
 	}

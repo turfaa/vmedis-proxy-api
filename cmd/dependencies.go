@@ -277,6 +277,7 @@ func getProcurementService() *procurement.Service {
 		getDatabase(),
 		getRedisClient(),
 		getVmedisClient(),
+		getVmedisV2Client(),
 		getDrugProducer(),
 		getDrugDatabase(),
 	)
