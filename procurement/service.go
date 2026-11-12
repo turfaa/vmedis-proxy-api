@@ -253,7 +253,7 @@ func (s *Service) GetRecommendationStatus(ctx context.Context) (RecommendationSt
 
 func (s *Service) GenerateRecommendations(ctx context.Context) (RecommendationsResponse, error) {
 	log.Printf("Getting all out-of-stock-drugs for writing procurement recommendations")
-	oosDrugs, err := s.vmedis.GetAllOutOfStockDrugs(ctx)
+	oosDrugs, err := s.vmedisV2.GetAllOutOfStockDrugs(ctx)
 	if err != nil {
 		return RecommendationsResponse{}, fmt.Errorf("get all out of stock drugs for writing procurement recommendations: %w", err)
 	}
@@ -263,7 +263,7 @@ func (s *Service) GenerateRecommendations(ctx context.Context) (RecommendationsR
 	log.Printf("Getting drug units of out-of-stock drugs")
 	drugCodes := make([]string, len(oosDrugs))
 	for i, d := range oosDrugs {
-		drugCodes[i] = d.Drug.VmedisCode
+		drugCodes[i] = d.VmedisCode
 	}
 
 	drugUnitsByDrugCode, err := s.drugUnitsGetter.GetDrugUnitsByDrugVmedisCodes(ctx, drugCodes)
@@ -278,12 +278,13 @@ func (s *Service) GenerateRecommendations(ctx context.Context) (RecommendationsR
 	log.Printf("Got %d drug units of out-of-stock drugs", unitCount)
 
 	recommendations := make([]Recommendation, len(oosDrugs))
-	for i, drugStock := range oosDrugs {
-		procurement, alternatives := calculateRecommendation(drugStock, drugUnitsByDrugCode[drugStock.Drug.VmedisCode])
+	for i, oosDrug := range oosDrugs {
+		drugStock := drug.FromVmedisV2OutOfStockDrug(oosDrug)
+		procurement, alternatives := calculateRecommendation(drugStock, drugUnitsByDrugCode[oosDrug.VmedisCode])
 
 		recommendations[i] = Recommendation{
-			DrugStock:    drug.FromVmedisDrugStock(drugStock),
-			FromSupplier: drugStock.Drug.Supplier,
+			DrugStock:    drugStock,
+			FromSupplier: oosDrug.Supplier,
 			Procurement:  procurement,
 			Alternatives: alternatives,
 		}
@@ -295,7 +296,7 @@ func (s *Service) GenerateRecommendations(ctx context.Context) (RecommendationsR
 	}, nil
 }
 
-func calculateRecommendation(stock vmedisv1.DrugStock, drugUnits []drug.Unit) (chosen drug.Stock, alternatives []drug.Stock) {
+func calculateRecommendation(stock drug.WithStock, drugUnits []drug.Unit) (chosen drug.Stock, alternatives []drug.Stock) {
 	smallestQ := stock.Drug.MinimumStock.Quantity*2 - stock.Stock.Quantity
 	smallestQ = max(smallestQ, 1)
 

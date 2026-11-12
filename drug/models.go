@@ -7,6 +7,7 @@ import (
 
 	"github.com/turfaa/vmedis-proxy-api/database/models"
 	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+	vmedisv2 "github.com/turfaa/vmedis-proxy-api/vmedis/v2"
 )
 
 // DrugsResponse is the response for the drugs endpoints.
@@ -23,6 +24,20 @@ func FromVmedisDrugStock(ds vmedisv1.DrugStock) WithStock {
 	return WithStock{
 		Drug:  FromVmedisDrug(ds.Drug),
 		Stock: FromVmedisStock(ds.Stock),
+	}
+}
+
+// FromVmedisV2OutOfStockDrug creates WithStock from a vmedis v2 out-of-stock drug.
+func FromVmedisV2OutOfStockDrug(d vmedisv2.OutOfStockDrug) WithStock {
+	return WithStock{
+		Drug: Drug{
+			VmedisCode:   d.VmedisCode,
+			Name:         d.Name,
+			Manufacturer: d.Manufacturer,
+			Supplier:     d.Supplier,
+			MinimumStock: Stock{Unit: d.MinimumStock.Unit, Quantity: d.MinimumStock.Quantity},
+		},
+		Stock: Stock{Unit: d.Stock.Unit, Quantity: d.Stock.Quantity},
 	}
 }
 
