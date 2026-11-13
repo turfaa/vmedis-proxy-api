@@ -211,7 +211,12 @@ func (d *Database) UpsertVmedisDrugs(ctx context.Context, drugs []vmedisv1.Drug,
 	return nil
 }
 
-// UpsertVmedisDrugUnits upserts the given drug units.
+// UpsertVmedisDrugUnits upserts the given drug units, and deletes the other
+// units of the drug, the ones vmedis no longer has. Without the deletion, a
+// unit renamed in vmedis (e.g. "BLISTER" to "Strip") stays as a second
+// smallest unit and breaks the drug's unit chain.
+// Empty units are ignored, so a drug whose units could not be read keeps its
+// units.
 func (d *Database) UpsertVmedisDrugUnits(ctx context.Context, drugVmedisCode string, units []vmedisv1.Unit) error {
 	if len(units) == 0 {
 		return nil
@@ -230,23 +235,37 @@ func (d *Database) UpsertVmedisDrugUnits(ctx context.Context, drugVmedisCode str
 		}
 	})
 
-	ops := d.dbCtx(ctx).
-		Clauses(clause.OnConflict{
-			Columns: []clause.Column{{Name: "drug_vmedis_code"}, {Name: "unit"}},
-			DoUpdates: clause.AssignmentColumns([]string{
-				"updated_at",
-				"parent_unit",
-				"conversion_to_parent_unit",
-				"unit_order",
-				"price_one",
-				"price_two",
-				"price_three",
-			}),
-		}).
-		Create(&dbUnits)
+	unitNames := slices2.Map(dbUnits, func(u models.DrugUnit) string { return u.Unit })
 
-	if err := ops.Error; err != nil {
-		return fmt.Errorf("upsert vmedis drug units: %w", err)
+	if err := d.dbCtx(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.
+			Clauses(clause.OnConflict{
+				Columns: []clause.Column{{Name: "drug_vmedis_code"}, {Name: "unit"}},
+				DoUpdates: clause.AssignmentColumns([]string{
+					"updated_at",
+					"parent_unit",
+					"conversion_to_parent_unit",
+					"unit_order",
+					"price_one",
+					"price_two",
+					"price_three",
+				}),
+			}).
+			Create(&dbUnits).
+			Error; err != nil {
+			return fmt.Errorf("upsert vmedis drug units: %w", err)
+		}
+
+		if err := tx.
+			Where("drug_vmedis_code = ? AND unit NOT IN ?", drugVmedisCode, unitNames).
+			Delete(&models.DrugUnit{}).
+			Error; err != nil {
+			return fmt.Errorf("delete units of '%s' no longer in vmedis: %w", drugVmedisCode, err)
+		}
+
+		return nil
+	}); err != nil {
+		return fmt.Errorf("upsert vmedis drug units transaction: %w", err)
 	}
 
 	return nil
