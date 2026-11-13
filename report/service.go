@@ -3,10 +3,8 @@ package report
 import (
 	"bytes"
 	"context"
-	"encoding/csv"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"math"
 	"time"
@@ -269,74 +267,6 @@ func newDrugQuantityStyles(file *excelize.File) (drugQuantityStyles, error) {
 	}
 
 	return styles, errors.Join(errs...)
-}
-
-func (s *Service) SendAggregatedProcurementsAndSalesCSV(
-	ctx context.Context,
-	fromTime time.Time,
-	toTime time.Time,
-	from string,
-	to []string,
-	cc []string,
-	subject string,
-	body []byte,
-) error {
-	procurementsCSV, err := s.GenerateAggregatedProcurementsCSV(ctx, fromTime, toTime)
-	if err != nil {
-		return fmt.Errorf("generate aggregated procurements CSV: %w", err)
-	}
-
-	x, err := io.ReadAll(procurementsCSV)
-	if err != nil {
-		return fmt.Errorf("read aggregated procurements CSV: %w", err)
-	}
-
-	buf := bytes.NewReader(x)
-
-	mail := email.Email{
-		From:    from,
-		To:      to,
-		Cc:      cc,
-		Subject: subject,
-		Text:    body,
-	}
-
-	if _, err := mail.Attach(buf, "pembelian.csv", "text/csv"); err != nil {
-		return fmt.Errorf("attach procurements CSV: %w", err)
-	}
-
-	if err := s.sender.Send(&mail, -1); err != nil {
-		return fmt.Errorf("send email: %w", err)
-	}
-
-	return nil
-}
-
-func (s *Service) GenerateAggregatedProcurementsCSV(ctx context.Context, from time.Time, to time.Time) (io.Reader, error) {
-	procurements, err := s.aggregatedProcurementsGetter.GetAggregatedProcurementsBetweenTime(ctx, from, to)
-	if err != nil {
-		return nil, fmt.Errorf("get aggregated procurements between %s and %s: %w", from, to, err)
-	}
-
-	var bytesBuffer bytes.Buffer
-	writer := csv.NewWriter(&bytesBuffer)
-	writer.Comma = ';'
-
-	var errs []error
-	errs = append(errs, writer.Write([]string{"Nama Obat", "Kuantitas", "Satuan"}))
-
-	for _, p := range procurements {
-		errs = append(errs, writer.Write([]string{
-			p.DrugName,
-			fmt.Sprintf("%.2f", p.Quantity),
-			p.Unit,
-		}))
-	}
-
-	writer.Flush()
-	errs = append(errs, writer.Error())
-
-	return &bytesBuffer, errors.Join(errs...)
 }
 
 func NewService(
