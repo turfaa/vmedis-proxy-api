@@ -38,7 +38,7 @@ type Unit struct {
 	ParentUnit string
 
 	// ConversionToParentUnit is how many of the parent unit make one of this
-	// unit, 1 for the smallest unit.
+	// unit, 0 for the smallest unit.
 	ConversionToParentUnit float64
 
 	// UnitOrder is the 0-based position of the unit, from the smallest.
@@ -185,15 +185,17 @@ func toUnits(rows []unitRow) []Unit {
 		}
 
 		unit := Unit{
-			Unit:                   name,
-			ConversionToParentUnit: float64(row.Conversion),
-			UnitOrder:              len(units),
-			PriceOne:               float64(row.PriceOne),
-			PriceTwo:               float64(row.PriceTwo),
-			PriceThree:             float64(row.PriceThree),
+			Unit:       name,
+			UnitOrder:  len(units),
+			PriceOne:   float64(row.PriceOne),
+			PriceTwo:   float64(row.PriceTwo),
+			PriceThree: float64(row.PriceThree),
 		}
+		// The smallest unit has no parent, so no conversion, like the v1
+		// scraper stored it; vmedis gives it a conversion of 1.
 		if len(units) > 0 {
 			unit.ParentUnit = units[len(units)-1].Unit
+			unit.ConversionToParentUnit = float64(row.Conversion)
 		}
 
 		units = append(units, unit)

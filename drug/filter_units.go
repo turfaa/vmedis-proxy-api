@@ -30,13 +30,17 @@ func filterUnits(units []Unit) []Unit {
 		conversion *= u.ConversionToParentUnit
 
 		minPrice, ok := minAllowedPriceByUnit[strings.ToLower(u.Unit)]
-		if ok && u.PriceOne < minPrice {
+		if ok && (minPrice == 0 || u.PriceOne < minPrice) {
 			continue
 		}
 
+		// The first unit shown has no parent, so no conversion either, even
+		// when it is made of smaller units that are not shown.
 		var pu string
 		if len(result) > 0 {
 			pu = result[len(result)-1].Unit
+		} else {
+			conversion = 0
 		}
 
 		result = append(result, Unit{

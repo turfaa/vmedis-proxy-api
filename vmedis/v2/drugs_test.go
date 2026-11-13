@@ -42,7 +42,7 @@ func TestGetDrug(t *testing.T) {
 		Manufacturer: "MUTIFA",
 		MinimumStock: Stock{Unit: "Strip", Quantity: 511},
 		Units: []Unit{
-			{Unit: "Strip", ConversionToParentUnit: 1, UnitOrder: 0, PriceOne: 2000, PriceTwo: 2000, PriceThree: 3500},
+			{Unit: "Strip", UnitOrder: 0, PriceOne: 2000, PriceTwo: 2000, PriceThree: 3500},
 			{Unit: "Box", ParentUnit: "Strip", ConversionToParentUnit: 10, UnitOrder: 1, PriceOne: 13000, PriceTwo: 12500, PriceThree: 14000},
 		},
 		Stocks: []Stock{
