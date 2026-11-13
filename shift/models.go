@@ -6,7 +6,7 @@ import (
 	"github.com/turfaa/vmedis-proxy-api/database/models"
 	"github.com/turfaa/vmedis-proxy-api/money"
 	"github.com/turfaa/vmedis-proxy-api/shift/templates"
-	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+	vmedisv2 "github.com/turfaa/vmedis-proxy-api/vmedis/v2"
 )
 
 type Shift struct {
@@ -69,13 +69,13 @@ func ShiftFromDB(dbShift models.Shift) Shift {
 	}
 }
 
-func ShiftFromVmedis(shift vmedisv1.Shift) Shift {
+func ShiftFromVmedis(shift vmedisv2.Shift) Shift {
 	return Shift{
 		VmedisID:            shift.ID,
 		Code:                shift.Code,
 		Cashier:             shift.Cashier,
-		StartedAt:           shift.StartedAt.Time,
-		EndedAt:             shift.EndedAt.Time,
+		StartedAt:           shift.StartedAt,
+		EndedAt:             shift.EndedAt,
 		InitialCash:         shift.InitialCash,
 		ExpectedFinalCash:   shift.ExpectedFinalCash,
 		ActualFinalCash:     shift.ActualFinalCash,

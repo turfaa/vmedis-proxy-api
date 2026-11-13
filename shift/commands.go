@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
-	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+	vmedisv2 "github.com/turfaa/vmedis-proxy-api/vmedis/v2"
 
 	"gorm.io/gorm"
 )
@@ -17,7 +17,7 @@ func DumpShiftsFromVmedisToDB(
 	to time.Time,
 	db *gorm.DB,
 	redisClient redis.UniversalClient,
-	vmedisClient *vmedisv1.Client,
+	vmedisClient *vmedisv2.Client,
 ) {
 	service := NewService(db, redisClient, vmedisClient)
 

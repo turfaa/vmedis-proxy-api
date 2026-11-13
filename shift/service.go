@@ -8,7 +8,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/slices2"
-	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+	vmedisv2 "github.com/turfaa/vmedis-proxy-api/vmedis/v2"
 
 	"gorm.io/gorm"
 )
@@ -16,10 +16,10 @@ import (
 type Service struct {
 	db           *Database
 	redisDB      *RedisDatabase
-	vmedisClient *vmedisv1.Client
+	vmedisClient *vmedisv2.Client
 }
 
-func NewService(db *gorm.DB, redisClient redis.UniversalClient, vmedisClient *vmedisv1.Client) *Service {
+func NewService(db *gorm.DB, redisClient redis.UniversalClient, vmedisClient *vmedisv2.Client) *Service {
 	return &Service{
 		db:           NewDatabase(db),
 		redisDB:      NewRedisDatabase(redisClient),

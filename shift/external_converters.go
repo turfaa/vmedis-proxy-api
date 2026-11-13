@@ -2,15 +2,15 @@ package shift
 
 import (
 	"github.com/turfaa/vmedis-proxy-api/database/models"
-	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+	vmedisv2 "github.com/turfaa/vmedis-proxy-api/vmedis/v2"
 )
 
-func vmedisShiftToDBShift(shift vmedisv1.Shift) models.Shift {
+func vmedisShiftToDBShift(shift vmedisv2.Shift) models.Shift {
 	return models.Shift{
 		VmedisID:            shift.ID,
 		Code:                shift.Code,
-		StartedAt:           shift.StartedAt.Time,
-		EndedAt:             shift.EndedAt.Time,
+		StartedAt:           shift.StartedAt,
+		EndedAt:             shift.EndedAt,
 		Cashier:             shift.Cashier,
 		InitialCash:         shift.InitialCash,
 		ExpectedFinalCash:   shift.ExpectedFinalCash,
