@@ -3,21 +3,24 @@ package stockopname
 import (
 	"context"
 	"log"
+	"time"
 
 	"gorm.io/gorm"
 
-	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+	vmedisv2 "github.com/turfaa/vmedis-proxy-api/vmedis/v2"
 )
 
-func DumpTodayStockOpnames(
+func DumpStockOpnamesBetweenDates(
 	ctx context.Context,
+	startDate time.Time,
+	endDate time.Time,
 	db *gorm.DB,
-	vmedisClient *vmedisv1.Client,
+	vmedisClient *vmedisv2.Client,
 	drugProducer UpdatedDrugProducer,
 ) {
 	service := NewService(db, vmedisClient, drugProducer)
 
-	if err := service.DumpTodayStockOpnamesFromVmedisToDB(ctx); err != nil {
-		log.Fatalf("DumpTodayStockOpnamesFromVmedisToDB: %s", err)
+	if err := service.DumpStockOpnamesBetweenDatesFromVmedisToDB(ctx, startDate, endDate); err != nil {
+		log.Fatalf("DumpStockOpnamesBetweenDatesFromVmedisToDB: %s", err)
 	}
 }

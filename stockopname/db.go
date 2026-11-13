@@ -3,7 +3,6 @@ package stockopname
 import (
 	"context"
 	"fmt"
-	"math/rand"
 	"time"
 
 	"gorm.io/datatypes"
@@ -11,7 +10,7 @@ import (
 	"gorm.io/gorm/clause"
 
 	"github.com/turfaa/vmedis-proxy-api/database/models"
-	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+	vmedisv2 "github.com/turfaa/vmedis-proxy-api/vmedis/v2"
 )
 
 type Database struct {
@@ -35,17 +34,20 @@ func (d *Database) GetStockOpnamesBetweenTime(ctx context.Context, from, to time
 	return sos, nil
 }
 
-func (d *Database) UpsertVmedisStockOpnames(ctx context.Context, stockOpnames []vmedisv1.StockOpname) error {
+// UpsertVmedisStockOpnames upserts the stock opnames, keyed by
+// VmedisStockOpnameIDs.
+func (d *Database) UpsertVmedisStockOpnames(ctx context.Context, stockOpnames []vmedisv2.StockOpname) error {
+	if len(stockOpnames) == 0 {
+		return nil
+	}
+
+	ids := VmedisStockOpnameIDs(stockOpnames)
+
 	soModels := make([]models.StockOpname, len(stockOpnames))
 	for i, so := range stockOpnames {
-		id := so.ID
-		if id == "" {
-			id = fmt.Sprintf("%s-%s-%s-%s-%d", so.DrugCode, so.BatchCode, so.Unit, so.Date.Time.Format("2006-01-02"), rand.Int())
-		}
-
 		soModels[i] = models.StockOpname{
-			VmedisID:            id,
-			Date:                datatypes.Date(so.Date.Time),
+			VmedisID:            ids[i],
+			Date:                datatypes.Date(so.Time),
 			DrugCode:            so.DrugCode,
 			DrugName:            so.DrugName,
 			BatchCode:           so.BatchCode,
@@ -75,15 +77,61 @@ func (d *Database) UpsertVmedisStockOpnames(ctx context.Context, stockOpnames []
 					"quantity_difference",
 					"hpp_difference",
 					"sale_price_difference",
+					"notes",
 				}),
 			},
 		).
-		Create(&soModels).
+		CreateInBatches(&soModels, upsertBatchSize).
 		Error; err != nil {
 		return fmt.Errorf("upsert vmedis stock opnames to db: %w", err)
 	}
 
 	return nil
+}
+
+// upsertBatchSize keeps each upsert statement well under Postgres's limit of
+// 65535 bind parameters.
+const upsertBatchSize = 500
+
+// VmedisStockOpnameIDs returns the vmedis_id of each of the stock opnames.
+//
+// The id is the stock opname code, which is what the v1 scraper stored, so the
+// stock opnames dumped before keep their rows. Vmedis gives several counted
+// batches the same code, so a code repeated within a day gets the
+// "-augmented-because-duplicate-<n>" suffix the v1 scraper gave it, numbered
+// in the order of stockOpnames.
+func VmedisStockOpnameIDs(stockOpnames []vmedisv2.StockOpname) []string {
+	ids := make([]string, len(stockOpnames))
+	visitedByDate := make(map[string]map[string]bool)
+
+	for i, so := range stockOpnames {
+		id := so.Code
+		if id == "" {
+			id = fmt.Sprintf("sopid-%d", so.ID)
+		}
+
+		date := so.Time.Format(time.DateOnly)
+		visited := visitedByDate[date]
+		if visited == nil {
+			visited = make(map[string]bool)
+			visitedByDate[date] = visited
+		}
+
+		if visited[id] {
+			for x := 2; ; x++ {
+				augmented := fmt.Sprintf("%s-augmented-because-duplicate-%d", id, x)
+				if !visited[augmented] {
+					id = augmented
+					break
+				}
+			}
+		}
+
+		visited[id] = true
+		ids[i] = id
+	}
+
+	return ids
 }
 
 func (d *Database) dbCtx(ctx context.Context) *gorm.DB {

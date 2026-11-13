@@ -11,12 +11,12 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/turfaa/vmedis-proxy-api/kafkapb"
-	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+	vmedisv2 "github.com/turfaa/vmedis-proxy-api/vmedis/v2"
 )
 
 type Service struct {
 	db           *Database
-	vmedis       *vmedisv1.Client
+	vmedis       *vmedisv2.Client
 	drugProducer UpdatedDrugProducer
 }
 
@@ -126,12 +126,16 @@ func addStockOpnameToSummary(summary Summary, stockOpname StockOpname) Summary {
 }
 
 func (s *Service) DumpTodayStockOpnamesFromVmedisToDB(ctx context.Context) error {
-	log.Println("Dumping stock opnames")
+	today := time.Now()
+	return s.DumpStockOpnamesBetweenDatesFromVmedisToDB(ctx, today, today)
+}
 
-	log.Println("Getting all today's stock opnames from Vmedis")
-	stockOpnames, err := s.vmedis.GetAllTodayStockOpnames(ctx)
+func (s *Service) DumpStockOpnamesBetweenDatesFromVmedisToDB(ctx context.Context, startDate, endDate time.Time) error {
+	log.Printf("Dumping stock opnames from %s to %s", startDate.Format(time.DateOnly), endDate.Format(time.DateOnly))
+
+	stockOpnames, err := s.vmedis.GetAllStockOpnamesBetweenDates(ctx, startDate, endDate)
 	if err != nil {
-		return fmt.Errorf("get all today's stock opnames from Vmedis: %w", err)
+		return fmt.Errorf("get all stock opnames from %s to %s from Vmedis: %w", startDate.Format(time.DateOnly), endDate.Format(time.DateOnly), err)
 	}
 
 	if len(stockOpnames) == 0 {
@@ -147,10 +151,11 @@ func (s *Service) DumpTodayStockOpnamesFromVmedisToDB(ctx context.Context) error
 	}
 	log.Println("Done upserting stock opnames to DB")
 
+	ids := VmedisStockOpnameIDs(stockOpnames)
 	kafkaMessages := make([]*kafkapb.UpdatedDrugByVmedisCode, 0, len(stockOpnames))
-	for _, so := range stockOpnames {
+	for i, so := range stockOpnames {
 		kafkaMessages = append(kafkaMessages, &kafkapb.UpdatedDrugByVmedisCode{
-			RequestKey: fmt.Sprintf("stock-opname:%s:%s", so.ID, so.DrugCode),
+			RequestKey: fmt.Sprintf("stock-opname:%s:%s", ids[i], so.DrugCode),
 			VmedisCode: so.DrugCode,
 		})
 	}
@@ -166,7 +171,7 @@ func (s *Service) DumpTodayStockOpnamesFromVmedisToDB(ctx context.Context) error
 	return nil
 }
 
-func NewService(db *gorm.DB, vmedisClient *vmedisv1.Client, drugProducer UpdatedDrugProducer) *Service {
+func NewService(db *gorm.DB, vmedisClient *vmedisv2.Client, drugProducer UpdatedDrugProducer) *Service {
 	return &Service{
 		db:           NewDatabase(db),
 		vmedis:       vmedisClient,

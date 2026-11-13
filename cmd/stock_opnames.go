@@ -15,15 +15,22 @@ var stockOpnamesCommands = []commandWithInit{
 	{
 		command: &cobra.Command{
 			Use:   "dump",
-			Short: "Dump today's stock opnames",
+			Short: "Dump stock opnames, today's by default",
 			Run: func(cmd *cobra.Command, args []string) {
-				stockopname.DumpTodayStockOpnames(
+				startTime, endTime := getDateRangeFromFlags(cmd)
+
+				stockopname.DumpStockOpnamesBetweenDates(
 					cmd.Context(),
+					startTime,
+					endTime,
 					getDatabase(),
-					getVmedisClient(),
+					getVmedisV2Client(),
 					getDrugProducer(),
 				)
 			},
+		},
+		init: func(cmd *cobra.Command) {
+			registerDateRangeFlags(cmd, 0)
 		},
 	},
 }

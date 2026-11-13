@@ -347,7 +347,7 @@ func getStockOpnameService() *stockopname.Service {
 
 	newService := stockopname.NewService(
 		getDatabase(),
-		getVmedisClient(),
+		getVmedisV2Client(),
 		getDrugProducer(),
 	)
 
