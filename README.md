@@ -62,6 +62,10 @@ go run . drugs run-updated-drugs-consumer
 
 # Send last month's report to IQVIA
 go run . reports send-to-iqvia
+
+# Generate the IQVIA report as an XLSX file without emailing it
+# (defaults to last month and Laporan-IQVIA-<month>.xlsx)
+go run . reports generate-iqvia --month 2026-10 -o laporan.xlsx
 ```
 
 ### Docker

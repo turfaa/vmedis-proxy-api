@@ -24,7 +24,7 @@ A proxy in front of [Vmedis](https://vmedis.com), a pharmacy management web app.
 
 ## Architecture
 
-Single binary with Cobra subcommands (`cmd/`): `serve` runs the HTTP API; `drugs`, `sales`, `procurements`, `stock-opnames`, `shifts`, `suppliers` have `dump` subcommands that fetch from Vmedis and write to the DB; `tokens refresh` keeps Vmedis session tokens alive; `drugs run-updated-drugs-consumer` runs the Kafka consumer; `reports send-to-iqvia` emails monthly reports.
+Single binary with Cobra subcommands (`cmd/`): `serve` runs the HTTP API; `drugs`, `sales`, `procurements`, `stock-opnames`, `shifts`, `suppliers` have `dump` subcommands that fetch from Vmedis and write to the DB; `tokens refresh` keeps Vmedis session tokens alive; `drugs run-updated-drugs-consumer` runs the Kafka consumer; `reports send-to-iqvia` emails monthly reports; `reports generate-iqvia` writes the same report to an XLSX file instead.
 
 - **Configuration** (`cmd/root.go`): Viper, layered flags → `VMEDIS_*` env vars → YAML file from `./config/config.yaml` or `~/.vmedis-proxy-api/config.yaml` (see `config/config.yaml.example`). Config keys use underscores (`postgres_dsn`), flags use dashes (`--postgres-dsn`).
 - **Dependency wiring** (`cmd/dependencies.go`): every shared dependency (DB, Redis, Vmedis client, services, handlers) is a lazily-initialized singleton behind an `atomic.Pointer` with a `getX()` accessor. New services/handlers get wired here.

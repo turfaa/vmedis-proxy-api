@@ -146,3 +146,6 @@ data
 x_test.go
 .DS_Store
 
+
+# Reports written by `reports generate-iqvia`
+Laporan-IQVIA-*.xlsx

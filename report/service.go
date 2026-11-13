@@ -36,28 +36,9 @@ func (s *Service) SendAggregatedProcurementsAndSalesXLSX(
 	subject string,
 	body []byte,
 ) error {
-	f := excelize.NewFile()
-	defer func() {
-		if err := f.Close(); err != nil {
-			log.Printf("failed to close file: %s", err)
-		}
-	}()
-
-	if err := s.GenerateAggregatedProcurementsXLSXSheet(ctx, f, fromTime, toTime); err != nil {
-		return fmt.Errorf("generate aggregated procurements sheet: %w", err)
-	}
-
-	if err := s.GenerateAggregatedSalesXLSXSheet(ctx, f, fromTime, toTime); err != nil {
-		return fmt.Errorf("generate aggregated sales sheet: %w", err)
-	}
-
-	if err := f.DeleteSheet("Sheet1"); err != nil {
-		return fmt.Errorf("delete default XLSX sheet: %w", err)
-	}
-
-	bytesBuffer, err := f.WriteToBuffer()
+	report, err := s.GenerateAggregatedProcurementsAndSalesXLSX(ctx, fromTime, toTime)
 	if err != nil {
-		return fmt.Errorf("write to buffer: %w", err)
+		return fmt.Errorf("generate aggregated procurements and sales XLSX: %w", err)
 	}
 
 	mail := email.Email{
@@ -68,7 +49,7 @@ func (s *Service) SendAggregatedProcurementsAndSalesXLSX(
 		Text:    body,
 	}
 
-	if _, err := mail.Attach(bytesBuffer, "Laporan.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"); err != nil {
+	if _, err := mail.Attach(bytes.NewReader(report), "Laporan.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"); err != nil {
 		return fmt.Errorf("attach procurements XLSX: %w", err)
 	}
 
@@ -77,6 +58,37 @@ func (s *Service) SendAggregatedProcurementsAndSalesXLSX(
 	}
 
 	return nil
+}
+
+// GenerateAggregatedProcurementsAndSalesXLSX builds the workbook sent to
+// IQVIA: a "Pembelian" sheet with the drugs procured and a "Penjualan" sheet
+// with the drugs sold between fromTime and toTime, and returns its bytes.
+func (s *Service) GenerateAggregatedProcurementsAndSalesXLSX(ctx context.Context, fromTime time.Time, toTime time.Time) ([]byte, error) {
+	f := excelize.NewFile()
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Printf("failed to close file: %s", err)
+		}
+	}()
+
+	if err := s.GenerateAggregatedProcurementsXLSXSheet(ctx, f, fromTime, toTime); err != nil {
+		return nil, fmt.Errorf("generate aggregated procurements sheet: %w", err)
+	}
+
+	if err := s.GenerateAggregatedSalesXLSXSheet(ctx, f, fromTime, toTime); err != nil {
+		return nil, fmt.Errorf("generate aggregated sales sheet: %w", err)
+	}
+
+	if err := f.DeleteSheet("Sheet1"); err != nil {
+		return nil, fmt.Errorf("delete default XLSX sheet: %w", err)
+	}
+
+	buf, err := f.WriteToBuffer()
+	if err != nil {
+		return nil, fmt.Errorf("write to buffer: %w", err)
+	}
+
+	return buf.Bytes(), nil
 }
 
 func (s *Service) GenerateAggregatedProcurementsXLSXSheet(ctx context.Context, file *excelize.File, from time.Time, to time.Time) error {

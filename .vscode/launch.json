@@ -56,6 +56,17 @@
             ],
         },
         {
+            "name": "Generate iqvia report",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "args": [
+                "reports",
+                "generate-iqvia"
+            ],
+        },
+        {
             "name": "Run procurements dumper",
             "type": "go",
             "request": "launch",

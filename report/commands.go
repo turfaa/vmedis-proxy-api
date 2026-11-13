@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
+	"time"
 
 	"github.com/turfaa/vmedis-proxy-api/pkg2/time2"
 )
@@ -42,4 +44,31 @@ Terima kasih.
 	}
 
 	log.Println("Last month report sent")
+}
+
+// GenerateIQVIAReport writes the report usually sent to IQVIA, covering the
+// whole month that starts at month, to outputPath without sending any email.
+func GenerateIQVIAReport(
+	ctx context.Context,
+	aggregatedProcurementsGetter AggregatedProcurementsGetter,
+	aggregatedSalesGetter AggregatedSalesGetter,
+	month time.Time,
+	outputPath string,
+) {
+	service := NewService(aggregatedProcurementsGetter, aggregatedSalesGetter, nil)
+
+	fromTime := time.Date(month.Year(), month.Month(), 1, 0, 0, 0, 0, time.Local)
+	toTime := fromTime.AddDate(0, 1, 0).Add(-time.Nanosecond)
+
+	log.Printf("Generating IQVIA report from %s to %s", fromTime.Format(time.DateOnly), toTime.Format(time.DateOnly))
+	report, err := service.GenerateAggregatedProcurementsAndSalesXLSX(ctx, fromTime, toTime)
+	if err != nil {
+		log.Fatalf("GenerateAggregatedProcurementsAndSalesXLSX: %s", err)
+	}
+
+	if err := os.WriteFile(outputPath, report, 0o644); err != nil {
+		log.Fatalf("write report to %s: %s", outputPath, err)
+	}
+
+	log.Printf("IQVIA report written to %s", outputPath)
 }
