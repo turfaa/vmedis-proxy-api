@@ -52,7 +52,7 @@ type RecommendationStatusResponse struct {
 }
 
 type Recommendation struct {
-	DrugStock    drug.WithStock `json:",inline"`
+	DrugStock    drug.WithStock `json:",embed"`
 	FromSupplier string         `json:"fromSupplier,omitempty"`
 	Procurement  drug.Stock     `json:"procurement"`
 	Alternatives []drug.Stock   `json:"alternatives,omitempty"`

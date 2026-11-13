@@ -53,7 +53,7 @@ func (h *ApiHandler) GetRecommendations(c *gin.Context) {
 		return
 	}
 
-	// We need to use the json/v2 renderer to make use of the new "inline" behaviour.
+	// We need to use the json/v2 renderer to make use of the "embed" behaviour.
 	c.Render(200, gin2.JSONV2Renderer{Data: recommendations})
 }
 
