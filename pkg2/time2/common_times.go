@@ -51,12 +51,25 @@ func EndOfDate(date string) (time.Time, error) {
 	return time.Date(t.Year(), t.Month(), t.Day(), 23, 59, 59, 999999999, time.Local), nil
 }
 
+// BeginningOfLastMonth returns the first instant of the month before the
+// current one, in the local timezone.
 func BeginningOfLastMonth() time.Time {
-	year, month, _ := time.Now().AddDate(0, -1, 0).Date()
-	return time.Date(year, month, 1, 0, 0, 0, 0, time.Local)
+	return beginningOfMonthBefore(time.Now())
 }
 
+// EndOfLastMonth returns the last instant of the month before the current
+// one, in the local timezone.
 func EndOfLastMonth() time.Time {
-	year, month, _ := time.Now().AddDate(0, -1, 0).Date()
-	return time.Date(year, month+1, 0, 23, 59, 59, 999999999, time.Local)
+	return endOfMonthBefore(time.Now())
+}
+
+// beginningOfMonthBefore steps back from the first day of now's month rather
+// than from now itself: going a month back from e.g. December 31 gives
+// "November 31", which time.Date normalizes to December 1.
+func beginningOfMonthBefore(now time.Time) time.Time {
+	return time.Date(now.Year(), now.Month()-1, 1, 0, 0, 0, 0, time.Local)
+}
+
+func endOfMonthBefore(now time.Time) time.Time {
+	return time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.Local).Add(-time.Nanosecond)
 }

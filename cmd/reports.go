@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/turfaa/vmedis-proxy-api/pkg2/time2"
 	"github.com/turfaa/vmedis-proxy-api/report"
 )
 
@@ -70,9 +71,7 @@ sending anything. Defaults to last month.`,
 			},
 		},
 		init: func(cmd *cobra.Command) {
-			now := time.Now()
-			lastMonth := time.Date(now.Year(), now.Month()-1, 1, 0, 0, 0, 0, time.Local)
-			cmd.Flags().String("month", lastMonth.Format("2006-01"), "Month to report, as YYYY-MM")
+			cmd.Flags().String("month", time2.BeginningOfLastMonth().Format("2006-01"), "Month to report, as YYYY-MM")
 			cmd.Flags().StringP("output", "o", "", "Output file (default \"Laporan-IQVIA-<month>.xlsx\")")
 		},
 	},
