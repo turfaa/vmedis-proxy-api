@@ -8,7 +8,9 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"time"
+	"unicode/utf8"
 
 	"github.com/jordan-wright/email"
 	"github.com/xuri/excelize/v2"
@@ -119,24 +121,142 @@ func (s *Service) GenerateAggregatedSalesXLSXSheet(ctx context.Context, file *ex
 	return nil
 }
 
+// GenerateDrugQuantitySheet writes the drugs to a new sheet: a header row with
+// "Nama Obat", "Kuantitas" and "Satuan", then one row per drug.
+// The layout is kept plain, the header in the first row and nothing else on
+// the sheet, so that it stays easy to read automatically; only the styling
+// makes it easier on the eyes.
 func GenerateDrugQuantitySheet(file *excelize.File, sheetName string, drugs []DrugQuantity) error {
 	if _, err := file.NewSheet(sheetName); err != nil {
 		return fmt.Errorf("create excel sheet: %w", err)
 	}
 
-	var errs []error
-
-	errs = append(errs, file.SetCellStr(sheetName, "A1", "Nama Obat"))
-	errs = append(errs, file.SetCellStr(sheetName, "B1", "Kuantitas"))
-	errs = append(errs, file.SetCellStr(sheetName, "C1", "Satuan"))
-
-	for i, d := range drugs {
-		errs = append(errs, file.SetCellStr(sheetName, fmt.Sprintf("A%d", i+2), d.DrugName))
-		errs = append(errs, file.SetCellFloat(sheetName, fmt.Sprintf("B%d", i+2), d.Quantity, 2, 64))
-		errs = append(errs, file.SetCellStr(sheetName, fmt.Sprintf("C%d", i+2), d.Unit))
+	styles, err := newDrugQuantityStyles(file)
+	if err != nil {
+		return fmt.Errorf("create styles: %w", err)
 	}
 
+	var errs []error
+
+	errs = append(errs, file.SetSheetRow(sheetName, "A1", &[]any{"Nama Obat", "Kuantitas", "Satuan"}))
+	errs = append(errs, file.SetCellStyle(sheetName, "A1", "C1", styles.header))
+	errs = append(errs, file.SetRowHeight(sheetName, 1, 24))
+
+	nameWidth := float64(len("Nama Obat"))
+	for i, d := range drugs {
+		row := i + 2
+		errs = append(errs, file.SetCellStr(sheetName, fmt.Sprintf("A%d", row), d.DrugName))
+		errs = append(errs, file.SetCellFloat(sheetName, fmt.Sprintf("B%d", row), d.Quantity, 2, 64))
+		errs = append(errs, file.SetCellStr(sheetName, fmt.Sprintf("C%d", row), d.Unit))
+		errs = append(errs, file.SetRowHeight(sheetName, row, 18))
+
+		band := styles.rows[i%2]
+		quantityStyle := band.decimal
+		if d.Quantity == math.Trunc(d.Quantity) {
+			quantityStyle = band.integer
+		}
+		errs = append(errs, file.SetCellStyle(sheetName, fmt.Sprintf("A%d", row), fmt.Sprintf("A%d", row), band.text))
+		errs = append(errs, file.SetCellStyle(sheetName, fmt.Sprintf("B%d", row), fmt.Sprintf("B%d", row), quantityStyle))
+		errs = append(errs, file.SetCellStyle(sheetName, fmt.Sprintf("C%d", row), fmt.Sprintf("C%d", row), band.text))
+
+		nameWidth = max(nameWidth, float64(utf8.RuneCountInString(d.DrugName)))
+	}
+
+	errs = append(errs, file.SetColWidth(sheetName, "A", "A", min(nameWidth+4, 70)))
+	errs = append(errs, file.SetColWidth(sheetName, "B", "B", 14))
+	errs = append(errs, file.SetColWidth(sheetName, "C", "C", 14))
+
+	// Keep the header visible while scrolling, and let the columns be
+	// filtered and sorted.
+	errs = append(errs, file.SetPanes(sheetName, &excelize.Panes{
+		Freeze:      true,
+		YSplit:      1,
+		TopLeftCell: "A2",
+		ActivePane:  "bottomLeft",
+	}))
+	errs = append(errs, file.AutoFilter(sheetName, fmt.Sprintf("A1:C%d", len(drugs)+1), nil))
+
 	return errors.Join(errs...)
+}
+
+type drugQuantityStyles struct {
+	header int
+	// rows are the styles of the even and odd data rows, which are shaded
+	// differently.
+	rows [2]drugQuantityRowStyles
+}
+
+type drugQuantityRowStyles struct {
+	text    int
+	integer int
+	decimal int
+}
+
+const (
+	reportHeaderColor = "1F4E78"
+	reportBandColor   = "EEF3F8"
+	reportBorderColor = "BFC9D4"
+	reportFont        = "Calibri"
+)
+
+func newDrugQuantityStyles(file *excelize.File) (drugQuantityStyles, error) {
+	border := []excelize.Border{
+		{Type: "left", Color: reportBorderColor, Style: 1},
+		{Type: "right", Color: reportBorderColor, Style: 1},
+		{Type: "top", Color: reportBorderColor, Style: 1},
+		{Type: "bottom", Color: reportBorderColor, Style: 1},
+	}
+
+	var (
+		styles drugQuantityStyles
+		errs   []error
+		err    error
+	)
+
+	styles.header, err = file.NewStyle(&excelize.Style{
+		Font:      &excelize.Font{Bold: true, Color: "FFFFFF", Family: reportFont, Size: 11},
+		Fill:      excelize.Fill{Type: "pattern", Pattern: 1, Color: []string{reportHeaderColor}},
+		Alignment: &excelize.Alignment{Horizontal: "center", Vertical: "center"},
+		Border:    border,
+	})
+	errs = append(errs, err)
+
+	font := &excelize.Font{Family: reportFont, Size: 11}
+	integerFormat, decimalFormat := "#,##0", "#,##0.00"
+	for i := range styles.rows {
+		var fill excelize.Fill
+		if i == 1 {
+			fill = excelize.Fill{Type: "pattern", Pattern: 1, Color: []string{reportBandColor}}
+		}
+
+		styles.rows[i].text, err = file.NewStyle(&excelize.Style{
+			Font:      font,
+			Fill:      fill,
+			Border:    border,
+			Alignment: &excelize.Alignment{Horizontal: "left", Vertical: "center", Indent: 1},
+		})
+		errs = append(errs, err)
+
+		styles.rows[i].integer, err = file.NewStyle(&excelize.Style{
+			Font:         font,
+			Fill:         fill,
+			Border:       border,
+			Alignment:    &excelize.Alignment{Horizontal: "right", Vertical: "center", Indent: 1},
+			CustomNumFmt: &integerFormat,
+		})
+		errs = append(errs, err)
+
+		styles.rows[i].decimal, err = file.NewStyle(&excelize.Style{
+			Font:         font,
+			Fill:         fill,
+			Border:       border,
+			Alignment:    &excelize.Alignment{Horizontal: "right", Vertical: "center", Indent: 1},
+			CustomNumFmt: &decimalFormat,
+		})
+		errs = append(errs, err)
+	}
+
+	return styles, errors.Join(errs...)
 }
 
 func (s *Service) SendAggregatedProcurementsAndSalesCSV(
