@@ -41,22 +41,18 @@ func (s *Service) GetLastDrugSales(ctx context.Context, drugCode string, limit i
 }
 
 func (s *Service) GetSoldDrugsBetweenTime(ctx context.Context, from time.Time, to time.Time) ([]SoldDrug, error) {
-	sales, err := s.db.GetSalesBetweenTime(ctx, from, to)
+	stats, err := s.db.GetDrugSalesStatsBetweenTime(ctx, from, to)
 	if err != nil {
-		return nil, fmt.Errorf("get sales between %s - %s: %w", from, to, err)
+		return nil, fmt.Errorf("get drug sales stats between %s - %s: %w", from, to, err)
 	}
 
-	var (
-		drugCodes []string
-		soldDrugs = make(map[string]SoldDrug)
-	)
-	for _, sale := range sales {
-		for _, saleUnit := range sale.SaleUnits {
-			drugCodes = append(drugCodes, saleUnit.DrugCode)
-			soldDrugs[saleUnit.DrugCode] = SoldDrug{
-				Occurrences: soldDrugs[saleUnit.DrugCode].Occurrences + 1,
-				TotalAmount: soldDrugs[saleUnit.DrugCode].TotalAmount + saleUnit.Total,
-			}
+	drugCodes := make([]string, 0, len(stats))
+	soldDrugs := make(map[string]SoldDrug, len(stats))
+	for _, st := range stats {
+		drugCodes = append(drugCodes, st.DrugCode)
+		soldDrugs[st.DrugCode] = SoldDrug{
+			Occurrences: st.Occurrences,
+			TotalAmount: st.TotalAmount,
 		}
 	}
 

@@ -36,6 +36,33 @@ func (d *Database) GetSalesBetweenTime(ctx context.Context, from time.Time, to t
 	return sales, nil
 }
 
+// drugSalesStats is how many times a drug was sold and for how much in total.
+type drugSalesStats struct {
+	DrugCode    string
+	Occurrences int
+	TotalAmount float64
+}
+
+// GetDrugSalesStatsBetweenTime returns, per drug, how many sale units of the
+// drug the sales between the given times have and their total.
+// It aggregates in the database so that long time ranges, with more sales and
+// sale units than a query can have parameters, still work.
+func (d *Database) GetDrugSalesStatsBetweenTime(ctx context.Context, from time.Time, to time.Time) ([]drugSalesStats, error) {
+	var stats []drugSalesStats
+	if err := d.dbCtx(ctx).
+		Model(&models.SaleUnit{}).
+		Select("sale_units.drug_code AS drug_code, COUNT(*) AS occurrences, SUM(sale_units.total) AS total_amount").
+		Joins("JOIN sales ON sales.invoice_number = sale_units.invoice_number AND sales.deleted_at IS NULL").
+		Where("sales.sold_at BETWEEN ? AND ?", from, to).
+		Group("sale_units.drug_code").
+		Scan(&stats).
+		Error; err != nil {
+		return nil, fmt.Errorf("get drug sales stats from database: %w", err)
+	}
+
+	return stats, nil
+}
+
 func (d *Database) GetAggregatedSalesBetweenTime(ctx context.Context, from time.Time, to time.Time) ([]AggregatedSale, error) {
 	var sales []AggregatedSale
 	if err := d.dbCtx(ctx).
