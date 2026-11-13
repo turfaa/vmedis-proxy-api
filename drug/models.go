@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/turfaa/vmedis-proxy-api/database/models"
-	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
 	vmedisv2 "github.com/turfaa/vmedis-proxy-api/vmedis/v2"
 )
 
@@ -18,13 +17,6 @@ type DrugsResponse struct {
 type WithStock struct {
 	Drug  Drug  `json:"drug"`
 	Stock Stock `json:"stock"`
-}
-
-func FromVmedisDrugStock(ds vmedisv1.DrugStock) WithStock {
-	return WithStock{
-		Drug:  FromVmedisDrug(ds.Drug),
-		Stock: FromVmedisStock(ds.Stock),
-	}
 }
 
 // FromVmedisV2OutOfStockDrug creates WithStock from a vmedis v2 out-of-stock drug.
@@ -51,29 +43,6 @@ type Drug struct {
 	MinimumStock Stock   `json:"minimumStock"`
 	Units        []Unit  `json:"units"`
 	Stocks       []Stock `json:"stocks"`
-}
-
-// FromVmedisDrug creates Drug from its vmedis schema.
-func FromVmedisDrug(cd vmedisv1.Drug) Drug {
-	units := make([]Unit, 0, len(cd.Units))
-	for _, cu := range cd.Units {
-		units = append(units, FromVmedisUnit(cu))
-	}
-
-	stocks := make([]Stock, 0, len(cd.Stocks))
-	for _, cs := range cd.Stocks {
-		stocks = append(stocks, FromVmedisStock(cs))
-	}
-
-	return Drug{
-		VmedisCode:   cd.VmedisCode,
-		Name:         cd.Name,
-		Manufacturer: cd.Manufacturer,
-		Supplier:     cd.Supplier,
-		MinimumStock: FromVmedisStock(cd.MinimumStock),
-		Units:        units,
-		Stocks:       stocks,
-	}
 }
 
 // FromDBDrug creates Drug from models.Drug.
@@ -148,14 +117,6 @@ func (s *Stock) UnmarshalText(text []byte) error {
 	return nil
 }
 
-// FromVmedisStock creates Stock from its vmedis schema.
-func FromVmedisStock(cs vmedisv1.Stock) Stock {
-	return Stock{
-		Unit:     cs.Unit,
-		Quantity: cs.Quantity,
-	}
-}
-
 // FromDBDrugStock creates Stock from models.DrugStock.
 func FromDBDrugStock(stock models.DrugStock) Stock {
 	return FromDBStock(stock.Stock)
@@ -186,19 +147,6 @@ type Unit struct {
 	PriceOne   float64 `json:"priceOne,omitempty"`
 	PriceTwo   float64 `json:"priceTwo,omitempty"`
 	PriceThree float64 `json:"priceThree,omitempty"`
-}
-
-// FromVmedisUnit creates Unit from its vmedis schema.
-func FromVmedisUnit(cu vmedisv1.Unit) Unit {
-	return Unit{
-		Unit:                   cu.Unit,
-		ParentUnit:             cu.ParentUnit,
-		ConversionToParentUnit: cu.ConversionToParentUnit,
-		UnitOrder:              cu.UnitOrder,
-		PriceOne:               cu.PriceOne,
-		PriceTwo:               cu.PriceTwo,
-		PriceThree:             cu.PriceThree,
-	}
 }
 
 // FromDBDrugUnit creates Unit from models.DrugUnit.

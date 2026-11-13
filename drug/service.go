@@ -15,7 +15,7 @@ import (
 	"github.com/turfaa/vmedis-proxy-api/database/models"
 	"github.com/turfaa/vmedis-proxy-api/kafkapb"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/slices2"
-	vmedisv1 "github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+	vmedisv2 "github.com/turfaa/vmedis-proxy-api/vmedis/v2"
 )
 
 const (
@@ -36,7 +36,7 @@ var (
 type Service struct {
 	cache    *Cache
 	db       *Database
-	vmedis   *vmedisv1.Client
+	vmedis   *vmedisv2.Client
 	producer *Producer
 }
 
@@ -287,7 +287,7 @@ func (s *Service) DumpDrugDetailsFromVmedisToDBByVmedisID(ctx context.Context, v
 }
 
 // NewService creates a new drug service.
-func NewService(redisClient redis.UniversalClient, db *gorm.DB, vmedisClient *vmedisv1.Client, kafkaWriter *kafka.Writer) *Service {
+func NewService(redisClient redis.UniversalClient, db *gorm.DB, vmedisClient *vmedisv2.Client, kafkaWriter *kafka.Writer) *Service {
 	return &Service{
 		cache:    NewCache(redisClient),
 		db:       NewDatabase(db),

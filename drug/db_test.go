@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/turfaa/vmedis-proxy-api/database"
-	vmedisv1 "github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+	vmedisv2 "github.com/turfaa/vmedis-proxy-api/vmedis/v2"
 )
 
 // TestUpsertVmedisDrugUnitsDeletesUnitsNoLongerInVmedis checks that a unit
@@ -22,7 +22,7 @@ func TestUpsertVmedisDrugUnitsDeletesUnitsNoLongerInVmedis(t *testing.T) {
 	}
 	d := NewDatabase(db)
 
-	upsert := func(code string, units []vmedisv1.Unit) {
+	upsert := func(code string, units []vmedisv2.Unit) {
 		t.Helper()
 		if err := d.UpsertVmedisDrugUnits(ctx, code, units); err != nil {
 			t.Fatalf("upsert units of %s: %v", code, err)
@@ -30,15 +30,15 @@ func TestUpsertVmedisDrugUnitsDeletesUnitsNoLongerInVmedis(t *testing.T) {
 	}
 
 	// The units before the rename, and another drug's units.
-	upsert("ANTASIDA", []vmedisv1.Unit{
+	upsert("ANTASIDA", []vmedisv2.Unit{
 		{Unit: "BLISTER", UnitOrder: 1, PriceOne: 2000},
 	})
-	upsert("OTHER", []vmedisv1.Unit{
+	upsert("OTHER", []vmedisv2.Unit{
 		{Unit: "Tablet", UnitOrder: 1},
 	})
 
 	// vmedis now has "Strip" and "Box" instead of "BLISTER".
-	upsert("ANTASIDA", []vmedisv1.Unit{
+	upsert("ANTASIDA", []vmedisv2.Unit{
 		{Unit: "Strip", UnitOrder: 1, PriceOne: 2000},
 		{Unit: "Box", ParentUnit: "Strip", ConversionToParentUnit: 10, UnitOrder: 2, PriceOne: 13000},
 	})

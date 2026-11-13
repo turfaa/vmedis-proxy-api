@@ -247,7 +247,7 @@ func getDrugService() *drug.Service {
 	newService := drug.NewService(
 		getRedisClient(),
 		getDatabase(),
-		getVmedisClient(),
+		getVmedisV2Client(),
 		getKafkaWriter(),
 	)
 

@@ -7,7 +7,7 @@ import (
 	"github.com/segmentio/kafka-go"
 	"gorm.io/gorm"
 
-	vmedisv1 "github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+	vmedisv2 "github.com/turfaa/vmedis-proxy-api/vmedis/v2"
 )
 
 type ApiHandlerConfig struct {
@@ -18,7 +18,7 @@ type ApiHandlerConfig struct {
 type ConsumerConfig struct {
 	DB           *gorm.DB
 	RedisClient  redis.UniversalClient
-	VmedisClient *vmedisv1.Client
+	VmedisClient *vmedisv2.Client
 	KafkaWriter  *kafka.Writer
 
 	Brokers []string

@@ -11,7 +11,7 @@ import (
 
 	"github.com/turfaa/vmedis-proxy-api/database/models"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/slices2"
-	"github.com/turfaa/vmedis-proxy-api/vmedis/v1"
+	vmedisv2 "github.com/turfaa/vmedis-proxy-api/vmedis/v2"
 )
 
 // Database provides drug-related database operations.
@@ -169,17 +169,17 @@ func (d *Database) GetDrugUnitsByDrugVmedisCodes(ctx context.Context, drugVmedis
 }
 
 // UpsertVmedisDrug upserts the given drug.
-func (d *Database) UpsertVmedisDrug(ctx context.Context, drug vmedisv1.Drug, keyColumn string, updateColumns []string) error {
-	return d.UpsertVmedisDrugs(ctx, []vmedisv1.Drug{drug}, keyColumn, updateColumns)
+func (d *Database) UpsertVmedisDrug(ctx context.Context, drug vmedisv2.Drug, keyColumn string, updateColumns []string) error {
+	return d.UpsertVmedisDrugs(ctx, []vmedisv2.Drug{drug}, keyColumn, updateColumns)
 }
 
 // UpsertVmedisDrugs upserts the given drugs.
-func (d *Database) UpsertVmedisDrugs(ctx context.Context, drugs []vmedisv1.Drug, keyColumn string, updateColumns []string) error {
+func (d *Database) UpsertVmedisDrugs(ctx context.Context, drugs []vmedisv2.Drug, keyColumn string, updateColumns []string) error {
 	if len(drugs) == 0 {
 		return nil
 	}
 
-	dbDrugs := slices2.Map(drugs, func(drug vmedisv1.Drug) models.Drug {
+	dbDrugs := slices2.Map(drugs, func(drug vmedisv2.Drug) models.Drug {
 		return models.Drug{
 			VmedisID:     drug.VmedisID,
 			VmedisCode:   drug.VmedisCode,
@@ -217,12 +217,12 @@ func (d *Database) UpsertVmedisDrugs(ctx context.Context, drugs []vmedisv1.Drug,
 // smallest unit and breaks the drug's unit chain.
 // Empty units are ignored, so a drug whose units could not be read keeps its
 // units.
-func (d *Database) UpsertVmedisDrugUnits(ctx context.Context, drugVmedisCode string, units []vmedisv1.Unit) error {
+func (d *Database) UpsertVmedisDrugUnits(ctx context.Context, drugVmedisCode string, units []vmedisv2.Unit) error {
 	if len(units) == 0 {
 		return nil
 	}
 
-	dbUnits := slices2.Map(units, func(unit vmedisv1.Unit) models.DrugUnit {
+	dbUnits := slices2.Map(units, func(unit vmedisv2.Unit) models.DrugUnit {
 		return models.DrugUnit{
 			DrugVmedisCode:         drugVmedisCode,
 			Unit:                   unit.Unit,
@@ -272,8 +272,8 @@ func (d *Database) UpsertVmedisDrugUnits(ctx context.Context, drugVmedisCode str
 }
 
 // UpsertVmedisDrugStocks upserts the given drug stocks.
-func (d *Database) UpsertVmedisDrugStocks(ctx context.Context, drugVmedisCode string, stocks []vmedisv1.Stock) error {
-	dbStocks := slices2.Map(stocks, func(stock vmedisv1.Stock) models.DrugStock {
+func (d *Database) UpsertVmedisDrugStocks(ctx context.Context, drugVmedisCode string, stocks []vmedisv2.Stock) error {
+	dbStocks := slices2.Map(stocks, func(stock vmedisv2.Stock) models.DrugStock {
 		return models.DrugStock{
 			DrugVmedisCode: drugVmedisCode,
 			Stock: models.Stock{

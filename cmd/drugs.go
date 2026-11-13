@@ -22,7 +22,7 @@ var drugsCommands = []commandWithInit{
 					cmd.Context(),
 					getRedisClient(),
 					getDatabase(),
-					getVmedisClient(),
+					getVmedisV2Client(),
 					getKafkaWriter(),
 				)
 			},
@@ -39,7 +39,7 @@ var drugsCommands = []commandWithInit{
 					drug.ConsumerConfig{
 						DB:           getDatabase(),
 						RedisClient:  getRedisClient(),
-						VmedisClient: getVmedisClient(),
+						VmedisClient: getVmedisV2Client(),
 						KafkaWriter:  getKafkaWriter(),
 						Brokers:      viper.GetStringSlice("kafka_brokers"),
 						Concurrency:  viper.GetInt("consumer_concurrency"),
