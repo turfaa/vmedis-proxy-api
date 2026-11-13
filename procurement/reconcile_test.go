@@ -21,7 +21,7 @@ func TestSoftDeleteProcurementsMissingFromVmedis(t *testing.T) {
 		t.Fatalf("open database: %v", err)
 	}
 
-	service := NewService(db, nil, nil, nil, nil, nil)
+	service := NewService(db, nil, nil, nil, nil)
 
 	date := time.Date(2026, 8, 7, 0, 0, 0, 0, time.Local)
 	otherDate := date.AddDate(0, 0, -1)

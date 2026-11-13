@@ -122,7 +122,7 @@ func setupRouter(t *testing.T, procurements []models.Procurement) *gin.Engine {
 		}
 	}
 
-	handler := procurement.NewApiHandler(procurement.NewService(db, nil, nil, nil, nil, nil))
+	handler := procurement.NewApiHandler(procurement.NewService(db, nil, nil, nil, nil))
 
 	gin.SetMode(gin.TestMode)
 	router := gin.New()

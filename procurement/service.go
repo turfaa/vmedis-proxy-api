@@ -14,7 +14,6 @@ import (
 
 	"github.com/turfaa/vmedis-proxy-api/drug"
 	"github.com/turfaa/vmedis-proxy-api/kafkapb"
-	vmedisv1 "github.com/turfaa/vmedis-proxy-api/vmedis/v1"
 	vmedisv2 "github.com/turfaa/vmedis-proxy-api/vmedis/v2"
 )
 
@@ -25,7 +24,6 @@ const (
 type Service struct {
 	db              *Database
 	redisDB         *RedisDatabase
-	vmedis          *vmedisv1.Client
 	vmedisV2        *vmedisv2.Client
 	drugProducer    UpdatedDrugProducer
 	drugUnitsGetter DrugUnitsGetter
@@ -361,7 +359,6 @@ func (s *Service) GetLastDrugProcurements(ctx context.Context, drugCode string, 
 func NewService(
 	db *gorm.DB,
 	redisClient redis.UniversalClient,
-	vmedisClient *vmedisv1.Client,
 	vmedisV2Client *vmedisv2.Client,
 	drugProducer UpdatedDrugProducer,
 	drugUnitsGetter DrugUnitsGetter,
@@ -369,7 +366,6 @@ func NewService(
 	return &Service{
 		db:              NewDatabase(db),
 		redisDB:         NewRedisDatabase(redisClient),
-		vmedis:          vmedisClient,
 		vmedisV2:        vmedisV2Client,
 		drugProducer:    drugProducer,
 		drugUnitsGetter: drugUnitsGetter,

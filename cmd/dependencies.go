@@ -280,7 +280,6 @@ func getProcurementService() *procurement.Service {
 	newService := procurement.NewService(
 		getDatabase(),
 		getRedisClient(),
-		getVmedisClient(),
 		getVmedisV2Client(),
 		getDrugProducer(),
 		getDrugDatabase(),
