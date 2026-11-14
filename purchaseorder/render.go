@@ -36,9 +36,14 @@ const (
 
 	tableFontSize   = 11.0
 	tableLineHeight = 5.0
-	tablePadding    = 1.5
+	tablePadding    = 1.0
 	tableNoWidth    = 12.0
 	tableQtyWidth   = 38.0
+
+	// signatureGap is the space above the place and date, and signatureSpace
+	// the space left for the pharmacist to sign in.
+	signatureGap   = 8.0
+	signatureSpace = 18.0
 )
 
 // letter is a purchase order PDF being written.
@@ -159,7 +164,7 @@ func (l *letter) writeLetterhead() {
 func (l *letter) writeTitle(title string) {
 	pdf := l.pdf
 
-	pdf.Ln(6)
+	pdf.Ln(4)
 	pdf.SetFont(fontFamily, "BU", 14)
 	pdf.CellFormat(0, 7, title, "", 1, "C", false, 0, "")
 	pdf.SetFont(fontFamily, "", bodyFontSize)
@@ -171,7 +176,7 @@ func (l *letter) writeRecipient() {
 	pdf := l.pdf
 	supplier := l.doc.Supplier
 
-	pdf.Ln(8)
+	pdf.Ln(5)
 	pdf.SetFont(fontFamily, "", bodyFontSize)
 	pdf.CellFormat(0, bodyLineHeight, "Kepada Yth.", "", 1, "L", false, 0, "")
 	pdf.SetFont(fontFamily, "B", bodyFontSize)
@@ -275,10 +280,10 @@ func (l *letter) writeTableRow(row itemRow, nameWidth float64) {
 // signatureHeight is the height of the block written by writeSignature.
 func signatureHeight(signed bool) float64 {
 	if signed {
-		return 10 + 2*bodyLineHeight + 22 + 2*bodyLineHeight
+		return signatureGap + 2*bodyLineHeight + signatureSpace + 2*bodyLineHeight
 	}
 
-	return 10 + 3*bodyLineHeight
+	return signatureGap + 3*bodyLineHeight
 }
 
 // writeSignature writes the right-aligned place and date, then either the
@@ -294,12 +299,12 @@ func (l *letter) writeSignature() {
 		pdf.CellFormat(width, bodyLineHeight, text, "", 1, "L", false, 0, "")
 	}
 
-	pdf.Ln(10)
+	pdf.Ln(signatureGap)
 	line("", fmt.Sprintf("%s, %s", l.doc.Letterhead.City, formatLetterDate(l.doc.CreatedAt)))
 
 	if signer := l.doc.Signer; signer != nil {
 		line("", "Apoteker Penanggung Jawab,")
-		pdf.Ln(22)
+		pdf.Ln(signatureSpace)
 		line("BU", "apt. "+signer.Name)
 		line("", "SIPA: "+signer.LicenseNumber)
 		return

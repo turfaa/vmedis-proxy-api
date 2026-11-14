@@ -11,7 +11,7 @@ func renderReguler(w io.Writer, doc Document) error {
 	l.writeTitle("SURAT PESANAN")
 	l.writeRecipient()
 
-	l.pdf.Ln(4)
+	l.pdf.Ln(3)
 	l.writeParagraph("Dengan hormat,\nbersama ini kami mengajukan pesanan obat sebagai berikut:")
 
 	const closingHeight = 4 + bodyLineHeight
