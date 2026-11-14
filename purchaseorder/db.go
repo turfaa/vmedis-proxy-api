@@ -71,6 +71,20 @@ func (d *Database) Create(ctx context.Context, po *models.PurchaseOrder, numberF
 	})
 }
 
+// GetByIdempotencyKey returns the purchase order created with the key,
+// without its items.
+func (d *Database) GetByIdempotencyKey(ctx context.Context, key string) (models.PurchaseOrder, error) {
+	var po models.PurchaseOrder
+	if err := d.dbCtx(ctx).Where("idempotency_key = ?", key).Take(&po).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return models.PurchaseOrder{}, fmt.Errorf("purchase order with idempotency key %q: %w", key, ErrNotFound)
+		}
+		return models.PurchaseOrder{}, fmt.Errorf("get purchase order by idempotency key: %w", err)
+	}
+
+	return po, nil
+}
+
 // Get returns the purchase order with its items, ordered by position.
 func (d *Database) Get(ctx context.Context, id uint) (models.PurchaseOrder, error) {
 	var po models.PurchaseOrder

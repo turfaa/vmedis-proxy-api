@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
@@ -18,6 +19,16 @@ import (
 const (
 	DefaultPageSize = 20
 	MaxPageSize     = 100
+	// maxPage keeps the list offset far from overflowing.
+	maxPage = 100_000
+
+	// Limits on create requests. They keep every item row well under a page
+	// tall, so the PDF table never has to split a row.
+	MaxItems              = 500
+	MaxDrugNameLength     = 200
+	MaxQuantityLength     = 50
+	MaxEmployeeNameLength = 100
+	MaxIdempotencyKeyLen  = 100
 )
 
 var (
@@ -67,6 +78,11 @@ func (s *Service) GetOptions() (OptionsResponse, error) {
 
 // Create numbers and stores a purchase order. createdByEmail is the login
 // account making the request.
+//
+// When the request has an idempotency key that was used before, it returns
+// the purchase order made with that key, with Replayed set, instead of
+// creating another one. So a retry after a lost response never uses up a
+// second number.
 func (s *Service) Create(ctx context.Context, req CreateRequest, createdByEmail string) (CreateResponse, error) {
 	if !s.config.Enabled() {
 		return CreateResponse{}, ErrNotConfigured
@@ -78,7 +94,14 @@ func (s *Service) Create(ctx context.Context, req CreateRequest, createdByEmail 
 
 	template, ok := templateByID(req.TemplateID)
 	if !ok {
-		return CreateResponse{}, fmt.Errorf("template %q: %w", req.TemplateID, ErrNotFound)
+		return CreateResponse{}, &ValidationError{Message: fmt.Sprintf("template %q tidak dikenal", req.TemplateID)}
+	}
+
+	key := strings.TrimSpace(req.IdempotencyKey)
+	if key != "" {
+		if res, ok, err := s.replay(ctx, key); err != nil || ok {
+			return res, err
+		}
 	}
 
 	supplier, err := s.db.GetSupplier(ctx, req.SupplierVmedisID)
@@ -146,40 +169,91 @@ func (s *Service) Create(ctx context.Context, req CreateRequest, createdByEmail 
 
 		Items: items,
 	}
+	if key != "" {
+		po.IdempotencyKey = &key
+	}
 
 	if err := s.db.Create(ctx, &po, func(sequence int) string {
 		return formatNumber(template.NumberCode, po.Year, po.Month, sequence)
 	}); err != nil {
+		// Two requests with the same key can race past the check above. The
+		// loser's insert fails on the key's unique index and its transaction,
+		// sequence included, rolls back; it then returns the winner's.
+		if key != "" {
+			if res, ok, replayErr := s.replay(ctx, key); replayErr == nil && ok {
+				return res, nil
+			}
+		}
 		return CreateResponse{}, err
 	}
 
 	return CreateResponse{ID: po.ID, Number: po.Number, CreatedAt: po.CreatedAt}, nil
 }
 
+// replay returns the purchase order created with the idempotency key, if
+// any.
+func (s *Service) replay(ctx context.Context, key string) (CreateResponse, bool, error) {
+	po, err := s.db.GetByIdempotencyKey(ctx, key)
+	if errors.Is(err, ErrNotFound) {
+		return CreateResponse{}, false, nil
+	}
+	if err != nil {
+		return CreateResponse{}, false, err
+	}
+
+	return CreateResponse{ID: po.ID, Number: po.Number, CreatedAt: po.CreatedAt, Replayed: true}, true, nil
+}
+
 func validateCreateRequest(req CreateRequest) error {
+	if utf8.RuneCountInString(req.IdempotencyKey) > MaxIdempotencyKeyLen {
+		return &ValidationError{Message: fmt.Sprintf("idempotency key maksimal %d karakter", MaxIdempotencyKeyLen)}
+	}
+
 	if req.SupplierVmedisID <= 0 {
 		return &ValidationError{Message: "supplier wajib dipilih"}
 	}
 
-	if req.CreatedByEmployee.ID <= 0 || strings.TrimSpace(req.CreatedByEmployee.Name) == "" {
+	creatorName := strings.TrimSpace(req.CreatedByEmployee.Name)
+	if req.CreatedByEmployee.ID <= 0 || creatorName == "" {
 		return &ValidationError{Message: "pembuat surat pesanan wajib dipilih"}
+	}
+	if utf8.RuneCountInString(creatorName) > MaxEmployeeNameLength {
+		return &ValidationError{Message: fmt.Sprintf("nama pembuat maksimal %d karakter", MaxEmployeeNameLength)}
 	}
 
 	if len(req.Items) == 0 {
 		return &ValidationError{Message: "surat pesanan harus berisi minimal satu obat"}
 	}
+	if len(req.Items) > MaxItems {
+		return &ValidationError{Message: fmt.Sprintf("surat pesanan maksimal berisi %d obat", MaxItems)}
+	}
 
-	var invalid []int
+	var empty, tooLong []int
 	for i, item := range req.Items {
-		if strings.TrimSpace(item.DrugName) == "" || strings.TrimSpace(item.Quantity) == "" {
-			invalid = append(invalid, i)
+		name, qty := strings.TrimSpace(item.DrugName), strings.TrimSpace(item.Quantity)
+
+		switch {
+		case name == "" || qty == "":
+			empty = append(empty, i)
+		case utf8.RuneCountInString(name) > MaxDrugNameLength || utf8.RuneCountInString(qty) > MaxQuantityLength:
+			tooLong = append(tooLong, i)
 		}
 	}
 
-	if len(invalid) > 0 {
+	if len(empty) > 0 {
 		return &ValidationError{
-			Message:      fmt.Sprintf("%d obat belum diisi nama atau jumlahnya", len(invalid)),
-			InvalidItems: invalid,
+			Message:      fmt.Sprintf("%d obat belum diisi nama atau jumlahnya", len(empty)),
+			InvalidItems: empty,
+		}
+	}
+
+	if len(tooLong) > 0 {
+		return &ValidationError{
+			Message: fmt.Sprintf(
+				"%d obat terlalu panjang: nama maksimal %d karakter, jumlah maksimal %d karakter",
+				len(tooLong), MaxDrugNameLength, MaxQuantityLength,
+			),
+			InvalidItems: tooLong,
 		}
 	}
 
@@ -198,6 +272,7 @@ func (s *Service) List(ctx context.Context, filter ListFilter) (ListResponse, er
 	}
 
 	filter.PageSize = min(filter.PageSize, MaxPageSize)
+	filter.Page = min(filter.Page, maxPage)
 
 	pos, itemCounts, total, err := s.db.List(ctx, filter)
 	if err != nil {

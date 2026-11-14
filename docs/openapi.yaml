@@ -398,7 +398,12 @@ paths:
         creation date in Asia/Jakarta) and stores the purchase order with
         snapshots of the supplier, the signer and the letterhead. Numbers are
         unique even under concurrent requests. The login email (`X-Email`) is
-        stored for audit. Download the PDF with
+        stored for audit.
+
+        Send an `idempotencyKey` (e.g. a UUID made once per dialog opening):
+        a retry with the same key responds with `200` and the purchase order
+        the first request created, with `replayed: true`, instead of creating
+        another one and using up another number. Download the PDF with
         `GET /api/v1/procurements/purchase-orders/{id}/pdf`. Responds with
         `503` until the pharmacy details are configured. Requires the `admin`
         or `staff` role.
@@ -411,6 +416,12 @@ paths:
             schema:
               $ref: '#/components/schemas/CreatePurchaseOrderRequest'
       responses:
+        '200':
+          description: The purchase order an earlier request with the same `idempotencyKey` created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatePurchaseOrderResponse'
         '201':
           description: The created purchase order.
           content:
@@ -418,7 +429,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/CreatePurchaseOrderResponse'
         '400':
-          description: Invalid request. `invalidItems` lists the indexes of the items without a drug name or quantity.
+          description: |
+            Invalid request, including an unknown template. `invalidItems`
+            lists the indexes of the items without a drug name or quantity, or
+            over the length limits.
           content:
             application/json:
               schema:
@@ -426,7 +440,7 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
-          description: The supplier or the template does not exist.
+          description: The supplier does not exist (anymore).
           content:
             application/json:
               schema:
@@ -1907,6 +1921,10 @@ components:
     CreatePurchaseOrderRequest:
       type: object
       properties:
+        idempotencyKey:
+          type: string
+          maxLength: 100
+          description: Identifies the create attempt; a retry with the same key returns the first result.
         templateId:
           type: string
         supplierVmedisId:
@@ -1918,6 +1936,7 @@ components:
         items:
           type: array
           minItems: 1
+          maxItems: 500
           items:
             $ref: '#/components/schemas/CreatePurchaseOrderItem'
       required: [templateId, supplierVmedisId, includePharmacistSignature, createdByEmployee, items]
@@ -1931,8 +1950,10 @@ components:
           description: Null for drugs added by hand that are not in Vmedis.
         drugName:
           type: string
+          maxLength: 200
         quantity:
           type: string
+          maxLength: 50
           description: The quantity as typed, e.g. "10 Box".
       required: [drugName, quantity]
 
@@ -1947,7 +1968,10 @@ components:
         createdAt:
           type: string
           format: date-time
-      required: [id, number, createdAt]
+        replayed:
+          type: boolean
+          description: True when this is the purchase order an earlier request with the same idempotency key created.
+      required: [id, number, createdAt, replayed]
 
     PurchaseOrderValidationError:
       type: object

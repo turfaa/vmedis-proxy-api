@@ -212,7 +212,22 @@ func TestCreateValidation(t *testing.T) {
 			wantInvalid: []int{1, 2},
 		},
 		{name: "unknown supplier", req: createRequest(99), wantNotFound: true},
-		{name: "unknown template", req: func() CreateRequest { r := createRequest(1); r.TemplateID = "x"; return r }(), wantNotFound: true},
+		{name: "unknown template", req: func() CreateRequest { r := createRequest(1); r.TemplateID = "x"; return r }()},
+		{
+			name: "too long",
+			req: createRequest(1,
+				CreateItem{DrugName: strings.Repeat("a", MaxDrugNameLength), Quantity: strings.Repeat("1", MaxQuantityLength)},
+				CreateItem{DrugName: strings.Repeat("a", MaxDrugNameLength+1), Quantity: "1"},
+				CreateItem{DrugName: "A", Quantity: strings.Repeat("1", MaxQuantityLength+1)},
+			),
+			wantInvalid: []int{1, 2},
+		},
+		{name: "too many items", req: createRequest(1, make([]CreateItem, MaxItems+1)...)},
+		{name: "too long idempotency key", req: func() CreateRequest {
+			r := createRequest(1)
+			r.IdempotencyKey = strings.Repeat("k", MaxIdempotencyKeyLen+1)
+			return r
+		}()},
 	}
 
 	for _, tt := range tests {
@@ -239,6 +254,88 @@ func TestCreateValidation(t *testing.T) {
 	// Rejected requests use no number up.
 	if got := env.create(t, createRequest(1)).Number; got != "001/SP-REG/AAF/XI/2026" {
 		t.Errorf("number after rejected requests = %q, want 001/SP-REG/AAF/XI/2026", got)
+	}
+}
+
+func TestCreateIdempotent(t *testing.T) {
+	env := newTestEnv(t)
+
+	req := createRequest(1)
+	req.IdempotencyKey = "key-1"
+
+	first := env.create(t, req)
+	if first.Replayed {
+		t.Errorf("first create replayed")
+	}
+
+	// A retry after a lost response, even with changed choices, returns the
+	// first purchase order.
+	req.SupplierVmedisID = 2
+	again := env.create(t, req)
+	if !again.Replayed || again.ID != first.ID || again.Number != first.Number {
+		t.Errorf("retry = %+v, want a replay of %+v", again, first)
+	}
+
+	// The replay used no number up.
+	if got := env.create(t, createRequest(1)).Number; got != "002/SP-REG/AAF/XI/2026" {
+		t.Errorf("next number = %q, want 002/SP-REG/AAF/XI/2026", got)
+	}
+}
+
+func TestCreateIdempotentConcurrent(t *testing.T) {
+	env := newTestEnv(t)
+
+	const n = 10
+	results := make([]CreateResponse, n)
+	errs := make([]error, n)
+
+	var wg sync.WaitGroup
+	for i := range n {
+		wg.Go(func() {
+			req := createRequest(1)
+			req.IdempotencyKey = "same-key"
+			results[i], errs[i] = env.service.Create(context.Background(), req, "")
+		})
+	}
+	wg.Wait()
+
+	for i := range n {
+		if errs[i] != nil {
+			t.Fatalf("create %d: %v", i, errs[i])
+		}
+		if results[i].ID != results[0].ID {
+			t.Errorf("create %d got purchase order %d, want %d", i, results[i].ID, results[0].ID)
+		}
+	}
+
+	if got := env.create(t, createRequest(1)).Number; got != "002/SP-REG/AAF/XI/2026" {
+		t.Errorf("next number = %q, want 002/SP-REG/AAF/XI/2026: retries used numbers up", got)
+	}
+}
+
+func TestFailedCreateUsesNoNumber(t *testing.T) {
+	env := newTestEnv(t)
+
+	// A row that holds the next number in another series makes the insert
+	// fail on the unique number.
+	blocker := models.PurchaseOrder{
+		CreatedAt: env.now, TemplateCode: "other", Year: 2026, Month: 11, Sequence: 1,
+		Number: "001/SP-REG/AAF/XI/2026", CreatedByEmployeeName: "x",
+	}
+	if err := env.db.Create(&blocker).Error; err != nil {
+		t.Fatalf("create blocker: %v", err)
+	}
+
+	if _, err := env.service.Create(context.Background(), createRequest(1), ""); err == nil {
+		t.Fatalf("create succeeded, want it to fail on the duplicate number")
+	}
+
+	if err := env.db.Delete(&blocker).Error; err != nil {
+		t.Fatalf("delete blocker: %v", err)
+	}
+
+	if got := env.create(t, createRequest(1)).Number; got != "001/SP-REG/AAF/XI/2026" {
+		t.Errorf("number after a failed create = %q, want 001/SP-REG/AAF/XI/2026", got)
 	}
 }
 
@@ -415,7 +512,7 @@ func TestRenderPDF(t *testing.T) {
 			Quantity: "10 Box",
 		})
 	}
-	items = append(items, CreateItem{DrugName: strings.Repeat("Sangatpanjangtanpaspasi", 10), Quantity: "1"})
+	items = append(items, CreateItem{DrugName: strings.Repeat("Sangatpanjangtanpaspasi", 8), Quantity: "1"})
 
 	created := env.create(t, createRequest(2, items...))
 
@@ -443,7 +540,7 @@ func TestRenderPDF(t *testing.T) {
 	}
 }
 
-func BenchmarkRenderReguler50Items(b *testing.B) {
+func renderTestDocument(items int) Document {
 	doc := Document{
 		Number:    "001/SP-REG/AAF/XI/2026",
 		CreatedAt: time.Date(2026, time.November, 14, 10, 0, 0, 0, jakarta),
@@ -453,9 +550,86 @@ func BenchmarkRenderReguler50Items(b *testing.B) {
 		},
 		Signer: &models.PurchaseOrderSigner{Name: "Apoteker", LicenseNumber: "SIPA"},
 	}
-	for i := range 50 {
-		doc.Items = append(doc.Items, models.PurchaseOrderItem{DrugName: fmt.Sprintf("Obat %d", i), Quantity: "10 Box"})
+	for i := range items {
+		doc.Items = append(doc.Items, models.PurchaseOrderItem{DrugName: fmt.Sprintf("Obat %d", i+1), Quantity: "10 Box"})
 	}
+	return doc
+}
+
+// TestLastRowMovesWithTail checks that when the rows fill the first page and
+// the tail (closing and signature) doesn't fit after them, the last row moves
+// to the next page with the tail, and only the last row.
+func TestLastRowMovesWithTail(t *testing.T) {
+	// The most rows that fit on the first page with no tail.
+	fitting := 0
+	for n := 1; ; n++ {
+		l := newLetter(renderTestDocument(n))
+		l.writeItems(0)
+		if l.pdf.PageNo() > 1 {
+			break
+		}
+		fitting = n
+	}
+
+	const tail = 60.0
+	l := newLetter(renderTestDocument(fitting))
+	l.writeItems(tail)
+
+	if got := l.pdf.PageNo(); got != 2 {
+		t.Fatalf("after %d rows with a %vmm tail, on page %d, want 2", fitting, tail, got)
+	}
+
+	// Page 2 has the table header and one row.
+	rowHeight := tableLineHeight + 2*tablePadding
+	if got, want := l.pdf.GetY(), pageMarginTop+2*rowHeight+0.01; got > want {
+		t.Errorf("page 2 ends at %.1fmm, want only the header and the last row (%.1fmm)", got, want)
+	}
+	if got := l.pdf.GetY() + tail; got > l.pageBottom() {
+		t.Errorf("the tail ends at %.1fmm, past the page bottom %.1fmm", got, l.pageBottom())
+	}
+}
+
+// TestLongestItemsFitOnPage checks that rows at the length limits stay well
+// under a page tall, so the table never splits a row.
+func TestLongestItemsFitOnPage(t *testing.T) {
+	doc := renderTestDocument(0)
+	doc.Items = []models.PurchaseOrderItem{{
+		DrugName: strings.Repeat("W", MaxDrugNameLength),
+		Quantity: strings.Repeat("W", MaxQuantityLength),
+	}}
+
+	l := newLetter(doc)
+	l.pdf.SetFont(fontFamily, "", tableFontSize)
+	nameWidth := l.contentWidth() - tableNoWidth - tableQtyWidth
+	row := itemRow{
+		nameLines: wrapText(l.pdf, doc.Items[0].DrugName, nameWidth-2*tablePadding),
+		qtyLines:  wrapText(l.pdf, doc.Items[0].Quantity, tableQtyWidth-2*tablePadding),
+	}
+
+	if h, page := row.height(), l.pageBottom()-pageMarginTop; h > page/4 {
+		t.Errorf("a row at the length limits is %.1fmm tall, more than a quarter of the %.1fmm page", h, page)
+	}
+
+	if err := renderReguler(&bytes.Buffer{}, doc); err != nil {
+		t.Fatalf("render: %v", err)
+	}
+}
+
+func TestRenderUnsigned(t *testing.T) {
+	doc := renderTestDocument(3)
+	doc.Signer = nil
+
+	var buf bytes.Buffer
+	if err := renderReguler(&buf, doc); err != nil {
+		t.Fatalf("render: %v", err)
+	}
+	if !bytes.HasPrefix(buf.Bytes(), []byte("%PDF-")) {
+		t.Errorf("content is not a PDF")
+	}
+}
+
+func BenchmarkRenderReguler50Items(b *testing.B) {
+	doc := renderTestDocument(50)
 
 	for b.Loop() {
 		if err := renderReguler(&bytes.Buffer{}, doc); err != nil {

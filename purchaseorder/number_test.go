@@ -33,7 +33,12 @@ func TestPDFFilename(t *testing.T) {
 		t.Errorf("got %q, want %q", got, want)
 	}
 
-	if got := contentDisposition("a Ñ.pdf"); got != `attachment; filename="a _.pdf"; filename*=UTF-8''a%20%C3%91.pdf` {
-		t.Errorf("content disposition = %q", got)
+	for filename, want := range map[string]string{
+		"a Ñ.pdf":                   `attachment; filename="a _.pdf"; filename*=UTF-8''a%20%C3%91.pdf`,
+		"PT A; Cabang (B), C'D.pdf": `attachment; filename="PT A; Cabang (B), C'D.pdf"; filename*=UTF-8''PT%20A%3B%20Cabang%20%28B%29%2C%20C%27D.pdf`,
+	} {
+		if got := contentDisposition(filename); got != want {
+			t.Errorf("content disposition of %q = %q, want %q", filename, got, want)
+		}
 	}
 }

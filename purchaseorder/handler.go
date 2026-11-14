@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 
@@ -47,7 +47,12 @@ func (h *ApiHandler) Create(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, res)
+	status := http.StatusCreated
+	if res.Replayed {
+		status = http.StatusOK
+	}
+
+	c.JSON(status, res)
 }
 
 // List handles requests to list purchase orders.
@@ -182,6 +187,37 @@ func contentDisposition(filename string) string {
 	return fmt.Sprintf(
 		`attachment; filename="%s"; filename*=UTF-8''%s`,
 		asciiFilename(filename),
-		url.PathEscape(filename),
+		encodeExtValue(filename),
 	)
+}
+
+// encodeExtValue percent-encodes s for an RFC 5987 ext-value: every byte
+// outside attr-char, including ";", ",", "'", "(" and ")", which would end or
+// confuse the parameter.
+func encodeExtValue(s string) string {
+	const hex = "0123456789ABCDEF"
+
+	var b strings.Builder
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if isAttrChar(c) {
+			b.WriteByte(c)
+			continue
+		}
+		b.WriteByte('%')
+		b.WriteByte(hex[c>>4])
+		b.WriteByte(hex[c&0x0f])
+	}
+
+	return b.String()
+}
+
+// isAttrChar reports whether c is an RFC 5987 attr-char.
+func isAttrChar(c byte) bool {
+	switch {
+	case 'a' <= c && c <= 'z', 'A' <= c && c <= 'Z', '0' <= c && c <= '9':
+		return true
+	}
+
+	return strings.IndexByte("!#$&+-.^_`|~", c) >= 0
 }

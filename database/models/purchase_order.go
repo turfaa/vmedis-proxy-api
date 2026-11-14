@@ -39,6 +39,11 @@ type PurchaseOrder struct {
 	// CreatedByEmail is the login account that made the request, for audit.
 	CreatedByEmail string
 
+	// IdempotencyKey is chosen by the client once per create attempt, so a
+	// retry after a lost response returns this purchase order instead of
+	// creating another one. Nil for requests without a key.
+	IdempotencyKey *string `gorm:"uniqueIndex"`
+
 	Items []PurchaseOrderItem `gorm:"foreignKey:PurchaseOrderID"`
 }
 
@@ -83,8 +88,6 @@ type PurchaseOrderItem struct {
 	DrugName       string `gorm:"index;not null"`
 	// Quantity is the quantity as typed, e.g. "10 Box".
 	Quantity string `gorm:"not null"`
-	// Extra holds template-specific fields of the item.
-	Extra datatypes.JSON
 }
 
 // PurchaseOrderSequence holds the last number used in a template's monthly

@@ -38,6 +38,10 @@ type Employee struct {
 
 // CreateRequest is the request to create a purchase order.
 type CreateRequest struct {
+	// IdempotencyKey identifies the create attempt, e.g. a UUID the client
+	// makes once per dialog opening. Retrying with the same key returns the
+	// purchase order made by the first request instead of creating another.
+	IdempotencyKey             string       `json:"idempotencyKey"`
 	TemplateID                 string       `json:"templateId"`
 	SupplierVmedisID           int          `json:"supplierVmedisId"`
 	IncludePharmacistSignature bool         `json:"includePharmacistSignature"`
@@ -58,6 +62,9 @@ type CreateResponse struct {
 	ID        uint      `json:"id"`
 	Number    string    `json:"number"`
 	CreatedAt time.Time `json:"createdAt"`
+	// Replayed is true when the request's idempotency key was used before,
+	// and this is the purchase order created then.
+	Replayed bool `json:"replayed"`
 }
 
 // ListFilter filters the purchase orders to list.
