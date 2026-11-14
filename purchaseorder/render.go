@@ -60,6 +60,9 @@ func newLetter(doc Document) *letter {
 	// is downloaded again.
 	pdf.SetCreationDate(doc.CreatedAt)
 	pdf.SetModificationDate(doc.CreatedAt)
+	// fpdf otherwise writes fonts and images in map order, which changes
+	// from run to run.
+	pdf.SetCatalogSort(true)
 	pdf.SetTitle("Surat Pesanan "+doc.Number, true)
 	pdf.SetAuthor(doc.Letterhead.Name, true)
 
