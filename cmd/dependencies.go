@@ -21,6 +21,7 @@ import (
 	"github.com/turfaa/vmedis-proxy-api/drug"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/email2"
 	"github.com/turfaa/vmedis-proxy-api/procurement"
+	"github.com/turfaa/vmedis-proxy-api/purchaseorder"
 	"github.com/turfaa/vmedis-proxy-api/rejecteddrug"
 	"github.com/turfaa/vmedis-proxy-api/sale"
 	"github.com/turfaa/vmedis-proxy-api/shift"
@@ -63,6 +64,9 @@ var (
 
 	supplierService atomic.Pointer[supplier.Service]
 	supplierHandler atomic.Pointer[supplier.ApiHandler]
+
+	purchaseOrderService atomic.Pointer[purchaseorder.Service]
+	purchaseOrderHandler atomic.Pointer[purchaseorder.ApiHandler]
 )
 
 func getDatabase() *gorm.DB {
@@ -556,6 +560,57 @@ func getSupplierHandler() *supplier.ApiHandler {
 
 	if !supplierHandler.CompareAndSwap(nil, newHandler) {
 		return supplierHandler.Load()
+	}
+
+	return newHandler
+}
+
+func getPurchaseOrderConfig() purchaseorder.Config {
+	return purchaseorder.Config{
+		PharmacyName:            viper.GetString("pharmacy_name"),
+		PharmacyLicenseNumber:   viper.GetString("pharmacy_license_number"),
+		PharmacyAddress:         viper.GetString("pharmacy_address"),
+		PharmacyEmail:           viper.GetString("pharmacy_email"),
+		PharmacyPhone:           viper.GetString("pharmacy_phone"),
+		PharmacyCity:            viper.GetString("pharmacy_city"),
+		PharmacistName:          viper.GetString("pharmacist_name"),
+		PharmacistLicenseNumber: viper.GetString("pharmacist_license_number"),
+		VmedisBaseURL:           viper.GetString("base_url"),
+	}
+}
+
+func getPurchaseOrderService() *purchaseorder.Service {
+	if val := purchaseOrderService.Load(); val != nil {
+		return val
+	}
+
+	config := getPurchaseOrderConfig()
+	if err := config.Validate(); err != nil {
+		log.Fatalf("Error configuring purchase orders: %s", err)
+	}
+
+	if !config.Enabled() {
+		log.Println("Purchase orders are not configured, their endpoints respond with 503")
+	}
+
+	newService := purchaseorder.NewService(getDatabase(), config)
+
+	if !purchaseOrderService.CompareAndSwap(nil, newService) {
+		return purchaseOrderService.Load()
+	}
+
+	return newService
+}
+
+func getPurchaseOrderHandler() *purchaseorder.ApiHandler {
+	if val := purchaseOrderHandler.Load(); val != nil {
+		return val
+	}
+
+	newHandler := purchaseorder.NewApiHandler(getPurchaseOrderService())
+
+	if !purchaseOrderHandler.CompareAndSwap(nil, newHandler) {
+		return purchaseOrderHandler.Load()
 	}
 
 	return newHandler

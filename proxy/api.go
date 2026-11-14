@@ -16,6 +16,7 @@ import (
 	"github.com/turfaa/vmedis-proxy-api/drug"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/gin2"
 	"github.com/turfaa/vmedis-proxy-api/procurement"
+	"github.com/turfaa/vmedis-proxy-api/purchaseorder"
 	"github.com/turfaa/vmedis-proxy-api/rejecteddrug"
 	"github.com/turfaa/vmedis-proxy-api/sale"
 	"github.com/turfaa/vmedis-proxy-api/shift"
@@ -30,15 +31,16 @@ type ApiServer struct {
 	redisClient redis.UniversalClient
 	authService *auth.Service
 
-	authHandler         *auth.ApiHandler
-	drugHandler         *drug.ApiHandler
-	saleHandler         *sale.ApiHandler
-	procurementHandler  *procurement.ApiHandler
-	stockOpnameHandler  *stockopname.ApiHandler
-	shiftHandler        *shift.ApiHandler
-	tokenHandler        *token.Handler
-	rejectedDrugHandler *rejecteddrug.ApiHandler
-	supplierHandler     *supplier.ApiHandler
+	authHandler          *auth.ApiHandler
+	drugHandler          *drug.ApiHandler
+	saleHandler          *sale.ApiHandler
+	procurementHandler   *procurement.ApiHandler
+	stockOpnameHandler   *stockopname.ApiHandler
+	shiftHandler         *shift.ApiHandler
+	tokenHandler         *token.Handler
+	rejectedDrugHandler  *rejecteddrug.ApiHandler
+	supplierHandler      *supplier.ApiHandler
+	purchaseOrderHandler *purchaseorder.ApiHandler
 }
 
 // GinEngine returns the gin engine of the proxy api server.
@@ -123,6 +125,22 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 				"/recommendations/status",
 				s.procurementHandler.GetRecommendationStatus,
 			)
+
+			// Purchase orders (surat pesanan) are never cached: they are
+			// writes, one-off downloads, or lists that must show a new
+			// purchase order immediately.
+			purchaseOrders := procurementsHandlers.Group(
+				"/purchase-orders",
+				auth.AllowedRoles(auth.RoleAdmin, auth.RoleStaff),
+			)
+			{
+				purchaseOrders.GET("/options", s.purchaseOrderHandler.GetOptions)
+				purchaseOrders.GET("/creators", s.purchaseOrderHandler.ListCreators)
+				purchaseOrders.GET("", s.purchaseOrderHandler.List)
+				purchaseOrders.POST("", s.purchaseOrderHandler.Create)
+				purchaseOrders.GET("/:id", s.purchaseOrderHandler.Get)
+				purchaseOrders.GET("/:id/pdf", s.purchaseOrderHandler.GetPDF)
+			}
 		}
 
 		drugs := v1.Group("/drugs")
@@ -393,20 +411,22 @@ func NewApiServer(
 	tokenHandler *token.Handler,
 	rejectedDrugHandler *rejecteddrug.ApiHandler,
 	supplierHandler *supplier.ApiHandler,
+	purchaseOrderHandler *purchaseorder.ApiHandler,
 ) *ApiServer {
 	return &ApiServer{
 		db:          db,
 		redisClient: redisClient,
 		authService: authService,
 
-		authHandler:         authHandler,
-		drugHandler:         drugHandler,
-		saleHandler:         saleHandler,
-		procurementHandler:  procurementHandler,
-		stockOpnameHandler:  stockOpnameHandler,
-		shiftHandler:        shiftHandler,
-		tokenHandler:        tokenHandler,
-		rejectedDrugHandler: rejectedDrugHandler,
-		supplierHandler:     supplierHandler,
+		authHandler:          authHandler,
+		drugHandler:          drugHandler,
+		saleHandler:          saleHandler,
+		procurementHandler:   procurementHandler,
+		stockOpnameHandler:   stockOpnameHandler,
+		shiftHandler:         shiftHandler,
+		tokenHandler:         tokenHandler,
+		rejectedDrugHandler:  rejectedDrugHandler,
+		supplierHandler:      supplierHandler,
+		purchaseOrderHandler: purchaseOrderHandler,
 	}
 }
