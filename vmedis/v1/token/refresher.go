@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/turfaa/vmedis-proxy-api/database/models"
-	slices22 "github.com/turfaa/vmedis-proxy-api/pkg2/slices2"
+	"github.com/turfaa/vmedis-proxy-api/pkg2/slices2"
 )
 
 type Refresher struct {
@@ -25,22 +25,19 @@ func (m *Refresher) RefreshTokens(ctx context.Context) error {
 			return fmt.Errorf("get non expired tokens from DB: %w", err)
 		}
 
-		nonExpiredTokenStrings := slices22.Map(nonExpiredTokens, func(t models.VmedisToken) string {
-			return t.Token
-		})
+		log.Printf("Refreshing %d tokens", len(nonExpiredTokens))
 
-		log.Printf("Refresing %d tokens", len(nonExpiredTokenStrings))
-
-		refreshResult, err := m.refresher.RefreshTokens(ctx, nonExpiredTokenStrings)
+		refreshResult, err := m.refresher.RefreshTokens(ctx, nonExpiredTokens)
 		if err != nil {
 			return fmt.Errorf("refresh tokens: %w", err)
 		}
 
 		updatedTokens := make([]models.VmedisToken, 0, len(refreshResult))
-		for token, state := range refreshResult {
+		for token, status := range refreshResult {
 			updatedTokens = append(updatedTokens, models.VmedisToken{
-				Token: token,
-				State: state,
+				Token:   token,
+				State:   status.State,
+				Version: status.Version,
 			})
 		}
 
@@ -48,8 +45,8 @@ func (m *Refresher) RefreshTokens(ctx context.Context) error {
 			return fmt.Errorf("upsert tokens state: %w", err)
 		}
 
-		activeTokens := slices22.Filter(nonExpiredTokenStrings, func(token string) bool {
-			return refreshResult[token] == models.TokenStateActive
+		activeTokens := slices2.Filter(nonExpiredTokens, func(token models.VmedisToken) bool {
+			return refreshResult[token.Token].State == models.TokenStateActive
 		})
 
 		log.Printf("Finished refreshing, got %d active tokens", len(activeTokens))

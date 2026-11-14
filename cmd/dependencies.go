@@ -17,6 +17,7 @@ import (
 
 	"github.com/turfaa/vmedis-proxy-api/auth"
 	"github.com/turfaa/vmedis-proxy-api/database"
+	"github.com/turfaa/vmedis-proxy-api/database/models"
 	"github.com/turfaa/vmedis-proxy-api/drug"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/email2"
 	"github.com/turfaa/vmedis-proxy-api/procurement"
@@ -200,7 +201,8 @@ func getTokenProvider() *token2.Provider {
 		return val
 	}
 
-	newProvider, err := token2.NewProvider(getDatabase(), viper.GetDuration("refresh_interval"))
+	// The v1 client opens v1 pages, so it can only use v1 tokens.
+	newProvider, err := token2.NewProvider(getDatabase(), models.TokenVersionV1, viper.GetDuration("refresh_interval"))
 	if err != nil {
 		log.Fatalf("Error creating token provider: %s", err)
 	}

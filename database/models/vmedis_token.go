@@ -13,6 +13,31 @@ type VmedisToken struct {
 
 	Token string     `gorm:"unique;not null"`
 	State TokenState `gorm:"type:token_state;not null;default:UNCHECKED"`
+
+	// Version is the vmedis version the token's session uses, detected when
+	// the token is refreshed. It is empty until then.
+	Version TokenVersion `gorm:"not null;default:''"`
+}
+
+// TokenVersion is the vmedis version a session uses. A session can only open
+// the pages of its own version: vmedis redirects it from the other version's
+// pages.
+type TokenVersion string
+
+const (
+	TokenVersionUnknown TokenVersion = ""
+	TokenVersionV1      TokenVersion = "V1"
+	TokenVersionV2      TokenVersion = "V2"
+)
+
+func (v TokenVersion) String() string {
+	return string(v)
+}
+
+// TokenStatus is the result of checking a token against vmedis.
+type TokenStatus struct {
+	State   TokenState
+	Version TokenVersion
 }
 
 type TokenState string

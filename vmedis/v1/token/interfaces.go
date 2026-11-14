@@ -7,5 +7,5 @@ import (
 )
 
 type ExternalRefresher interface {
-	RefreshTokens(ctx context.Context, tokens []string) (map[string]models.TokenState, error)
+	RefreshTokens(ctx context.Context, tokens []models.VmedisToken) (map[string]models.TokenStatus, error)
 }

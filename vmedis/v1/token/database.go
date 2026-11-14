@@ -73,10 +73,16 @@ func (d *Database) GetNonExpiredTokens(ctx context.Context) ([]models.VmedisToke
 	return tokens, nil
 }
 
-func (d *Database) GetActiveTokens(ctx context.Context) ([]models.VmedisToken, error) {
+// GetNonExpiredTokensOfVersion gets the non-expired tokens whose detected
+// version is the given one.
+func (d *Database) GetNonExpiredTokensOfVersion(ctx context.Context, version models.TokenVersion) ([]models.VmedisToken, error) {
 	var tokens []models.VmedisToken
-	if err := d.withContext(ctx).Where("state = 'ACTIVE'").Find(&tokens).Error; err != nil {
-		return nil, fmt.Errorf("get active tokens from DB: %w", err)
+	if err := d.withContext(ctx).
+		Where("state != 'EXPIRED'").
+		Where("version = ?", version).
+		Find(&tokens).
+		Error; err != nil {
+		return nil, fmt.Errorf("get non expired %s tokens from DB: %w", version, err)
 	}
 
 	return tokens, nil
@@ -98,7 +104,7 @@ func (d *Database) UpsertTokensState(ctx context.Context, tokens []models.Vmedis
 		Clauses(
 			clause.OnConflict{
 				Columns:   []clause.Column{{Name: "token"}},
-				DoUpdates: clause.AssignmentColumns([]string{"updated_at", "state"}),
+				DoUpdates: clause.AssignmentColumns([]string{"updated_at", "state", "version"}),
 			},
 		).
 		Create(&tokens).

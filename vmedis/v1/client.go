@@ -61,14 +61,15 @@ var ErrInvalidToken = errors.New("invalid session token: vmedis responded with t
 var ErrRedirected = errors.New("vmedis redirected the request to a different page")
 
 func (c *Client) get(ctx context.Context, path string) (*http.Response, error) {
-	return c.getWithRetry(ctx, path, c.tokenProvider.GetActiveToken)
+	return c.getWithRetry(ctx, path, c.tokenProvider.GetActiveToken, true)
 }
 
 // getWithSessionId performs a GET request to vmedis with the given session id,
 // retrying transient failures. Being redirected to one of allowedRedirectPaths
-// is not an error. See getWithRetry.
+// is not an error. Being redirected elsewhere is not retried, as the same
+// session would be redirected again. See getWithRetry.
 func (c *Client) getWithSessionId(ctx context.Context, path, sessionId string, allowedRedirectPaths ...string) (*http.Response, error) {
-	return c.getWithRetry(ctx, path, func() (string, error) { return sessionId, nil }, allowedRedirectPaths...)
+	return c.getWithRetry(ctx, path, func() (string, error) { return sessionId, nil }, false, allowedRedirectPaths...)
 }
 
 // getWithRetry performs a GET request to vmedis, retrying transient failures.
@@ -76,9 +77,10 @@ func (c *Client) getWithSessionId(ctx context.Context, path, sessionId string, a
 // use a different session than the attempt that failed.
 // Receiving the login page instead of the requested page is an error,
 // reported as ErrInvalidToken. Being redirected to another page is an error
-// too, reported as ErrRedirected, unless it is to one of allowedRedirectPaths.
+// too, reported as ErrRedirected, unless it is to one of allowedRedirectPaths;
+// it is retried only if retryRedirects is set.
 // The caller owns the response body of a successful request.
-func (c *Client) getWithRetry(ctx context.Context, path string, getSessionId func() (string, error), allowedRedirectPaths ...string) (*http.Response, error) {
+func (c *Client) getWithRetry(ctx context.Context, path string, getSessionId func() (string, error), retryRedirects bool, allowedRedirectPaths ...string) (*http.Response, error) {
 	res, err := retry.Do(ctx, c.retryConfig, func(ctx context.Context) (*http.Response, error) {
 		sessionId, err := getSessionId()
 		if err != nil {
@@ -95,7 +97,11 @@ func (c *Client) getWithRetry(ctx context.Context, path string, getSessionId fun
 		}
 
 		if err := ensureNotRedirected(res, allowedRedirectPaths); err != nil {
-			return nil, fmt.Errorf("with session id %s: %w", sessionId, err)
+			err = fmt.Errorf("with session id %s: %w", sessionId, err)
+			if !retryRedirects {
+				err = retry.Permanent(err)
+			}
+			return nil, err
 		}
 
 		return res, nil

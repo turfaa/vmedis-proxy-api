@@ -1025,7 +1025,10 @@ paths:
       operationId: getVmedisTokens
       tags: [Vmedis Tokens]
       summary: Get Vmedis tokens
-      description: Returns all Vmedis session tokens as a display-ready table. Requires the `admin` or `staff` role.
+      description: |
+        Returns all Vmedis session tokens as a display-ready table, with each
+        token's status and Vmedis version (`V1`, `V2`, or `-` until the token
+        is refreshed). Requires the `admin` or `staff` role.
       security:
         - EmailAuth: []
       responses:
@@ -1070,7 +1073,11 @@ paths:
       summary: Refresh Vmedis token statuses
       description: |
         Starts an asynchronous refresh of every non-expired Vmedis token's
-        status against Vmedis and returns immediately. The refresh is guarded by
+        status against Vmedis and returns immediately. Each token's version is
+        detected from which sales page it can open: the v1 one or the v2 one,
+        as Vmedis redirects a session from the other version's pages. A token
+        that gets the login page, or can open neither page, is marked
+        `EXPIRED`. The refresh is guarded by
         a distributed lock held for at most one minute, so only one refresh runs
         at a time. Requires the `admin` or `staff` role.
       security:

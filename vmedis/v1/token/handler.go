@@ -40,6 +40,7 @@ func (h *Handler) transformTokensToTable(tokens []models.VmedisToken) cui.Table 
 		"Terakhir Diperbarui",
 		"Token",
 		"Status",
+		"Versi",
 	}
 
 	rows := make([]cui.Row, len(tokens))
@@ -52,6 +53,7 @@ func (h *Handler) transformTokensToTable(tokens []models.VmedisToken) cui.Table 
 				time2.FormatDateTime(token.UpdatedAt),
 				token.Token,
 				token.State.String(),
+				formatVersion(token.Version),
 			},
 		}
 	}
@@ -60,6 +62,16 @@ func (h *Handler) transformTokensToTable(tokens []models.VmedisToken) cui.Table 
 		Header: header,
 		Rows:   rows,
 	}
+}
+
+// formatVersion formats a token version for display. The version is unknown
+// until the token is refreshed.
+func formatVersion(version models.TokenVersion) string {
+	if version == models.TokenVersionUnknown {
+		return "-"
+	}
+
+	return version.String()
 }
 
 func (h *Handler) InsertToken(c *gin.Context) {
