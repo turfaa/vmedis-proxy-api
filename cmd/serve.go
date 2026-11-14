@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"log"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -25,18 +26,19 @@ var serveCmd = commandWithInit{
 
 			proxy.Run(
 				proxy.Config{
-					DB:                  getDatabase(),
-					RedisClient:         getRedisClient(),
-					AuthService:         getAuthService(),
-					AuthHandler:         getAuthHandler(),
-					DrugHandler:         getDrugHandler(stockOpnameStartDate),
-					SaleHandler:         getSaleHandler(),
-					ProcurementHandler:  getProcurementHandler(),
-					StockOpnameHandler:  getStockOpnameHandler(),
-					ShiftHandler:        getShiftHandler(),
-					TokenHandler:        getTokenHandler(),
-					RejectedDrugHandler: getRejectedDrugHandler(),
-					SupplierHandler:     getSupplierHandler(),
+					DB:                   getDatabase(),
+					RedisClient:          getRedisClient(),
+					AuthService:          getAuthService(),
+					AuthHandler:          getAuthHandler(),
+					DrugHandler:          getDrugHandler(stockOpnameStartDate),
+					SaleHandler:          getSaleHandler(),
+					ProcurementHandler:   getProcurementHandler(),
+					StockOpnameHandler:   getStockOpnameHandler(),
+					ShiftHandler:         getShiftHandler(),
+					TokenHandler:         getTokenHandler(),
+					RejectedDrugHandler:  getRejectedDrugHandler(),
+					SupplierHandler:      getSupplierHandler(),
+					PurchaseOrderHandler: getPurchaseOrderHandler(),
 				},
 			)
 		},
@@ -45,6 +47,23 @@ var serveCmd = commandWithInit{
 		cmd.Flags().String("stock-opname-start-date", time.Now().AddDate(0, 0, -14).Format(time.DateOnly), "Stock opname start date")
 
 		viper.BindPFlag("stock_opname_start_date", cmd.Flags().Lookup("stock-opname-start-date"))
+
+		// The pharmacy details printed on purchase orders (surat pesanan).
+		// Purchase orders are disabled while all of them are empty.
+		for _, f := range []struct{ key, usage string }{
+			{"pharmacy_name", "pharmacy name on purchase orders, e.g. Apotek Aulia Farma"},
+			{"pharmacy_license_number", "pharmacy license number (nomor izin) on purchase orders"},
+			{"pharmacy_address", "pharmacy address on purchase orders"},
+			{"pharmacy_email", "pharmacy email on purchase orders"},
+			{"pharmacy_phone", "pharmacy phone on purchase orders"},
+			{"pharmacy_city", "city purchase orders are written from, printed before their date"},
+			{"pharmacist_name", "name of the pharmacist in charge (APJ), without the apt. title"},
+			{"pharmacist_license_number", "SIPA of the pharmacist in charge (APJ)"},
+		} {
+			flag := strings.ReplaceAll(f.key, "_", "-")
+			cmd.Flags().String(flag, "", f.usage)
+			viper.BindPFlag(f.key, cmd.Flags().Lookup(flag))
+		}
 	},
 }
 

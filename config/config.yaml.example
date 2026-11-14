@@ -33,3 +33,17 @@ email:
 stock_opname_start_date: "2024-03-07"
 
 consumer_concurrency: 10
+# The pharmacy details printed on purchase orders (surat pesanan). Purchase
+# orders are disabled (their endpoints respond with 503) while all of these
+# are empty, and the server refuses to start when only some are set.
+pharmacy_name: "" # e.g. "Apotek Aulia Farma"
+pharmacy_license_number: ""
+pharmacy_address: ""
+pharmacy_email: ""
+pharmacy_phone: ""
+# Where letters are written from, printed before their date.
+pharmacy_city: "" # e.g. "Sumedang"
+# The pharmacist in charge (Apoteker Penanggung Jawab), without the "apt." title.
+pharmacist_name: ""
+# The pharmacist's SIPA.
+pharmacist_license_number: ""

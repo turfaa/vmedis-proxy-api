@@ -38,6 +38,8 @@ tags:
     description: Drug inventory.
   - name: Procurements
     description: Drug procurements, recommendations, and invoice calculators.
+  - name: Purchase Orders
+    description: Purchase order letters (surat pesanan) sent to suppliers.
   - name: Stock Opnames
     description: Stock opnames (physical stock counts).
   - name: Shifts
@@ -294,6 +296,231 @@ paths:
           $ref: '#/components/responses/Message'
         '400':
           $ref: '#/components/responses/BadRequest'
+
+  /api/v1/procurements/purchase-orders/options:
+    get:
+      operationId: getPurchaseOrderOptions
+      tags: [Purchase Orders]
+      summary: Get purchase order options
+      description: |
+        Returns what the dashboard needs to create a purchase order: the
+        templates, the pharmacist who signs (Apoteker Penanggung Jawab), and
+        the Vmedis page where suppliers are edited. Responds with `503` until
+        the pharmacy details are configured. Requires the `admin` or `staff`
+        role.
+      security:
+        - EmailAuth: []
+      responses:
+        '200':
+          description: Purchase order options.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseOrderOptionsResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/NotConfigured'
+
+  /api/v1/procurements/purchase-orders:
+    get:
+      operationId: listPurchaseOrders
+      tags: [Purchase Orders]
+      summary: List purchase orders
+      description: |
+        Returns a page of the purchase orders matching all the given filters,
+        newest first. Requires the `admin` or `staff` role.
+      security:
+        - EmailAuth: []
+      parameters:
+        - name: q
+          in: query
+          description: Case-insensitive partial match on the number or any item's drug name.
+          schema:
+            type: string
+        - name: from
+          in: query
+          description: Earliest creation date (inclusive), `YYYY-MM-DD` in Asia/Jakarta.
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          description: Latest creation date (inclusive), `YYYY-MM-DD` in Asia/Jakarta.
+          schema:
+            type: string
+            format: date
+        - name: supplierVmedisId
+          in: query
+          schema:
+            type: integer
+        - name: templateId
+          in: query
+          schema:
+            type: string
+        - name: createdByEmployeeId
+          in: query
+          description: The HRIS ID of the employee who created the purchase order.
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: A page of purchase orders.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseOrdersResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      operationId: createPurchaseOrder
+      tags: [Purchase Orders]
+      summary: Create a purchase order
+      description: |
+        Assigns the next number in the template's monthly series (by the
+        creation date in Asia/Jakarta) and stores the purchase order with
+        snapshots of the supplier, the signer and the letterhead. Numbers are
+        unique even under concurrent requests. The login email (`X-Email`) is
+        stored for audit. Download the PDF with
+        `GET /api/v1/procurements/purchase-orders/{id}/pdf`. Responds with
+        `503` until the pharmacy details are configured. Requires the `admin`
+        or `staff` role.
+      security:
+        - EmailAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePurchaseOrderRequest'
+      responses:
+        '201':
+          description: The created purchase order.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatePurchaseOrderResponse'
+        '400':
+          description: Invalid request. `invalidItems` lists the indexes of the items without a drug name or quantity.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseOrderValidationError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: The supplier or the template does not exist.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/NotConfigured'
+
+  /api/v1/procurements/purchase-orders/creators:
+    get:
+      operationId: listPurchaseOrderCreators
+      tags: [Purchase Orders]
+      summary: List purchase order creators
+      description: |
+        Returns the employees who have created at least one purchase order,
+        with the name from their latest one, ordered by name. Requires the
+        `admin` or `staff` role.
+      security:
+        - EmailAuth: []
+      responses:
+        '200':
+          description: Purchase order creators.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseOrderCreatorsResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/procurements/purchase-orders/{id}:
+    get:
+      operationId: getPurchaseOrder
+      tags: [Purchase Orders]
+      summary: Get a purchase order
+      description: Returns a purchase order with its items. Requires the `admin` or `staff` role.
+      security:
+        - EmailAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PurchaseOrderID'
+      responses:
+        '200':
+          description: The purchase order.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseOrderDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/procurements/purchase-orders/{id}/pdf:
+    get:
+      operationId: getPurchaseOrderPdf
+      tags: [Purchase Orders]
+      summary: Download a purchase order PDF
+      description: |
+        Renders the purchase order as an A4 PDF from its stored snapshots, so
+        it is the same document every time, even after the supplier or the
+        config changed. Requires the `admin` or `staff` role.
+      security:
+        - EmailAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PurchaseOrderID'
+      responses:
+        '200':
+          description: |
+            The PDF. `Content-Disposition` names it
+            `<YYYY-MM-DD> - <supplier> - <template name> - <number with / as ->.pdf`,
+            with both `filename` (ASCII) and `filename*` (UTF-8).
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /api/v1/stock-opnames:
     get:
@@ -1212,6 +1439,15 @@ components:
         type: integer
         minimum: 0
 
+    PurchaseOrderID:
+      name: id
+      in: path
+      required: true
+      description: The ID of the purchase order.
+      schema:
+        type: integer
+        minimum: 1
+
   responses:
     Message:
       description: Operation accepted or completed.
@@ -1243,6 +1479,13 @@ components:
 
     Conflict:
       description: The request conflicts with an operation already in progress.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotConfigured:
+      description: Purchase orders are not configured yet (the pharmacy details are empty).
       content:
         application/json:
           schema:
@@ -1611,6 +1854,215 @@ components:
           type: number
 
     # ----- Stock Opnames -----
+
+    PurchaseOrderOptionsResponse:
+      type: object
+      properties:
+        templates:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseOrderTemplate'
+        signer:
+          $ref: '#/components/schemas/PurchaseOrderSigner'
+        vmedisSupplierPageUrl:
+          type: string
+          description: The Vmedis page where suppliers are edited. Vmedis has no page per supplier.
+      required: [templates, signer, vmedisSupplierPageUrl]
+
+    PurchaseOrderTemplate:
+      type: object
+      properties:
+        id:
+          type: string
+          example: reguler
+        name:
+          type: string
+          example: Surat Pesanan Reguler
+        description:
+          type: string
+      required: [id, name, description]
+
+    PurchaseOrderSigner:
+      type: object
+      description: The pharmacist who signs purchase orders (Apoteker Penanggung Jawab).
+      properties:
+        name:
+          type: string
+          description: The name without the "apt." title.
+        licenseNumber:
+          type: string
+          description: The pharmacist's SIPA.
+      required: [name, licenseNumber]
+
+    PurchaseOrderEmployee:
+      type: object
+      description: An HRIS employee.
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+      required: [id, name]
+
+    CreatePurchaseOrderRequest:
+      type: object
+      properties:
+        templateId:
+          type: string
+        supplierVmedisId:
+          type: integer
+        includePharmacistSignature:
+          type: boolean
+        createdByEmployee:
+          $ref: '#/components/schemas/PurchaseOrderEmployee'
+        items:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/CreatePurchaseOrderItem'
+      required: [templateId, supplierVmedisId, includePharmacistSignature, createdByEmployee, items]
+
+    CreatePurchaseOrderItem:
+      type: object
+      properties:
+        drugVmedisCode:
+          type: string
+          nullable: true
+          description: Null for drugs added by hand that are not in Vmedis.
+        drugName:
+          type: string
+        quantity:
+          type: string
+          description: The quantity as typed, e.g. "10 Box".
+      required: [drugName, quantity]
+
+    CreatePurchaseOrderResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        number:
+          type: string
+          example: 001/SP-REG/AAF/XI/2026
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, number, createdAt]
+
+    PurchaseOrderValidationError:
+      type: object
+      properties:
+        error:
+          type: string
+        invalidItems:
+          type: array
+          items:
+            type: integer
+          description: Indexes of the items without a drug name or quantity.
+      required: [error]
+
+    PurchaseOrdersResponse:
+      type: object
+      properties:
+        purchaseOrders:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseOrderSummary'
+        total:
+          type: integer
+        page:
+          type: integer
+        pageSize:
+          type: integer
+      required: [purchaseOrders, total, page, pageSize]
+
+    PurchaseOrderSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        number:
+          type: string
+        templateId:
+          type: string
+        templateName:
+          type: string
+        supplier:
+          type: object
+          properties:
+            vmedisId:
+              type: integer
+            name:
+              type: string
+          required: [vmedisId, name]
+        itemCount:
+          type: integer
+        includePharmacistSignature:
+          type: boolean
+        createdByEmployee:
+          $ref: '#/components/schemas/PurchaseOrderEmployee'
+        createdByEmail:
+          type: string
+          description: The login account that created the purchase order.
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, number, templateId, templateName, supplier, itemCount, includePharmacistSignature, createdByEmployee, createdByEmail, createdAt]
+
+    PurchaseOrderDetail:
+      allOf:
+        - $ref: '#/components/schemas/PurchaseOrderSummary'
+        - type: object
+          properties:
+            supplier:
+              type: object
+              description: The supplier as it was when the purchase order was created.
+              properties:
+                vmedisId:
+                  type: integer
+                name:
+                  type: string
+                address:
+                  type: string
+                city:
+                  type: string
+                phone:
+                  type: string
+              required: [vmedisId, name, address, city, phone]
+            signer:
+              allOf:
+                - $ref: '#/components/schemas/PurchaseOrderSigner'
+              nullable: true
+              description: Null when the pharmacist signature is not included.
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/PurchaseOrderItem'
+          required: [signer, items]
+
+    PurchaseOrderItem:
+      type: object
+      properties:
+        position:
+          type: integer
+          description: 1-based order on the letter.
+        drugVmedisCode:
+          type: string
+          nullable: true
+        drugName:
+          type: string
+        quantity:
+          type: string
+      required: [position, drugVmedisCode, drugName, quantity]
+
+    PurchaseOrderCreatorsResponse:
+      type: object
+      properties:
+        creators:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseOrderEmployee'
+      required: [creators]
 
     StockOpnamesResponse:
       type: object
