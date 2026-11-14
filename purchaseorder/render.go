@@ -102,40 +102,49 @@ func (l *letter) output(w io.Writer) error {
 }
 
 // writeLetterhead writes the pharmacy letterhead: the logo, the pharmacy's
-// name, license number, address and contacts, then a double rule.
+// name, license number, address and contacts, then a double rule. It is kept
+// compact so the page is left for the items.
 func (l *letter) writeLetterhead() {
 	pdf := l.pdf
 	lh := l.doc.Letterhead
 
 	const (
-		logoSize   = 26.0
-		nameHeight = 7.0
-		lineHeight = 5.0
+		logoHeight     = 14.0
+		logoGap        = 5.0
+		nameFontSize   = 12.0
+		nameHeight     = 5.5
+		detailFontSize = 9.5
+		lineHeight     = 4.0
 	)
 
-	top := pdf.GetY()
-	pdf.ImageOptions(logoName, pageMarginSide, top, logoSize, logoSize, false, fpdf.ImageOptions{ImageType: "PNG"}, 0, "")
+	info := pdf.GetImageInfo(logoName)
+	logoWidth := logoHeight * info.Width() / info.Height()
 
-	lines := []string{
-		"Nomor Izin: " + lh.LicenseNumber,
-		lh.Address,
-		fmt.Sprintf("Email: %s, Telepon: %s", lh.Email, lh.Phone),
-	}
+	textX := pageMarginSide + logoWidth + logoGap
+	textW := l.contentWidth() - logoWidth - logoGap
 
-	textX := pageMarginSide + logoSize + 5
-	textW := l.contentWidth() - logoSize - 5
+	pdf.SetFont(fontFamily, "", detailFontSize)
+	var lines []string
+	lines = append(lines, "Nomor Izin: "+lh.LicenseNumber)
+	lines = append(lines, wrapText(pdf, lh.Address, textW)...)
+	lines = append(lines, fmt.Sprintf("Email: %s, Telepon: %s", lh.Email, lh.Phone))
+
 	textHeight := nameHeight + float64(len(lines))*lineHeight
+	blockHeight := max(logoHeight, textHeight)
 
-	pdf.SetXY(textX, top+(logoSize-textHeight)/2)
-	pdf.SetFont(fontFamily, "B", 14)
+	top := pdf.GetY()
+	pdf.ImageOptions(logoName, pageMarginSide, top+(blockHeight-logoHeight)/2, logoWidth, logoHeight, false, fpdf.ImageOptions{ImageType: "PNG"}, 0, "")
+
+	pdf.SetXY(textX, top+(blockHeight-textHeight)/2)
+	pdf.SetFont(fontFamily, "B", nameFontSize)
 	pdf.CellFormat(textW, nameHeight, strings.ToUpper(lh.Name), "", 2, "L", false, 0, "")
 
-	pdf.SetFont(fontFamily, "", 11)
+	pdf.SetFont(fontFamily, "", detailFontSize)
 	for _, line := range lines {
 		pdf.CellFormat(textW, lineHeight, line, "", 2, "L", false, 0, "")
 	}
 
-	ruleY := top + logoSize + 3
+	ruleY := top + blockHeight + 2
 	right := pageMarginSide + l.contentWidth()
 
 	pdf.SetLineWidth(0.6)
@@ -150,7 +159,7 @@ func (l *letter) writeLetterhead() {
 func (l *letter) writeTitle(title string) {
 	pdf := l.pdf
 
-	pdf.Ln(8)
+	pdf.Ln(6)
 	pdf.SetFont(fontFamily, "BU", 14)
 	pdf.CellFormat(0, 7, title, "", 1, "C", false, 0, "")
 	pdf.SetFont(fontFamily, "", bodyFontSize)
