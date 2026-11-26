@@ -40,6 +40,22 @@ const (
 	tableNoWidth    = 12.0
 	tableQtyWidth   = 38.0
 
+	// Controlled templates (Prekursor and OOT) have more text and columns,
+	// so they use smaller type.
+	controlledBodyFontSize    = 11.0
+	controlledBodyLineHeight  = 5.5
+	controlledTableFontSize   = 10.0
+	controlledTableLineHeight = 4.5
+
+	// fieldLabelWidth is the width of the labels of writeFields, e.g. "Nama",
+	// and fieldIndent the indent of their block.
+	fieldLabelWidth = 35.0
+	fieldColonWidth = 4.0
+	fieldIndent     = 4.0
+
+	watermarkText     = "DIBATALKAN"
+	watermarkFontSize = 100.0
+
 	// signatureGap is the space above the place and date, and signatureSpace
 	// the space left for the pharmacist to sign in.
 	signatureGap   = 8.0
@@ -50,6 +66,11 @@ const (
 type letter struct {
 	pdf *fpdf.Fpdf
 	doc Document
+
+	// bodyFontSize and bodyLineHeight are of the letter's text outside the
+	// item table.
+	bodyFontSize   float64
+	bodyLineHeight float64
 }
 
 func newLetter(doc Document) *letter {
@@ -76,6 +97,10 @@ func newLetter(doc Document) *letter {
 	pdf.RegisterImageOptionsReader(logoName, fpdf.ImageOptions{ImageType: "PNG"}, bytes.NewReader(logoPNG))
 
 	pdf.SetFooterFunc(func() {
+		if doc.Cancellation != nil {
+			writeWatermark(pdf)
+		}
+
 		pdf.SetY(-12)
 		pdf.SetFont(fontFamily, "", 9)
 		pdf.SetTextColor(68, 68, 68)
@@ -85,7 +110,26 @@ func newLetter(doc Document) *letter {
 
 	pdf.AddPage()
 
-	return &letter{pdf: pdf, doc: doc}
+	return &letter{pdf: pdf, doc: doc, bodyFontSize: bodyFontSize, bodyLineHeight: bodyLineHeight}
+}
+
+// writeWatermark writes a light, diagonal DIBATALKAN across the page.
+func writeWatermark(pdf *fpdf.Fpdf) {
+	w, h := pdf.GetPageSize()
+	cx, cy := w/2, h/2
+
+	pdf.SetFont(fontFamily, "B", watermarkFontSize)
+	pdf.SetTextColor(0, 0, 0)
+	pdf.SetAlpha(0.12, "Normal")
+	pdf.TransformBegin()
+	pdf.TransformRotate(35, cx, cy)
+
+	textWidth := pdf.GetStringWidth(watermarkText)
+	_, fontHeight := pdf.GetFontSize()
+	pdf.Text(cx-textWidth/2, cy+fontHeight/3, watermarkText)
+
+	pdf.TransformEnd()
+	pdf.SetAlpha(1, "Normal")
 }
 
 func (l *letter) contentWidth() float64 {
@@ -160,15 +204,29 @@ func (l *letter) writeLetterhead() {
 	pdf.SetXY(pageMarginSide, ruleY+1)
 }
 
-// writeTitle writes the centered title and the purchase order number.
+// writeTitle writes the centered title and the purchase order number, and
+// under them when the purchase order is cancelled, when, by whom and why.
 func (l *letter) writeTitle(title string) {
 	pdf := l.pdf
 
 	pdf.Ln(4)
 	pdf.SetFont(fontFamily, "BU", 14)
-	pdf.CellFormat(0, 7, title, "", 1, "C", false, 0, "")
-	pdf.SetFont(fontFamily, "", bodyFontSize)
-	pdf.CellFormat(0, bodyLineHeight, "Nomor: "+l.doc.Number, "", 1, "C", false, 0, "")
+	pdf.MultiCell(0, 7, title, "", "C", false)
+	pdf.SetFont(fontFamily, "", l.bodyFontSize)
+	pdf.CellFormat(0, l.bodyLineHeight, "Nomor: "+l.doc.Number, "", 1, "C", false, 0, "")
+
+	if c := l.doc.Cancellation; c != nil {
+		pdf.Ln(2)
+		pdf.SetFont(fontFamily, "B", l.bodyFontSize-1)
+		pdf.SetLineWidth(0.4)
+		pdf.SetCellMargin(2)
+		pdf.MultiCell(0, l.bodyLineHeight, fmt.Sprintf(
+			"DIBATALKAN pada %s oleh %s. Alasan: %s",
+			formatLetterDate(c.At), c.EmployeeName, c.Reason,
+		), "1", "L", false)
+		pdf.SetCellMargin(0)
+		pdf.SetLineWidth(0.2)
+	}
 }
 
 // writeRecipient writes who the letter is addressed to.
@@ -177,50 +235,171 @@ func (l *letter) writeRecipient() {
 	supplier := l.doc.Supplier
 
 	pdf.Ln(5)
-	pdf.SetFont(fontFamily, "", bodyFontSize)
-	pdf.CellFormat(0, bodyLineHeight, "Kepada Yth.", "", 1, "L", false, 0, "")
-	pdf.SetFont(fontFamily, "B", bodyFontSize)
-	pdf.MultiCell(0, bodyLineHeight, supplier.Name, "", "L", false)
-	pdf.SetFont(fontFamily, "", bodyFontSize)
-	pdf.MultiCell(0, bodyLineHeight, joinNonEmpty(", ", supplier.Address, supplier.City), "", "L", false)
+	pdf.SetFont(fontFamily, "", l.bodyFontSize)
+	pdf.CellFormat(0, l.bodyLineHeight, "Kepada Yth.", "", 1, "L", false, 0, "")
+	pdf.SetFont(fontFamily, "B", l.bodyFontSize)
+	pdf.MultiCell(0, l.bodyLineHeight, supplier.Name, "", "L", false)
+	pdf.SetFont(fontFamily, "", l.bodyFontSize)
+	pdf.MultiCell(0, l.bodyLineHeight, joinNonEmpty(", ", supplier.Address, supplier.City), "", "L", false)
 }
 
 // writeParagraph writes body text, wrapped to the content width.
 func (l *letter) writeParagraph(text string) {
-	l.pdf.SetFont(fontFamily, "", bodyFontSize)
-	l.pdf.MultiCell(0, bodyLineHeight, text, "", "L", false)
+	l.pdf.SetFont(fontFamily, "", l.bodyFontSize)
+	l.pdf.MultiCell(0, l.bodyLineHeight, text, "", "L", false)
 }
 
-type itemRow struct {
-	no        string
-	nameLines []string
-	qtyLines  []string
+// paragraphHeight is the height writeParagraph writes text in.
+func (l *letter) paragraphHeight(text string) float64 {
+	l.pdf.SetFont(fontFamily, "", l.bodyFontSize)
+	return float64(len(wrapText(l.pdf, text, l.contentWidth()))) * l.bodyLineHeight
 }
 
-func (r itemRow) height() float64 {
-	return float64(max(len(r.nameLines), len(r.qtyLines), 1))*tableLineHeight + 2*tablePadding
+// field is a labelled value, e.g. "Nama : apt. Nama".
+type field struct {
+	label string
+	value string
+	bold  bool
+}
+
+func (l *letter) fieldValueWidth() float64 {
+	return l.contentWidth() - fieldIndent - fieldLabelWidth - fieldColonWidth
+}
+
+func (l *letter) fieldLines(f field) []string {
+	style := ""
+	if f.bold {
+		style = "B"
+	}
+
+	l.pdf.SetFont(fontFamily, style, l.bodyFontSize)
+	return wrapText(l.pdf, f.value, l.fieldValueWidth())
+}
+
+// writeFields writes indented labelled values, with the labels and colons
+// lined up.
+func (l *letter) writeFields(fields []field) {
+	pdf := l.pdf
+	labelX := pageMarginSide + fieldIndent
+	valueX := labelX + fieldLabelWidth + fieldColonWidth
+
+	for _, f := range fields {
+		lines := l.fieldLines(f)
+
+		pdf.SetFont(fontFamily, "", l.bodyFontSize)
+		pdf.SetX(labelX)
+		pdf.CellFormat(fieldLabelWidth, l.bodyLineHeight, f.label, "", 0, "L", false, 0, "")
+		pdf.CellFormat(fieldColonWidth, l.bodyLineHeight, ":", "", 0, "L", false, 0, "")
+
+		if f.bold {
+			pdf.SetFont(fontFamily, "B", l.bodyFontSize)
+		}
+		for i, line := range lines {
+			if i > 0 {
+				pdf.SetX(valueX)
+			}
+			pdf.CellFormat(l.fieldValueWidth(), l.bodyLineHeight, line, "", 1, "L", false, 0, "")
+		}
+	}
+}
+
+// fieldsHeight is the height writeFields writes fields in.
+func (l *letter) fieldsHeight(fields []field) float64 {
+	height := 0.0
+	for _, f := range fields {
+		height += float64(len(l.fieldLines(f))) * l.bodyLineHeight
+	}
+
+	return height
+}
+
+// tableColumn is a column of the item table.
+type tableColumn struct {
+	header string
+	// width is the column's width in mm. Columns with no width share the
+	// width left by their weight.
+	width  float64
+	weight float64
+	// align is the alignment of the header and the cells: "L", "C" or "R".
+	align string
+	// value is the cell of the item at the 0-based index.
+	value func(i int, item models.PurchaseOrderItem) string
+}
+
+// itemTable is how the items are laid out.
+type itemTable struct {
+	fontSize   float64
+	lineHeight float64
+	columns    []tableColumn
+}
+
+// tableRow is a row of the table, its cells wrapped to their columns.
+type tableRow struct {
+	cells      [][]string
+	lineHeight float64
+}
+
+func (r tableRow) height() float64 {
+	lines := 1
+	for _, cell := range r.cells {
+		lines = max(lines, len(cell))
+	}
+
+	return float64(lines)*r.lineHeight + 2*tablePadding
+}
+
+// columnWidths returns the width of each column: fixed widths as they are,
+// and the rest of the content width shared by weight.
+func (l *letter) columnWidths(t itemTable) []float64 {
+	fixed, weights := 0.0, 0.0
+	for _, c := range t.columns {
+		if c.width > 0 {
+			fixed += c.width
+		} else {
+			weights += c.weight
+		}
+	}
+
+	left := l.contentWidth() - fixed
+	widths := make([]float64, len(t.columns))
+	for i, c := range t.columns {
+		if c.width > 0 {
+			widths[i] = c.width
+		} else if weights > 0 {
+			widths[i] = left * c.weight / weights
+		}
+	}
+
+	return widths
+}
+
+func (l *letter) tableRow(t itemTable, widths []float64, style string, cell func(i int, c tableColumn) string) tableRow {
+	l.pdf.SetFont(fontFamily, style, t.fontSize)
+
+	row := tableRow{cells: make([][]string, len(t.columns)), lineHeight: t.lineHeight}
+	for i, c := range t.columns {
+		row.cells[i] = wrapText(l.pdf, cell(i, c), widths[i]-2*tablePadding)
+	}
+
+	return row
 }
 
 // writeItems writes the item table. The header repeats on every page, and the
 // last row moves to the next page together with the tail (e.g. the closing
 // and signature) when they would not fit after it, so the tail is never left
 // alone on a page.
-func (l *letter) writeItems(tailHeight float64) {
+func (l *letter) writeItems(t itemTable, tailHeight float64) {
 	pdf := l.pdf
-	nameWidth := l.contentWidth() - tableNoWidth - tableQtyWidth
+	widths := l.columnWidths(t)
 
-	pdf.SetFont(fontFamily, "", tableFontSize)
-	rows := make([]itemRow, len(l.doc.Items))
+	header := l.tableRow(t, widths, "B", func(_ int, c tableColumn) string { return c.header })
+	rows := make([]tableRow, len(l.doc.Items))
 	for i, item := range l.doc.Items {
-		rows[i] = itemRow{
-			no:        fmt.Sprintf("%d", i+1),
-			nameLines: wrapText(pdf, item.DrugName, nameWidth-2*tablePadding),
-			qtyLines:  wrapText(pdf, item.Quantity, tableQtyWidth-2*tablePadding),
-		}
+		rows[i] = l.tableRow(t, widths, "", func(_ int, c tableColumn) string { return c.value(i, item) })
 	}
 
 	pdf.Ln(2)
-	l.writeTableHeader(nameWidth)
+	l.writeTableRow(t, widths, header, "B")
 
 	for i, row := range rows {
 		needed := row.height()
@@ -230,60 +409,57 @@ func (l *letter) writeItems(tailHeight float64) {
 
 		if pdf.GetY()+needed > l.pageBottom() {
 			pdf.AddPage()
-			l.writeTableHeader(nameWidth)
+			l.writeTableRow(t, widths, header, "B")
 		}
 
-		l.writeTableRow(row, nameWidth)
+		l.writeTableRow(t, widths, row, "")
 	}
 }
 
-func (l *letter) writeTableHeader(nameWidth float64) {
-	pdf := l.pdf
-	h := tableLineHeight + 2*tablePadding
-
-	pdf.SetFont(fontFamily, "B", tableFontSize)
-	pdf.SetLineWidth(0.2)
-	pdf.SetX(pageMarginSide)
-	pdf.CellFormat(tableNoWidth, h, "No.", "1", 0, "C", false, 0, "")
-	pdf.SetCellMargin(tablePadding)
-	pdf.CellFormat(nameWidth, h, "Nama Obat", "1", 0, "L", false, 0, "")
-	pdf.SetCellMargin(0)
-	pdf.CellFormat(tableQtyWidth, h, "Jumlah", "1", 1, "C", false, 0, "")
-}
-
-func (l *letter) writeTableRow(row itemRow, nameWidth float64) {
+func (l *letter) writeTableRow(t itemTable, widths []float64, row tableRow, style string) {
 	pdf := l.pdf
 	h := row.height()
-	x, y := pageMarginSide, pdf.GetY()
+	y := pdf.GetY()
 
-	pdf.SetFont(fontFamily, "", tableFontSize)
+	pdf.SetFont(fontFamily, style, t.fontSize)
 	pdf.SetLineWidth(0.2)
 
-	pdf.Rect(x, y, tableNoWidth, h, "D")
-	pdf.Rect(x+tableNoWidth, y, nameWidth, h, "D")
-	pdf.Rect(x+tableNoWidth+nameWidth, y, tableQtyWidth, h, "D")
-
-	writeLines := func(lines []string, cellX, cellW float64, align string) {
-		for i, line := range lines {
-			pdf.SetXY(cellX+tablePadding, y+tablePadding+float64(i)*tableLineHeight)
-			pdf.CellFormat(cellW-2*tablePadding, tableLineHeight, line, "", 0, align, false, 0, "")
+	x := pageMarginSide
+	for i, c := range t.columns {
+		pdf.Rect(x, y, widths[i], h, "D")
+		for j, line := range row.cells[i] {
+			pdf.SetXY(x+tablePadding, y+tablePadding+float64(j)*t.lineHeight)
+			pdf.CellFormat(widths[i]-2*tablePadding, t.lineHeight, line, "", 0, c.align, false, 0, "")
 		}
+		x += widths[i]
 	}
-
-	writeLines([]string{row.no}, x, tableNoWidth, "C")
-	writeLines(row.nameLines, x+tableNoWidth, nameWidth, "L")
-	writeLines(row.qtyLines, x+tableNoWidth+nameWidth, tableQtyWidth, "C")
 
 	pdf.SetXY(pageMarginSide, y+h)
 }
 
+func itemNumber(i int, _ models.PurchaseOrderItem) string {
+	return fmt.Sprintf("%d", i+1)
+}
+
+// regulerTable is the table of a Surat Pesanan Reguler: the drug's name and
+// the quantity as typed.
+var regulerTable = itemTable{
+	fontSize:   tableFontSize,
+	lineHeight: tableLineHeight,
+	columns: []tableColumn{
+		{header: "No.", width: tableNoWidth, align: "C", value: itemNumber},
+		{header: "Nama Obat", weight: 1, align: "L", value: func(_ int, item models.PurchaseOrderItem) string { return item.DrugName }},
+		{header: "Jumlah", width: tableQtyWidth, align: "C", value: func(_ int, item models.PurchaseOrderItem) string { return item.Quantity }},
+	},
+}
+
 // signatureHeight is the height of the block written by writeSignature.
-func signatureHeight(signed bool) float64 {
-	if signed {
-		return signatureGap + 2*bodyLineHeight + signatureSpace + 2*bodyLineHeight
+func (l *letter) signatureHeight() float64 {
+	if l.doc.Signer != nil {
+		return signatureGap + 2*l.bodyLineHeight + signatureSpace + 2*l.bodyLineHeight
 	}
 
-	return signatureGap + 3*bodyLineHeight
+	return signatureGap + 3*l.bodyLineHeight
 }
 
 // writeSignature writes the right-aligned place and date, then either the
@@ -295,8 +471,8 @@ func (l *letter) writeSignature() {
 	x := pageMarginSide + l.contentWidth() - width
 	line := func(style, text string) {
 		pdf.SetX(x)
-		pdf.SetFont(fontFamily, style, bodyFontSize)
-		pdf.CellFormat(width, bodyLineHeight, text, "", 1, "L", false, 0, "")
+		pdf.SetFont(fontFamily, style, l.bodyFontSize)
+		pdf.CellFormat(width, l.bodyLineHeight, text, "", 1, "L", false, 0, "")
 	}
 
 	pdf.Ln(signatureGap)
@@ -410,11 +586,32 @@ func pdfSafeDocument(doc Document) Document {
 	for i, item := range doc.Items {
 		item.DrugName = pdfSafe(item.DrugName)
 		item.Quantity = pdfSafe(item.Quantity)
+		item.ActiveIngredient = pdfSafePtr(item.ActiveIngredient)
+		item.DosageFormStrength = pdfSafePtr(item.DosageFormStrength)
+		item.SmallestPackage = pdfSafePtr(item.SmallestPackage)
+		item.QuantityWords = pdfSafePtr(item.QuantityWords)
+		item.Note = pdfSafePtr(item.Note)
 		items[i] = item
 	}
 	doc.Items = items
 
+	if doc.Cancellation != nil {
+		c := *doc.Cancellation
+		c.EmployeeName = pdfSafe(c.EmployeeName)
+		c.Reason = pdfSafe(c.Reason)
+		doc.Cancellation = &c
+	}
+
 	return doc
+}
+
+func pdfSafePtr(s *string) *string {
+	if s == nil {
+		return nil
+	}
+
+	safe := pdfSafe(*s)
+	return &safe
 }
 
 // pdfSafe removes the characters fpdf cannot write: those outside the Basic

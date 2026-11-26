@@ -49,9 +49,36 @@ func testConfig() Config {
 }
 
 type testEnv struct {
-	db      *gorm.DB
-	service *Service
-	now     time.Time
+	db        *gorm.DB
+	service   *Service
+	refresher *fakeRefresher
+	now       time.Time
+}
+
+// fakeRefresher stands in for vmedis: refreshing a drug applies the update
+// queued for it, if any.
+type fakeRefresher struct {
+	db        *gorm.DB
+	mu        sync.Mutex
+	updates   map[int64]map[string]any
+	fail      bool
+	refreshed []int64
+}
+
+func (f *fakeRefresher) DumpDrugDetailsFromVmedisToDBByVmedisID(ctx context.Context, vmedisID int64) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	f.refreshed = append(f.refreshed, vmedisID)
+	if f.fail {
+		return errors.New("vmedis is down")
+	}
+
+	if update, ok := f.updates[vmedisID]; ok {
+		return f.db.Model(&models.Drug{}).Where("vmedis_id = ?", vmedisID).Updates(update).Error
+	}
+
+	return nil
 }
 
 func newTestEnv(t *testing.T) *testEnv {
@@ -68,10 +95,11 @@ func newTestEnv(t *testing.T) *testEnv {
 	}
 
 	env := &testEnv{
-		db:      db,
-		service: NewService(db, testConfig()),
-		now:     time.Date(2026, time.November, 14, 10, 0, 0, 0, jakarta),
+		db:        db,
+		refresher: &fakeRefresher{db: db},
+		now:       time.Date(2026, time.November, 14, 10, 0, 0, 0, jakarta),
 	}
+	env.service = NewService(db, testConfig(), env.refresher)
 	env.service.now = func() time.Time { return env.now }
 
 	return env
@@ -377,8 +405,23 @@ func TestGetOptions(t *testing.T) {
 	if options.VmedisSupplierPageURL != "https://aulia.vmedis.com/apt-data-supplier-v2" {
 		t.Errorf("vmedis supplier page = %q", options.VmedisSupplierPageURL)
 	}
-	if len(options.Templates) != 1 || options.Templates[0].ID != "reguler" || options.Templates[0].Name != "Surat Pesanan Reguler" {
-		t.Errorf("templates = %+v, want only reguler", options.Templates)
+	if options.VmedisDrugPageURL != "https://aulia.vmedis.com/apt-obat-batch-v2" {
+		t.Errorf("vmedis drug page = %q", options.VmedisDrugPageURL)
+	}
+	want := []TemplateInfo{
+		{ID: "reguler", Name: "Surat Pesanan Reguler", ItemFields: ItemFieldsBasic, SignatureMode: SignatureModeOptional},
+		{ID: "prekursor", Name: "Surat Pesanan Prekursor Farmasi", ItemFields: ItemFieldsControlled, SignatureMode: SignatureModeWet},
+		{ID: "oot", Name: "Surat Pesanan Obat-Obat Tertentu", ItemFields: ItemFieldsControlled, SignatureMode: SignatureModeWet},
+	}
+	if len(options.Templates) != len(want) {
+		t.Fatalf("templates = %+v, want %d", options.Templates, len(want))
+	}
+	for i, w := range want {
+		got := options.Templates[i]
+		got.Description = ""
+		if got != w {
+			t.Errorf("template %d = %+v, want %+v", i, got, w)
+		}
 	}
 	if options.Signer.Name != "Nama Apoteker" || options.Signer.LicenseNumber != "SIPA-123" {
 		t.Errorf("signer = %+v", options.Signer)
@@ -564,7 +607,7 @@ func TestLastRowMovesWithTail(t *testing.T) {
 	fitting := 0
 	for n := 1; ; n++ {
 		l := newLetter(renderTestDocument(n))
-		l.writeItems(0)
+		l.writeItems(regulerTable, 0)
 		if l.pdf.PageNo() > 1 {
 			break
 		}
@@ -573,7 +616,7 @@ func TestLastRowMovesWithTail(t *testing.T) {
 
 	const tail = 60.0
 	l := newLetter(renderTestDocument(fitting))
-	l.writeItems(tail)
+	l.writeItems(regulerTable, tail)
 
 	if got := l.pdf.PageNo(); got != 2 {
 		t.Fatalf("after %d rows with a %vmm tail, on page %d, want 2", fitting, tail, got)
@@ -599,12 +642,7 @@ func TestLongestItemsFitOnPage(t *testing.T) {
 	}}
 
 	l := newLetter(doc)
-	l.pdf.SetFont(fontFamily, "", tableFontSize)
-	nameWidth := l.contentWidth() - tableNoWidth - tableQtyWidth
-	row := itemRow{
-		nameLines: wrapText(l.pdf, doc.Items[0].DrugName, nameWidth-2*tablePadding),
-		qtyLines:  wrapText(l.pdf, doc.Items[0].Quantity, tableQtyWidth-2*tablePadding),
-	}
+	row := l.tableRow(regulerTable, l.columnWidths(regulerTable), "", func(_ int, c tableColumn) string { return c.value(0, doc.Items[0]) })
 
 	if h, page := row.height(), l.pageBottom()-pageMarginTop; h > page/4 {
 		t.Errorf("a row at the length limits is %.1fmm tall, more than a quarter of the %.1fmm page", h, page)

@@ -175,6 +175,10 @@ func sortDrugsBySalesAmount(drugs []Drug, saleStatisticsByDrugCode map[string]Sa
 	})
 }
 
+// vmedisDetailColumns are the drug columns copied as they are from vmedis,
+// which both the drug list and the drug details return.
+var vmedisDetailColumns = []string{"golongan", "kandungan", "kemasan_bentuk_sediaan", "zat_aktif_prekursor"}
+
 // DumpDrugsFromVmedisToDB dumps the drugs from Vmedis to DB.
 func (s *Service) DumpDrugsFromVmedisToDB(ctx context.Context) error {
 	log.Println("Dumping drugs from Vmedis to DB")
@@ -196,7 +200,7 @@ func (s *Service) DumpDrugsFromVmedisToDB(ctx context.Context) error {
 		log.Printf("Starting to dump drugs batch %d, number of drugs: %d", batchNum, len(batch))
 
 		log.Println("Upserting drugs to DB")
-		if err := s.db.UpsertVmedisDrugs(ctx, batch, "vmedis_code", []string{"vmedis_id", "name", "manufacturer"}); err != nil {
+		if err := s.db.UpsertVmedisDrugs(ctx, batch, "vmedis_code", append([]string{"vmedis_id", "name", "manufacturer"}, vmedisDetailColumns...)); err != nil {
 			log.Printf("Error upserting drugs to DB: %s", err)
 			errs = append(errs, err)
 			continue
@@ -264,7 +268,7 @@ func (s *Service) DumpDrugDetailsFromVmedisToDBByVmedisID(ctx context.Context, v
 		ctx,
 		drug,
 		"vmedis_id",
-		[]string{"vmedis_code", "name", "manufacturer", "minimum_stock_unit", "minimum_stock_quantity"},
+		append([]string{"vmedis_code", "name", "manufacturer", "minimum_stock_unit", "minimum_stock_quantity"}, vmedisDetailColumns...),
 	); err != nil {
 		return fmt.Errorf("upsert drug %d details to DB: %w", vmedisID, err)
 	}
