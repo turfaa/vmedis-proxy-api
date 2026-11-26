@@ -60,6 +60,14 @@ func (h *ApiHandler) List(c *gin.Context) {
 	filter := ListFilter{
 		Query:      c.Query("q"),
 		TemplateID: c.Query("templateId"),
+		Status:     Status(c.Query("status")),
+	}
+
+	switch filter.Status {
+	case "", StatusActive, StatusCancelled:
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid status %q, want active or cancelled", filter.Status)})
+		return
 	}
 
 	var err error
@@ -97,6 +105,63 @@ func (h *ApiHandler) List(c *gin.Context) {
 	res, err := h.service.List(c.Request.Context(), filter)
 	if err != nil {
 		h.writeError(c, "failed to list purchase orders", err)
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
+// GetItemDetails handles requests to get what vmedis has on the drugs to put
+// on a purchase order: ?templateId=oot&codes=A,B.
+func (h *ApiHandler) GetItemDetails(c *gin.Context) {
+	req := ItemDetailsRequest{TemplateID: c.Query("templateId")}
+	for _, codes := range c.QueryArray("codes") {
+		req.Codes = append(req.Codes, strings.Split(codes, ",")...)
+	}
+
+	res, err := h.service.GetItemDetails(c.Request.Context(), req)
+	if err != nil {
+		h.writeError(c, "failed to get purchase order item details", err)
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
+// RefreshItemDetails handles requests to fetch drugs from vmedis again and
+// return their item details.
+func (h *ApiHandler) RefreshItemDetails(c *gin.Context) {
+	var req ItemDetailsRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid request: %s", err)})
+		return
+	}
+
+	res, err := h.service.RefreshItemDetails(c.Request.Context(), req)
+	if err != nil {
+		h.writeError(c, "failed to refresh purchase order item details", err)
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
+// Cancel handles requests to cancel a purchase order.
+func (h *ApiHandler) Cancel(c *gin.Context) {
+	id, ok := h.parseID(c)
+	if !ok {
+		return
+	}
+
+	var req CancelRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid request: %s", err)})
+		return
+	}
+
+	res, err := h.service.Cancel(c.Request.Context(), id, req, auth.FromGinContext(c).Email)
+	if err != nil {
+		h.writeError(c, "failed to cancel purchase order", err)
 		return
 	}
 
@@ -169,6 +234,12 @@ func (h *ApiHandler) writeError(c *gin.Context, message string, err error) {
 			body["invalidItems"] = validationErr.InvalidItems
 		}
 		c.JSON(http.StatusBadRequest, body)
+
+	case errors.Is(err, ErrAlreadyCancelled):
+		c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+
+	case errors.Is(err, ErrVmedis):
+		c.JSON(http.StatusBadGateway, gin.H{"error": fmt.Sprintf("%s: %s", message, err)})
 
 	case errors.Is(err, ErrNotFound):
 		c.JSON(http.StatusNotFound, gin.H{"error": fmt.Sprintf("%s: %s", message, err)})

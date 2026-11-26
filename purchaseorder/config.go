@@ -9,6 +9,10 @@ import (
 // Vmedis has no page per supplier, so the operator searches for it there.
 const vmedisSupplierPagePath = "/apt-data-supplier-v2"
 
+// vmedisDrugPagePath is the vmedis web page where drugs (Data Obat) are
+// edited. Vmedis has no page per drug either.
+const vmedisDrugPagePath = "/apt-obat-batch-v2"
+
 // Config holds the pharmacy details printed on purchase orders.
 type Config struct {
 	PharmacyName          string
@@ -81,6 +85,11 @@ func (c Config) Validate() error {
 // VmedisSupplierPageURL returns the vmedis page where suppliers are edited.
 func (c Config) VmedisSupplierPageURL() string {
 	return strings.TrimRight(c.VmedisBaseURL, "/") + vmedisSupplierPagePath
+}
+
+// VmedisDrugPageURL returns the vmedis page where drugs are edited.
+func (c Config) VmedisDrugPageURL() string {
+	return strings.TrimRight(c.VmedisBaseURL, "/") + vmedisDrugPagePath
 }
 
 func (c Config) signer() Signer {

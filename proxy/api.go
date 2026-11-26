@@ -136,10 +136,13 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 			{
 				purchaseOrders.GET("/options", s.purchaseOrderHandler.GetOptions)
 				purchaseOrders.GET("/creators", s.purchaseOrderHandler.ListCreators)
+				purchaseOrders.GET("/item-details", s.purchaseOrderHandler.GetItemDetails)
+				purchaseOrders.POST("/item-details/refresh", s.purchaseOrderHandler.RefreshItemDetails)
 				purchaseOrders.GET("", s.purchaseOrderHandler.List)
 				purchaseOrders.POST("", s.purchaseOrderHandler.Create)
 				purchaseOrders.GET("/:id", s.purchaseOrderHandler.Get)
 				purchaseOrders.GET("/:id/pdf", s.purchaseOrderHandler.GetPDF)
+				purchaseOrders.POST("/:id/cancel", s.purchaseOrderHandler.Cancel)
 			}
 		}
 

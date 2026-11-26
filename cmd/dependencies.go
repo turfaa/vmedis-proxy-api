@@ -593,7 +593,7 @@ func getPurchaseOrderService() *purchaseorder.Service {
 		log.Println("Purchase orders are not configured, their endpoints respond with 503")
 	}
 
-	newService := purchaseorder.NewService(getDatabase(), config)
+	newService := purchaseorder.NewService(getDatabase(), config, getDrugService())
 
 	if !purchaseOrderService.CompareAndSwap(nil, newService) {
 		return purchaseOrderService.Load()

@@ -9,7 +9,8 @@ import (
 // PurchaseOrder is a surat pesanan (SP): a numbered purchase order letter sent
 // to a supplier. It keeps snapshots of everything printed on it, so the same
 // PDF can be rendered again even after the supplier or the config changes.
-// Purchase orders are never edited or deleted by the app.
+// Purchase orders are never deleted by the app, and only edited to be
+// cancelled.
 type PurchaseOrder struct {
 	ID        uint      `gorm:"primarykey"`
 	CreatedAt time.Time `gorm:"index;not null"`
@@ -43,6 +44,17 @@ type PurchaseOrder struct {
 	// retry after a lost response returns this purchase order instead of
 	// creating another one. Nil for requests without a key.
 	IdempotencyKey *string `gorm:"uniqueIndex"`
+
+	// CancelledAt is set when the purchase order is cancelled (dibatalkan).
+	// A cancelled purchase order keeps its number, which is never reused.
+	// The other Cancelled fields are set with it.
+	CancelledAt     *time.Time `gorm:"index"`
+	CancelledReason *string
+	// CancelledByEmployeeID is the HRIS employee the operator picked.
+	CancelledByEmployeeID   *int
+	CancelledByEmployeeName *string
+	// CancelledByEmail is the login account that cancelled it, for audit.
+	CancelledByEmail *string
 
 	Items []PurchaseOrderItem `gorm:"foreignKey:PurchaseOrderID"`
 }
@@ -86,8 +98,24 @@ type PurchaseOrderItem struct {
 	// DrugVmedisCode is nil for drugs added by hand that are not in vmedis.
 	DrugVmedisCode *string
 	DrugName       string `gorm:"index;not null"`
-	// Quantity is the quantity as typed, e.g. "10 Box".
+	// Quantity is the quantity as typed, e.g. "10 Box". On templates with
+	// controlled item fields it is a whole number, e.g. "12".
 	Quantity string `gorm:"not null"`
+
+	// The fields below are set only on templates with controlled item fields
+	// (Prekursor and OOT), nil otherwise.
+
+	// ActiveIngredient (zat aktif) and DosageFormStrength (bentuk dan
+	// kekuatan sediaan) are snapshots of the drug's data in vmedis.
+	ActiveIngredient   *string
+	DosageFormStrength *string
+	// SmallestPackage is the unit the quantity is in (kemasan terkecil),
+	// e.g. "Box @ 10 Strip".
+	SmallestPackage *string
+	// QuantityWords is the quantity in Indonesian words, e.g. "dua belas".
+	QuantityWords *string
+	// Note is the item's keterangan, nil when empty.
+	Note *string
 }
 
 // PurchaseOrderSequence holds the last number used in a template's monthly

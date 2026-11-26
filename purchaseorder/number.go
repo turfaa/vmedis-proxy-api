@@ -28,13 +28,20 @@ func formatLetterDate(t time.Time) string {
 // pdfFilename returns the name a purchase order PDF is downloaded as:
 // "[YYYY-MM-DD] - [supplier] - [template] - [number].pdf", with the number's
 // slashes turned into dashes and characters not allowed in filenames removed.
-func pdfFilename(createdAt time.Time, supplierName, templateName, number string) string {
+// A cancelled purchase order's ends in " - DIBATALKAN.pdf".
+func pdfFilename(createdAt time.Time, supplierName, templateName, number string, cancelled bool) string {
+	suffix := ""
+	if cancelled {
+		suffix = " - DIBATALKAN"
+	}
+
 	return fmt.Sprintf(
-		"%s - %s - %s - %s.pdf",
+		"%s - %s - %s - %s%s.pdf",
 		createdAt.In(time.Local).Format(time.DateOnly),
 		sanitizeFilenamePart(supplierName),
 		sanitizeFilenamePart(templateName),
 		sanitizeFilenamePart(strings.ReplaceAll(number, "/", "-")),
+		suffix,
 	)
 }
 

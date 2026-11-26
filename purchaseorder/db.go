@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 
@@ -69,6 +70,72 @@ func (d *Database) Create(ctx context.Context, po *models.PurchaseOrder, numberF
 
 		return nil
 	})
+}
+
+// GetDrugs returns the drugs with the vmedis codes, with their units ordered
+// from the smallest, by code. Codes of unknown drugs are left out.
+func (d *Database) GetDrugs(ctx context.Context, codes []string) (map[string]models.Drug, error) {
+	drugs := make(map[string]models.Drug, len(codes))
+	if len(codes) == 0 {
+		return drugs, nil
+	}
+
+	var rows []models.Drug
+	if err := d.dbCtx(ctx).
+		Preload("Units", func(db *gorm.DB) *gorm.DB { return db.Order("unit_order") }).
+		Where("vmedis_code IN ?", codes).
+		Find(&rows).
+		Error; err != nil {
+		return nil, fmt.Errorf("get drugs: %w", err)
+	}
+
+	for _, drug := range rows {
+		drugs[drug.VmedisCode] = drug
+	}
+
+	return drugs, nil
+}
+
+type cancellation struct {
+	at           time.Time
+	reason       string
+	employeeID   int
+	employeeName string
+	email        string
+}
+
+// Cancel marks the purchase order as cancelled. The update only applies to
+// a purchase order that is not cancelled yet, so of two concurrent cancels
+// one wins and the other gets ErrAlreadyCancelled.
+func (d *Database) Cancel(ctx context.Context, id uint, c cancellation) error {
+	res := d.dbCtx(ctx).
+		Model(&models.PurchaseOrder{}).
+		Where("id = ? AND cancelled_at IS NULL", id).
+		Updates(map[string]any{
+			"cancelled_at":               c.at,
+			"cancelled_reason":           c.reason,
+			"cancelled_by_employee_id":   c.employeeID,
+			"cancelled_by_employee_name": c.employeeName,
+			"cancelled_by_email":         c.email,
+		})
+	if res.Error != nil {
+		return fmt.Errorf("cancel purchase order %d: %w", id, res.Error)
+	}
+
+	if res.RowsAffected > 0 {
+		return nil
+	}
+
+	var count int64
+	if err := d.dbCtx(ctx).Model(&models.PurchaseOrder{}).Where("id = ?", id).Count(&count).Error; err != nil {
+		return fmt.Errorf("check purchase order %d: %w", id, err)
+	}
+
+	if count == 0 {
+		return fmt.Errorf("purchase order %d: %w", id, ErrNotFound)
+	}
+
+	return fmt.Errorf("purchase order %d: %w", id, ErrAlreadyCancelled)
 }
 
 // GetByIdempotencyKey returns the purchase order created with the key,
@@ -160,6 +227,13 @@ func filterScope(filter ListFilter) func(*gorm.DB) *gorm.DB {
 
 		if filter.CreatedByEmployeeID != 0 {
 			query = query.Where("created_by_employee_id = ?", filter.CreatedByEmployeeID)
+		}
+
+		switch filter.Status {
+		case StatusActive:
+			query = query.Where("cancelled_at IS NULL")
+		case StatusCancelled:
+			query = query.Where("cancelled_at IS NOT NULL")
 		}
 
 		return query

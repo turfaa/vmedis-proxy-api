@@ -190,6 +190,10 @@ func (d *Database) UpsertVmedisDrugs(ctx context.Context, drugs []vmedisv2.Drug,
 				Unit:     drug.MinimumStock.Unit,
 				Quantity: drug.MinimumStock.Quantity,
 			},
+			Golongan:             drug.Golongan,
+			Kandungan:            drug.Kandungan,
+			KemasanBentukSediaan: drug.KemasanBentukSediaan,
+			ZatAktifPrekursor:    drug.ZatAktifPrekursor,
 		}
 	})
 

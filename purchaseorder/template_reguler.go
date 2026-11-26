@@ -14,8 +14,8 @@ func renderReguler(w io.Writer, doc Document) error {
 	l.pdf.Ln(3)
 	l.writeParagraph("Dengan hormat,\nbersama ini kami mengajukan pesanan obat sebagai berikut:")
 
-	const closingHeight = 4 + bodyLineHeight
-	l.writeItems(closingHeight + signatureHeight(doc.Signer != nil))
+	closingHeight := 4 + l.bodyLineHeight
+	l.writeItems(regulerTable, closingHeight+l.signatureHeight())
 
 	l.pdf.Ln(4)
 	l.writeParagraph("Atas perhatian dan kerja samanya, kami ucapkan terima kasih.")

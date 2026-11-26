@@ -17,6 +17,14 @@ type Drug struct {
 	Manufacturer string `gorm:"index"`
 	MinimumStock Stock  `gorm:"embedded;embeddedPrefix:minimum_stock_"`
 
+	// Golongan, Kandungan, KemasanBentukSediaan and ZatAktifPrekursor are the
+	// drug's fields of the same names in vmedis, as they are there. Golongan
+	// is meant to be the drug class but often holds a shelf instead.
+	Golongan             string `gorm:"not null;default:''"`
+	Kandungan            string `gorm:"not null;default:''"`
+	KemasanBentukSediaan string `gorm:"not null;default:''"`
+	ZatAktifPrekursor    string `gorm:"not null;default:''"`
+
 	Units  []DrugUnit  `gorm:"foreignKey:DrugVmedisCode;references:VmedisCode"`
 	Stocks []DrugStock `gorm:"foreignKey:DrugVmedisCode;references:VmedisCode"`
 }

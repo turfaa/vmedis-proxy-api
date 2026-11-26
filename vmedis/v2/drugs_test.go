@@ -10,7 +10,7 @@ import (
 // testDrugViewResponse is a trimmed copy of a real apt-obat-batch/view
 // response, with the units out of order and a second batch added.
 const testDrugViewResponse = `{"status":1,"message":"","data":{
-	"obat":{"obatid":2281,"obatkode":"OBT2312090001","obatnama":"ANTASIDA DOEN TAB 10x10 (MUTIFA) ","kodekfa":null,"pabnama":"MUTIFA","obatminstok":"511.00"},
+	"obat":{"obatid":2281,"obatkode":"OBT2312090001","obatnama":"ANTASIDA DOEN TAB 10x10 (MUTIFA) ","kodekfa":null,"pabnama":"MUTIFA","obatminstok":"511.00","golonama":"Prekursor ","obatkandungan":"","obatkemasan":"Tablet 500 mg","obatzat":null},
 	"satuan":[
 		{"sodid":3838,"soid":6,"sodkonversi":"10.00","sodhasilkonversi":"10.00","sodurut":2,"sonama":"Box","hrgjual1":"13000.00","hrgjual2":"12500.00","hrgjual3":"14000.00"},
 		{"sodid":3837,"soid":2,"sodkonversi":"1.00","sodhasilkonversi":"1.00","sodurut":1,"sonama":"Strip","hrgjual1":"2000.00","hrgjual2":"2000.00","hrgjual3":"3500.00"}
@@ -36,11 +36,13 @@ func TestGetDrug(t *testing.T) {
 	}
 
 	want := Drug{
-		VmedisID:     2281,
-		VmedisCode:   "OBT2312090001",
-		Name:         "ANTASIDA DOEN TAB 10x10 (MUTIFA)",
-		Manufacturer: "MUTIFA",
-		MinimumStock: Stock{Unit: "Strip", Quantity: 511},
+		VmedisID:             2281,
+		VmedisCode:           "OBT2312090001",
+		Name:                 "ANTASIDA DOEN TAB 10x10 (MUTIFA)",
+		Manufacturer:         "MUTIFA",
+		MinimumStock:         Stock{Unit: "Strip", Quantity: 511},
+		Golongan:             "Prekursor",
+		KemasanBentukSediaan: "Tablet 500 mg",
 		Units: []Unit{
 			{Unit: "Strip", UnitOrder: 0, PriceOne: 2000, PriceTwo: 2000, PriceThree: 3500},
 			{Unit: "Box", ParentUnit: "Strip", ConversionToParentUnit: 10, UnitOrder: 1, PriceOne: 13000, PriceTwo: 12500, PriceThree: 14000},

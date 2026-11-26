@@ -17,6 +17,16 @@ type Drug struct {
 	Name         string
 	Manufacturer string
 
+	// Golongan is the drug's "Golongan" in vmedis. It is meant to be the drug
+	// class (e.g. "Prekursor"), but often holds a shelf (e.g. "DEPAN").
+	Golongan string
+	// Kandungan is the drug's "Kandungan" (contents) in vmedis.
+	Kandungan string
+	// KemasanBentukSediaan is the drug's "Kemasan / Bentuk Sediaan" in vmedis.
+	KemasanBentukSediaan string
+	// ZatAktifPrekursor is the drug's "Zat Aktif Prekursor" in vmedis.
+	ZatAktifPrekursor string
+
 	// MinimumStock is in the drug's smallest unit.
 	// Only set by GetDrug.
 	MinimumStock Stock
@@ -148,6 +158,11 @@ type drugRow struct {
 	Name         string  `json:"obatnama"`
 	Manufacturer *string `json:"pabnama"`
 	MinimumStock number  `json:"obatminstok"`
+
+	Golongan             *string `json:"golonama"`
+	Kandungan            *string `json:"obatkandungan"`
+	KemasanBentukSediaan *string `json:"obatkemasan"`
+	ZatAktifPrekursor    *string `json:"obatzat"`
 }
 
 func (r drugRow) toDrug() Drug {
@@ -158,6 +173,11 @@ func (r drugRow) toDrug() Drug {
 		Name:         strings.TrimSpace(r.Name),
 		Manufacturer: strings.TrimSpace(deref(r.Manufacturer)),
 		MinimumStock: Stock{Quantity: float64(r.MinimumStock)},
+
+		Golongan:             strings.TrimSpace(deref(r.Golongan)),
+		Kandungan:            strings.TrimSpace(deref(r.Kandungan)),
+		KemasanBentukSediaan: strings.TrimSpace(deref(r.KemasanBentukSediaan)),
+		ZatAktifPrekursor:    strings.TrimSpace(deref(r.ZatAktifPrekursor)),
 	}
 }
 

@@ -27,10 +27,16 @@ func TestPDFFilename(t *testing.T) {
 		`PT. A/B: "Farma"  Ñusantara`,
 		"Surat Pesanan Reguler",
 		"001/SP-REG/AAF/XI/2026",
+		false,
 	)
 
 	if want := "2026-11-15 - PT. AB Farma Ñusantara - Surat Pesanan Reguler - 001-SP-REG-AAF-XI-2026.pdf"; got != want {
 		t.Errorf("got %q, want %q", got, want)
+	}
+
+	cancelled := pdfFilename(time.Date(2026, time.November, 14, 10, 0, 0, 0, time.UTC), "PBF", "Surat Pesanan Obat-Obat Tertentu", "001/SP-OOT/AAF/XI/2026", true)
+	if want := "2026-11-14 - PBF - Surat Pesanan Obat-Obat Tertentu - 001-SP-OOT-AAF-XI-2026 - DIBATALKAN.pdf"; cancelled != want {
+		t.Errorf("got %q, want %q", cancelled, want)
 	}
 
 	for filename, want := range map[string]string{
