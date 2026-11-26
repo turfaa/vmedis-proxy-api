@@ -26,6 +26,11 @@ type GatewayRequest struct {
 	TargetVersion string
 	TargetOptions GatewayTargetOptions
 	Payload       any
+
+	// NoRetry sends the request once, without retrying transient failures.
+	// Set it for writes that must not be repeated, since a failure after the
+	// request was sent (e.g. a timeout) may still have written.
+	NoRetry bool
 }
 
 type GatewayTargetOptions struct {
@@ -54,7 +59,12 @@ func NewGatewayClient(baseUrl string, crypt *Crypt) *GatewayClient {
 // Call sends the request to the vmedis gateway, retrying transient failures,
 // and decodes the response into responseTarget.
 func (c *GatewayClient) Call(ctx context.Context, req GatewayRequest, responseTarget any) error {
-	bodyBytes, err := retry.Do(ctx, c.retryConfig, func(ctx context.Context) ([]byte, error) {
+	retryConfig := c.retryConfig
+	if req.NoRetry {
+		retryConfig.MaxRetries = 0
+	}
+
+	bodyBytes, err := retry.Do(ctx, retryConfig, func(ctx context.Context) ([]byte, error) {
 		return c.doHTTPRequest(ctx, req)
 	})
 	if err != nil {

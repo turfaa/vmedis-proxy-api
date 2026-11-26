@@ -14,6 +14,7 @@ import (
 
 	"github.com/turfaa/vmedis-proxy-api/auth"
 	"github.com/turfaa/vmedis-proxy-api/drug"
+	"github.com/turfaa/vmedis-proxy-api/journal"
 	"github.com/turfaa/vmedis-proxy-api/procurement"
 	"github.com/turfaa/vmedis-proxy-api/purchaseorder"
 	"github.com/turfaa/vmedis-proxy-api/rejecteddrug"
@@ -40,6 +41,7 @@ type Config struct {
 	RejectedDrugHandler  *rejecteddrug.ApiHandler
 	SupplierHandler      *supplier.ApiHandler
 	PurchaseOrderHandler *purchaseorder.ApiHandler
+	JournalHandler       *journal.ApiHandler
 }
 
 // Run runs the proxy server.
@@ -60,6 +62,7 @@ func Run(config Config) {
 		config.RejectedDrugHandler,
 		config.SupplierHandler,
 		config.PurchaseOrderHandler,
+		config.JournalHandler,
 	)
 
 	engine := apiServer.GinEngine()

@@ -11,6 +11,10 @@ vmedis_v2:
   crypt_key: ""
   app_id: ""
   reg: ""
+  # The numeric vmedis user ID journal entries are recorded under (the "uid"
+  # the Data Jurnal Keuangan page sends). Creating journal entries fails
+  # while it is 0.
+  uid: 0
 
 redis_address: "localhost:26379"
 redis_password: ""

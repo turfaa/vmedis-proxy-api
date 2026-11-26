@@ -15,6 +15,7 @@ import (
 	"github.com/turfaa/vmedis-proxy-api/auth"
 	"github.com/turfaa/vmedis-proxy-api/docs"
 	"github.com/turfaa/vmedis-proxy-api/drug"
+	"github.com/turfaa/vmedis-proxy-api/journal"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/gin2"
 	"github.com/turfaa/vmedis-proxy-api/procurement"
 	"github.com/turfaa/vmedis-proxy-api/purchaseorder"
@@ -42,6 +43,7 @@ type ApiServer struct {
 	rejectedDrugHandler  *rejecteddrug.ApiHandler
 	supplierHandler      *supplier.ApiHandler
 	purchaseOrderHandler *purchaseorder.ApiHandler
+	journalHandler       *journal.ApiHandler
 }
 
 // GinEngine returns the gin engine of the proxy api server.
@@ -211,6 +213,18 @@ func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 				auth.AllowedRoles(auth.RoleAdmin, auth.RoleStaff),
 				s.supplierHandler.GetDumpStatus,
 			)
+		}
+
+		// Journal entries (jurnal keuangan) in vmedis, e.g. salaries HRIS
+		// posts. Never cached: creates are writes, and a lookup must see an
+		// entry created a moment ago.
+		journalEntries := v1.Group(
+			"/vmedis/journal-entries",
+			auth.AllowedRoles(auth.RoleAdmin),
+		)
+		{
+			journalEntries.GET("", s.journalHandler.Find)
+			journalEntries.POST("", s.journalHandler.Create)
 		}
 
 		users := v1.Group("/users")
@@ -419,6 +433,7 @@ func NewApiServer(
 	rejectedDrugHandler *rejecteddrug.ApiHandler,
 	supplierHandler *supplier.ApiHandler,
 	purchaseOrderHandler *purchaseorder.ApiHandler,
+	journalHandler *journal.ApiHandler,
 ) *ApiServer {
 	return &ApiServer{
 		db:          db,
@@ -435,5 +450,6 @@ func NewApiServer(
 		rejectedDrugHandler:  rejectedDrugHandler,
 		supplierHandler:      supplierHandler,
 		purchaseOrderHandler: purchaseOrderHandler,
+		journalHandler:       journalHandler,
 	}
 }

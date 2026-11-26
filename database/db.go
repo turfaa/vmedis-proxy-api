@@ -70,6 +70,7 @@ func AutoMigrate(db *gorm.DB) error {
 		models.PurchaseOrder{},
 		models.PurchaseOrderItem{},
 		models.PurchaseOrderSequence{},
+		models.JournalEntryRequest{},
 	}
 
 	for _, model := range availableModels {

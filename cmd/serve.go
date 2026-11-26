@@ -39,6 +39,7 @@ var serveCmd = commandWithInit{
 					RejectedDrugHandler:  getRejectedDrugHandler(),
 					SupplierHandler:      getSupplierHandler(),
 					PurchaseOrderHandler: getPurchaseOrderHandler(),
+					JournalHandler:       getJournalHandler(),
 				},
 			)
 		},

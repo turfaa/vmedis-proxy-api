@@ -13,6 +13,9 @@ type Client struct {
 	gateway gatewayCaller
 	appID   string
 	reg     string
+	// userID is the vmedis user ("uid") writes are recorded under. Zero when
+	// not configured; only the journal calls need it.
+	userID int
 }
 
 type gatewayCaller interface {
@@ -30,6 +33,14 @@ func New(gateway *GatewayClient, appID, reg string) *Client {
 	}
 }
 
+// WithUserID returns a copy of c that sends userID as the "uid" parameter, the
+// vmedis user writes (e.g. journal entries) are recorded under.
+func (c *Client) WithUserID(userID int) *Client {
+	clone := *c
+	clone.userID = userID
+	return &clone
+}
+
 // reportApiVersion is the Target-Version the report pages call the report
 // API with.
 const reportApiVersion = "apivi"
@@ -37,6 +48,16 @@ const reportApiVersion = "apivi"
 // callReport POSTs payload, plus the parameters identifying the apotek, to
 // the report API endpoint at targetUrl.
 func (c *Client) callReport(ctx context.Context, targetUrl string, payload map[string]any, responseTarget any) error {
+	return c.callReportWithOptions(ctx, targetUrl, payload, responseTarget, false)
+}
+
+// callReportOnce is callReport without retries, for writes that must not be
+// sent twice.
+func (c *Client) callReportOnce(ctx context.Context, targetUrl string, payload map[string]any, responseTarget any) error {
+	return c.callReportWithOptions(ctx, targetUrl, payload, responseTarget, true)
+}
+
+func (c *Client) callReportWithOptions(ctx context.Context, targetUrl string, payload map[string]any, responseTarget any, noRetry bool) error {
 	if c.appID == "" || c.reg == "" {
 		return fmt.Errorf("vmedis v2 app id and reg must be configured")
 	}
@@ -57,5 +78,6 @@ func (c *Client) callReport(ctx context.Context, targetUrl string, payload map[s
 		TargetVersion: reportApiVersion,
 		TargetOptions: GatewayTargetOptions{Method: "POST"},
 		Payload:       params,
+		NoRetry:       noRetry,
 	}, responseTarget)
 }

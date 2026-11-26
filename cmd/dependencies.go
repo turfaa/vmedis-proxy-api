@@ -19,6 +19,7 @@ import (
 	"github.com/turfaa/vmedis-proxy-api/database"
 	"github.com/turfaa/vmedis-proxy-api/database/models"
 	"github.com/turfaa/vmedis-proxy-api/drug"
+	"github.com/turfaa/vmedis-proxy-api/journal"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/email2"
 	"github.com/turfaa/vmedis-proxy-api/procurement"
 	"github.com/turfaa/vmedis-proxy-api/purchaseorder"
@@ -67,6 +68,9 @@ var (
 
 	purchaseOrderService atomic.Pointer[purchaseorder.Service]
 	purchaseOrderHandler atomic.Pointer[purchaseorder.ApiHandler]
+
+	journalService atomic.Pointer[journal.Service]
+	journalHandler atomic.Pointer[journal.ApiHandler]
 )
 
 func getDatabase() *gorm.DB {
@@ -127,7 +131,7 @@ func getVmedisV2Client() *vmedisv2.Client {
 		),
 		viper.GetString("vmedis_v2.app_id"),
 		viper.GetString("vmedis_v2.reg"),
-	)
+	).WithUserID(viper.GetInt("vmedis_v2.uid"))
 
 	if !vmedisV2Client.CompareAndSwap(nil, newClient) {
 		return vmedisV2Client.Load()
@@ -611,6 +615,43 @@ func getPurchaseOrderHandler() *purchaseorder.ApiHandler {
 
 	if !purchaseOrderHandler.CompareAndSwap(nil, newHandler) {
 		return purchaseOrderHandler.Load()
+	}
+
+	return newHandler
+}
+
+func getJournalService() *journal.Service {
+	if val := journalService.Load(); val != nil {
+		return val
+	}
+
+	if viper.GetInt("vmedis_v2.uid") == 0 {
+		log.Println("vmedis_v2.uid is not configured, creating journal entries fails")
+	}
+
+	newService := journal.NewService(
+		journal.NewDatabase(getDatabase()),
+		journal.NewRedisDatabase(getRedisClient()),
+		getVmedisV2Client(),
+		getVmedisRateLimiter(),
+	)
+
+	if !journalService.CompareAndSwap(nil, newService) {
+		return journalService.Load()
+	}
+
+	return newService
+}
+
+func getJournalHandler() *journal.ApiHandler {
+	if val := journalHandler.Load(); val != nil {
+		return val
+	}
+
+	newHandler := journal.NewApiHandler(getJournalService())
+
+	if !journalHandler.CompareAndSwap(nil, newHandler) {
+		return journalHandler.Load()
 	}
 
 	return newHandler

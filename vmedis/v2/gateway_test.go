@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -151,5 +152,30 @@ func TestGatewayCall_ReturnsErrorObjectInSuccessfulResponse(t *testing.T) {
 	err := c.Call(context.Background(), GatewayRequest{TargetUrl: "some/endpoint"}, &struct{}{})
 	if err == nil || !strings.Contains(err.Error(), "boom") {
 		t.Fatalf("got error %v, want a gateway error containing %q", err, "boom")
+	}
+}
+
+func TestGatewayCall_NoRetrySendsOnce(t *testing.T) {
+	var hits atomic.Int32
+	c := newTestGateway(t, func(w http.ResponseWriter, r *http.Request) {
+		hits.Add(1)
+		w.WriteHeader(http.StatusBadGateway)
+	})
+	c.retryConfig = retry.Config{MaxRetries: 3, InitialBackoff: time.Millisecond}
+
+	var res any
+	if err := c.Call(context.Background(), GatewayRequest{TargetUrl: "x", NoRetry: true}, &res); err == nil {
+		t.Fatal("got no error")
+	}
+	if hits.Load() != 1 {
+		t.Errorf("got %d requests, want 1", hits.Load())
+	}
+
+	hits.Store(0)
+	if err := c.Call(context.Background(), GatewayRequest{TargetUrl: "x"}, &res); err == nil {
+		t.Fatal("got no error")
+	}
+	if hits.Load() != 4 {
+		t.Errorf("got %d requests with retries, want 4", hits.Load())
 	}
 }
