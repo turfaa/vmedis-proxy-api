@@ -1,0 +1,18 @@
+{
+  "targetUrl": "jurnal/delete",
+  "targetVersion": "apivi",
+  "targetOptions": {
+    "method": "POST"
+  },
+  "request": {
+    "a": "v0000",
+    "login_a": "v0000",
+    "reg": "ab12",
+    "mn_jenis": 1,
+    "jrlid": 1000001
+  },
+  "response": {
+    "success": true,
+    "message": "Jurnal JRLM2610310001 di hapus"
+  }
+}

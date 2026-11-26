@@ -1,0 +1,27 @@
+{
+  "targetUrl": "jurnal/jurnal-singkat-options",
+  "targetVersion": "apivi",
+  "targetOptions": {
+    "method": "POST"
+  },
+  "request": {
+    "a": "v0000",
+    "login_a": "v0000",
+    "reg": "ab12",
+    "mn_jenis": 1,
+    "app_jenis": 1,
+    "uid": 1001
+  },
+  "response": {
+    "success": true,
+    "data": [
+      {
+        "id": 12,
+        "name": "Gaji Karyawan OCBC",
+        "jsjenis": "Pengeluaran Kas",
+        "jsdebit": 377,
+        "jskredit": 618
+      }
+    ]
+  }
+}

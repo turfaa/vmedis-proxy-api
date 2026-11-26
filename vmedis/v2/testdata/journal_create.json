@@ -1,0 +1,31 @@
+{
+  "targetUrl": "jurnal/create",
+  "targetVersion": "apivi",
+  "targetOptions": {
+    "method": "POST"
+  },
+  "request": {
+    "a": "v0000",
+    "login_a": "v0000",
+    "reg": "ab12",
+    "mn_jenis": 1,
+    "app_jenis": 1,
+    "uid": 1001,
+    "jrltanggal": "2026-10-31",
+    "jrlno": "JRLM2610310001",
+    "jrlketerangan": "Gaji Karyawan Contoh Oktober 2026 (Snapshot #42)",
+    "jsid": 0,
+    "jrlkodedebit": 377,
+    "jrlkodekredit": 618,
+    "djdebit": 377,
+    "djkredit": 618,
+    "jrlnominal": 2500000,
+    "time": "10:00:00"
+  },
+  "response": {
+    "success": true,
+    "message": "Data tersimpan",
+    "jrlid": 1000001,
+    "jrlno": "JRLM2610310001"
+  }
+}

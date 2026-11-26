@@ -1,0 +1,44 @@
+{
+  "targetUrl": "jurnal/akun-options",
+  "targetVersion": "apivi",
+  "targetOptions": {
+    "method": "POST"
+  },
+  "request": {
+    "a": "v0000",
+    "login_a": "v0000",
+    "reg": "ab12",
+    "mn_jenis": 1,
+    "app_jenis": 1,
+    "uid": 1001
+  },
+  "response": {
+    "success": true,
+    "data": [
+      {
+        "id": 180,
+        "name": "110001 / Kas Umum",
+        "akkode": "110001",
+        "aknama": "Kas Umum"
+      },
+      {
+        "id": 618,
+        "name": "111004 / Bank OCBC",
+        "akkode": "111004",
+        "aknama": "Bank OCBC"
+      },
+      {
+        "id": 592,
+        "name": "171001 / Piutang Pegawai",
+        "akkode": "171001",
+        "aknama": "Piutang Pegawai"
+      },
+      {
+        "id": 377,
+        "name": "610002 / Gaji Karyawan",
+        "akkode": "610002",
+        "aknama": "Gaji Karyawan"
+      }
+    ]
+  }
+}

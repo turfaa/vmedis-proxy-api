@@ -1,0 +1,63 @@
+{
+  "targetUrl": "jurnal/list",
+  "targetVersion": "apivi",
+  "targetOptions": {
+    "method": "POST"
+  },
+  "request": {
+    "a": "v0000",
+    "login_a": "v0000",
+    "reg": "ab12",
+    "mn_jenis": 1,
+    "cari": 4,
+    "tanggalawal": "31 Oct 2026",
+    "tanggalakhir": "31 Oct 2026",
+    "bulan": "Oct 2026",
+    "tahun": "2026",
+    "jrlno": "",
+    "jrlketerangan": "",
+    "username": "",
+    "jrlaktif": "1",
+    "limit": 10,
+    "offset": 0
+  },
+  "response": {
+    "success": true,
+    "data": [
+      {
+        "jrlid": 1000001,
+        "jrltanggal": "2026-10-31 10:00:00",
+        "jrlno": "JRLM2610310001",
+        "jrlketerangan": "Gaji Karyawan Contoh Oktober 2026 (Snapshot #42)",
+        "jrlaktif": 1,
+        "uid": 1001,
+        "jsid": 0,
+        "shfid": 0,
+        "join_id": null,
+        "username": "admin",
+        "djdebit": "2500000.00",
+        "_no": 1,
+        "tanggal": "31 Oct 2026 10:00:00",
+        "statusLabel": "Aktif",
+        "nominal": 2500000
+      },
+      {
+        "jrlid": 1000002,
+        "jrltanggal": "2026-10-31 10:00:05",
+        "jrlno": "JRLM2610310002",
+        "jrlketerangan": "Pelunasan Utang Kasbon - Karyawan Contoh Oktober 2026 (Snapshot #42)",
+        "jrlaktif": 1,
+        "uid": 1001,
+        "jsid": 0,
+        "shfid": 0,
+        "join_id": null,
+        "username": "admin",
+        "djdebit": "150000.00",
+        "_no": 2,
+        "tanggal": "31 Oct 2026 10:00:05",
+        "statusLabel": "Aktif",
+        "nominal": 150000
+      }
+    ]
+  }
+}

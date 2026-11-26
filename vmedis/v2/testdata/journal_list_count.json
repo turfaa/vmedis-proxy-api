@@ -1,0 +1,28 @@
+{
+  "targetUrl": "jurnal/list-count",
+  "targetVersion": "apivi",
+  "targetOptions": {
+    "method": "POST"
+  },
+  "request": {
+    "a": "v0000",
+    "login_a": "v0000",
+    "reg": "ab12",
+    "mn_jenis": 1,
+    "cari": 4,
+    "tanggalawal": "31 Oct 2026",
+    "tanggalakhir": "31 Oct 2026",
+    "bulan": "Oct 2026",
+    "tahun": "2026",
+    "jrlno": "",
+    "jrlketerangan": "",
+    "username": "",
+    "jrlaktif": "1",
+    "limit": 10,
+    "offset": 0
+  },
+  "response": {
+    "success": true,
+    "total": 2
+  }
+}
