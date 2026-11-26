@@ -13,6 +13,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/turfaa/vmedis-proxy-api/auth"
+	"github.com/turfaa/vmedis-proxy-api/docs"
 	"github.com/turfaa/vmedis-proxy-api/drug"
 	"github.com/turfaa/vmedis-proxy-api/pkg2/gin2"
 	"github.com/turfaa/vmedis-proxy-api/procurement"
@@ -66,6 +67,9 @@ func (s *ApiServer) GinEngine() *gin.Engine {
 func (s *ApiServer) SetupRoute(router *gin.RouterGroup) {
 	store := persist.CacheStore(gin2.NewRedisCacheAdapter(s.redisClient))
 	// store = CompressedCache{Store: store} // try to not use compressed cache for now
+
+	router.GET("/docs", gin.WrapF(docs.RedocHandler))
+	router.GET("/docs/openapi.yaml", gin.WrapF(docs.SpecHandler))
 
 	v1 := router.Group("/api/v1")
 	{
