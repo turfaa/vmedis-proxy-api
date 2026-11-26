@@ -50,12 +50,46 @@ tags:
     description: Drugs asked by customers but not sold (yet).
   - name: Vmedis Tokens
     description: Vmedis session token management.
+  - name: Documentation
+    description: API documentation.
 
 security:
   - {}
   - EmailAuth: []
 
 paths:
+  /docs:
+    get:
+      operationId: getApiDocs
+      tags: [Documentation]
+      summary: Interactive API documentation
+      description: Returns an HTML page that renders this specification with Redoc.
+      security:
+        - {}
+      responses:
+        '200':
+          description: HTML documentation page.
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /docs/openapi.yaml:
+    get:
+      operationId: getOpenApiSpec
+      tags: [Documentation]
+      summary: OpenAPI specification
+      description: Returns this OpenAPI specification in YAML format.
+      security:
+        - {}
+      responses:
+        '200':
+          description: OpenAPI specification.
+          content:
+            application/yaml:
+              schema:
+                type: string
+
   /api/v1/sales:
     get:
       operationId: getSales

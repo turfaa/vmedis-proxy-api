@@ -4,7 +4,7 @@ A proxy service in front of [Vmedis](https://vmedis.com), a pharmacy management 
 
 ## Features
 
-- **HTTP API** (`/api/v1` and `/api/v2`) for sales, drugs, procurements (including procurement recommendations and invoice calculators), stock opnames, shifts, and rejected drugs. The full API is documented in [`docs/openapi.yaml`](docs/openapi.yaml).
+- **HTTP API** (`/api/v1` and `/api/v2`) for sales, drugs, procurements (including procurement recommendations and invoice calculators), stock opnames, shifts, and rejected drugs. The full API is documented in [`docs/openapi.yaml`](docs/openapi.yaml), rendered with Redoc at `GET /docs` (raw spec at `GET /docs/openapi.yaml`).
 - **Data dumpers** that scrape or fetch data from Vmedis and persist it to Postgres/SQLite.
 - **Vmedis session management** — session tokens are stored in the database and kept alive by a refresher job.
 - **Kafka pipeline** — drug updates are published as protobuf messages and a consumer re-fetches full drug details from Vmedis.

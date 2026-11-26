@@ -35,4 +35,4 @@ Single binary with Cobra subcommands (`cmd/`): `serve` runs the HTTP API; `drugs
 - **Database** (`database/`): GORM with Postgres (`postgres_dsn` set) or SQLite fallback. Schema is managed by `AutoMigrate` on startup — add new models to `database/models/` and register them in `database/db.go`.
 - **Kafka** (`kafkapb/`, `drug/producer.go`, `drug/consumer.go`): drug updates are published as protobuf messages (topics `drug_vmedis_id.updated` and `drug_vmedis_code.updated`, declared in `drug/producer.go`); the consumer re-fetches full drug details from Vmedis and upserts them.
 
-The HTTP API is documented in `docs/openapi.yaml` — keep it in sync when changing endpoints.
+The HTTP API is documented in `docs/openapi.yaml` — keep it in sync when changing endpoints. The `docs` package embeds it (plus the Redoc page `docs/index.html`) and the server serves them at `/docs` and `/docs/openapi.yaml`.
